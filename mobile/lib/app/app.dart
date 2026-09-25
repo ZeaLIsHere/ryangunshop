@@ -13,7 +13,7 @@ class RyanGunshopApp extends StatelessWidget {
       title: 'RyanGunshop',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
-      initialRoute: AppRoutes.shell,
+      initialRoute: AppRoutes.splash,
       onGenerateRoute: AppRouter.onGenerateRoute,
     );
   }
