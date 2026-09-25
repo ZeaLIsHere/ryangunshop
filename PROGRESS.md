@@ -22,7 +22,7 @@ berjalan tanpa harus menebak dari riwayat commit.
 | 1 — Kerangka aplikasi dan komponen dasar | review | belum | belum |
 | 2 — Splash, onboarding, dan dashboard | review | belum | belum |
 | 3 — Denah operasional dan pemindai | review | belum | belum |
-| 4 — Pembayaran, panorama, dan laporan | belum | belum | belum |
+| 4 — Pembayaran, panorama, dan laporan | review | belum | belum |
 | 5 — Audit aksesibilitas dan rilis internal | belum | belum | belum |
 
 ## Catatan per tugas
@@ -107,6 +107,24 @@ dikerjakan.
 
 **Blessly — belum.** `ProductScanner` belum dikerjakan.
 
+### Fase 4 — Pembayaran, panorama, dan laporan
+
+**Tariq — review (2026-09-25)**
+
+- Lingkup: layar riwayat dan laporan transaksi dengan data contoh, lengkap dengan
+  state memuat, kosong, dan gagal yang dapat dicoba lewat pemilih skenario contoh.
+- Berkas penting: `mobile/lib/features/reports/view/reports_screen.dart`,
+  `mobile/lib/core/format/rupiah.dart`, `mobile/lib/core/widgets/sample_badge.dart`.
+- Verifikasi: `flutter analyze` bersih, `flutter test` 33/33 lulus.
+- Belum: tampilan belum dijalankan di emulator Android dan PR belum ditinjau.
+- Catatan: layar dibuka dari pintasan "Riwayat transaksi" di dashboard lewat rute
+  `/riwayat`. Metode pembayaran pada riwayat masih model lokal, dan disatukan dengan
+  fitur pembayaran Blessly setelah fitur itu ada.
+
+**Farel — belum.** Viewer panorama 360 belum dikerjakan.
+
+**Blessly — belum.** `CartCheckout` dan `PaymentSheet` belum dikerjakan.
+
 ## Catatan untuk agen AI
 
 - Baca `AGENTS.md` lebih dahulu, lalu `TEAM.md`, lalu berkas ini untuk mengetahui posisi
@@ -123,5 +141,7 @@ dikerjakan.
 - Peran pengguna ada di `core/session/`. Baca dengan `AppSessionScope.of(context)` dan
   periksa `canEditFloorPlan` sebelum menampilkan mode edit denah; jangan menyalin peran
   ke variabel lokal fitur.
+- Nominal rupiah lewat `formatRupiah` di `core/format/rupiah.dart`, dan data contoh
+  ditandai `SampleBadge` dari `core/widgets/widgets.dart`.
 - Alur pembuka aplikasi: splash menuju perkenalan (sekali per sesi), lalu kerangka utama.
   Rutenya terdaftar di `mobile/lib/app/routing/app_router.dart`.
