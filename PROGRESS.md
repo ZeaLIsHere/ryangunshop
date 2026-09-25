@@ -21,7 +21,7 @@ berjalan tanpa harus menebak dari riwayat commit.
 | 0 — Fondasi UI dan aset | selesai | belum | belum |
 | 1 — Kerangka aplikasi dan komponen dasar | review | belum | belum |
 | 2 — Splash, onboarding, dan dashboard | review | belum | belum |
-| 3 — Denah operasional dan pemindai | belum | belum | belum |
+| 3 — Denah operasional dan pemindai | review | belum | belum |
 | 4 — Pembayaran, panorama, dan laporan | belum | belum | belum |
 | 5 — Audit aksesibilitas dan rilis internal | belum | belum | belum |
 
@@ -88,6 +88,25 @@ belum dikerjakan.
 
 **Blessly — belum.** `ProductForm` lengkap dan layar detail produk belum dikerjakan.
 
+### Fase 3 — Denah operasional dan pemindai
+
+**Tariq — review (2026-09-25), kecuali penyambungan ke kasir**
+
+- Lingkup yang selesai: keadaan sesi peran pengguna di `core/session/`, halaman
+  pengaturan, dan status ketersediaan mode edit denah. Aksi "Mulai pindai" sudah
+  ditempatkan di dashboard pada Fase 2.
+- Berkas penting: `mobile/lib/core/session/app_session.dart`,
+  `mobile/lib/features/settings/view/settings_screen.dart`.
+- Verifikasi: `flutter analyze` bersih, `flutter test` 28/28 lulus.
+- Belum: tampilan belum dijalankan di emulator Android dan PR belum ditinjau.
+- Ditunda sesuai urutan kerja: "menyambungkan navigasi ke kasir" menunggu pemindai
+  Blessly, karena rute pemindai didaftarkan bersamanya.
+
+**Farel — belum.** Bottom sheet produk per fixture dan sorot rak hasil pemindaian belum
+dikerjakan.
+
+**Blessly — belum.** `ProductScanner` belum dikerjakan.
+
 ## Catatan untuk agen AI
 
 - Baca `AGENTS.md` lebih dahulu, lalu `TEAM.md`, lalu berkas ini untuk mengetahui posisi
@@ -101,5 +120,8 @@ belum dikerjakan.
   pull request.
 - Belum ada pekerjaan backend, sesuai cakupan tahap ini. Semua layar memakai data contoh
   lokal di folder `sample/` pada fitur masing-masing.
+- Peran pengguna ada di `core/session/`. Baca dengan `AppSessionScope.of(context)` dan
+  periksa `canEditFloorPlan` sebelum menampilkan mode edit denah; jangan menyalin peran
+  ke variabel lokal fitur.
 - Alur pembuka aplikasi: splash menuju perkenalan (sekali per sesi), lalu kerangka utama.
   Rutenya terdaftar di `mobile/lib/app/routing/app_router.dart`.
