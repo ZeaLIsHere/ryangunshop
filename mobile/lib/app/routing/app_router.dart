@@ -4,6 +4,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/widgets/primary_action.dart';
 import '../../features/onboarding/view/onboarding_screen.dart';
+import '../../features/reports/view/reports_screen.dart';
 import '../shell/app_shell.dart';
 import '../splash/splash_screen.dart';
 
@@ -21,6 +22,9 @@ abstract final class AppRoutes {
 
   /// Kerangka utama berisi navigasi bawah.
   static const String shell = '/utama';
+
+  /// Riwayat dan laporan transaksi.
+  static const String reports = '/riwayat';
 }
 
 /// Pembuat rute aplikasi.
@@ -37,6 +41,8 @@ abstract final class AppRouter {
         return const OnboardingScreen();
       case AppRoutes.shell:
         return const AppShell();
+      case AppRoutes.reports:
+        return const ReportsScreen();
       default:
         return _UnknownRouteView(routeName: name);
     }

@@ -15,6 +15,11 @@ enum DashboardShortcut {
     description: 'Periksa barang lalu bayar',
     icon: Icons.point_of_sale_outlined,
   ),
+  reports(
+    label: 'Riwayat transaksi',
+    description: 'Lihat transaksi yang sudah selesai',
+    icon: Icons.receipt_long_outlined,
+  ),
   settings(
     label: 'Pengaturan',
     description: 'Peran pengguna dan info warung',

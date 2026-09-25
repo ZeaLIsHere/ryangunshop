@@ -5,6 +5,7 @@ import '../../core/widgets/ryan_app_logo.dart';
 import '../../features/dashboard/model/dashboard_shortcut.dart';
 import '../../features/dashboard/view/dashboard_screen.dart';
 import '../../features/settings/view/settings_screen.dart';
+import '../routing/app_router.dart';
 import 'shell_destination.dart';
 import 'shell_placeholder_view.dart';
 
@@ -27,17 +28,15 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _selectShortcut(DashboardShortcut shortcut) {
-    _selectDestination(_destinationFor(shortcut).index);
-  }
-
-  ShellDestination _destinationFor(DashboardShortcut shortcut) {
     switch (shortcut) {
+      case DashboardShortcut.reports:
+        Navigator.of(context).pushNamed(AppRoutes.reports);
       case DashboardShortcut.catalog:
-        return ShellDestination.catalog;
+        _selectDestination(ShellDestination.catalog.index);
       case DashboardShortcut.cashier:
-        return ShellDestination.cashier;
+        _selectDestination(ShellDestination.cashier.index);
       case DashboardShortcut.settings:
-        return ShellDestination.settings;
+        _selectDestination(ShellDestination.settings.index);
     }
   }
 
