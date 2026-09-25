@@ -133,7 +133,7 @@ kontribusi karena setiap fase tetap satu PR per orang. Pekerjaan murni dokumen
 |---|---|---|
 | Tariq | Menyelaraskan `PRODUCT.md`, `DESIGN.md`, dan `README.md` dengan hasil UI, menutup peta fitur di `PROGRESS.md`, dan menyiapkan konfigurasi `.vscode` akhir | PR dokumentasi + peta fitur tuntas |
 | Farel | Mengaudit aksesibilitas lintas layar (text scale 1.3, lebar 360 dp, kontras, semantic label, tooltip ikon), menulis `docs/a11y.md`, dan menambahkan golden test widget | PR audit + golden test |
-| Blessly | Menguji alur kasir pada perangkat kecil, membangun APK untuk pengujian internal, dan mendokumentasikan cara mempratinjau UI di `README.md` | PR rilis internal + APK terpasang |
+| Blessly | Menguji alur kasir pada perangkat kecil, membangun APK untuk pengujian internal, dan menambahkan catatan rilis serta panduan uji perangkat kecil di `README.md` | PR rilis internal + APK terpasang |
 
 ## Definisi selesai
 
@@ -184,15 +184,15 @@ menyentuh tampilan yang ditutup sekarang.
   dibuat pada Fase 0, sedangkan `docs/ui-flow.md` dan `docs/a11y.md` menyusul pada fase
   masing-masing.
 - **`TODO.md` dibatalkan.** Checklist fitur sudah tercakup oleh `PROGRESS.md` lewat
-  ringkasan fase dan peta fitur, jadi tidak perlu berkas terpisah. `README.md` masih
-  menyebut `TODO.md`; penyelarasannya dikerjakan Blessly sebagai pemilik berkas.
+  ringkasan fase dan peta fitur, jadi tidak perlu berkas terpisah. Rujukan `TODO.md`
+  sudah dibersihkan dari `AGENTS.md`, `TEAM.md`, dan `README.md`.
 - **Nama repositori** `ryangunshp` berbeda dari nama produk `RyanGunshop`. Sepakati satu
   penulisan sebelum rilis internal agar nama paket, launcher, dan dokumentasi konsisten.
-- **Perubahan `README.md` menyusul.** Blok struktur di `README.md` masih menyebut
-  `mobile/lib/data/`, `mobile/lib/domain/`, dan `mobile/lib/di/` yang tidak dipakai pada
-  tahap UI ini. Struktur resmi sekarang ada di `AGENTS.md` (`app/`, `core/theme/`,
-  `core/widgets/`, dan `features/`), dan penyelarasan `README.md` dikerjakan Blessly
-  sebagai pemilik berkas pada fase berikutnya.
+- **`README.md` sudah diselaraskan.** Blok struktur dan bagian backendnya diperbarui
+  Tariq lewat pull request sebelum Blessly mulai bekerja, karena isi lamanya menyebut
+  `lib/data/`, `lib/domain/`, `lib/di/`, dan `backend-agent/` yang belum ada. Rencana
+  tahap berikutnya kini berada di satu bagian tersendiri supaya tidak terbaca sebagai
+  instruksi sekarang. Kepemilikan berkas tetap pada Blessly.
 - **Kepemilikan `mobile/pubspec.yaml`.** Berkas ini dipakai bertiga, jadi ditetapkan milik
   Tariq dengan perubahan lewat pull request. Tanpa penetapan ini, dua orang bisa menambah
   aset di saat yang sama dan berbenturan.
