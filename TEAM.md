@@ -10,6 +10,9 @@ memakai data contoh lokal agar dapat dipreview tanpa layanan eksternal.
 Dokumen ini berbeda dari `TODO.md`: `TODO.md` adalah checklist fitur berdasarkan
 FR/NFR, sedangkan `TEAM.md` adalah peta **siapa mengerjakan apa**.
 
+Papan status pengerjaan ada di `PROGRESS.md`. Berkas itu mencatat tugas yang sudah
+selesai, yang sedang jalan, dan langkah berikutnya.
+
 ## Anggota dan peran
 
 | Anggota | Peran | Tanggung jawab utama |
@@ -30,6 +33,7 @@ dilakukan lewat pull request, bukan commit langsung.
 | `mobile/lib/features/onboarding/**`, `mobile/lib/features/dashboard/**` | Tariq |
 | `mobile/lib/features/reports/**`, `docs/COLOR_PALETTE.md`, `TODO.md` | Tariq |
 | `mobile/pubspec.yaml`, `mobile/analysis_options.yaml`, `.vscode/**` | Tariq |
+| `PROGRESS.md` (papan status) | Tariq |
 | `mobile/lib/features/floor_plan/**`, `mobile/lib/features/panorama/**` | Farel |
 | `mobile/assets/branding/**`, `mobile/tool/**`, `docs/a11y.md` | Farel |
 | `mobile/lib/features/catalog/**`, `mobile/lib/features/scanner/**` | Blessly |
@@ -44,6 +48,9 @@ folder bersama, agar tidak ada berkas yang dipakai dua orang.
 `mobile/pubspec.yaml` dipakai bertiga, tetapi pemiliknya Tariq karena ia yang menyiapkan
 dependensi. Perubahan dependensi baru atau pendaftaran aset (misalnya `assets/branding/`
 dan `assets/models/`) diajukan lewat pull request agar tidak berbenturan.
+
+`PROGRESS.md` dikecualikan dari aturan satu pengubah: setiap anggota hanya menyunting
+baris tugasnya sendiri, dan pembaruan itu dilakukan pada pull request tugas tersebut.
 
 ## Alur kerja Git
 
@@ -64,6 +71,8 @@ volume setara, bukan satu akun yang mengerjakan semuanya.
   kontribusi.
 - Setiap akhir fase, ketiga anggota merge PR masing-masing pada minggu yang sama agar
   grafik kontribusi tidak menumpuk pada satu orang.
+- Setiap tugas yang selesai memperbarui `PROGRESS.md` pada pull request yang sama, agar
+  anggota lain dan agen AI mereka tahu kemajuan tanpa menunggu akhir fase.
 
 ## Pembagian tugas per fase
 
