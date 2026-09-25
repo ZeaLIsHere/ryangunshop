@@ -18,7 +18,7 @@ berjalan tanpa harus menebak dari riwayat commit.
 
 | Fase | Tariq | Farel | Blessly |
 |---|---|---|---|
-| 0 — Fondasi UI dan aset | selesai | belum | belum |
+| 0 — Fondasi UI dan aset | selesai | review | belum |
 | 1 — Kerangka aplikasi dan komponen dasar | review | belum | belum |
 | 2 — Splash, onboarding, dan dashboard | review | belum | belum |
 | 3 — Denah operasional dan pemindai | review | belum | belum |
@@ -59,8 +59,12 @@ berkas checklist terpisah.
 - Verifikasi: `flutter analyze` bersih, `flutter test` 4/4 lulus.
 - Belum: tampilan belum dijalankan di emulator atau perangkat Android.
 
-**Farel — belum.** Skema koordinat denah, `FixtureTile`, aset brand, dan
-`tool/generate_brand_assets.dart` belum ada.
+**Farel — review (2026-09-25)**
+
+- Lingkup: Skema koordinat denah (FixtureModel), komponen `FixtureTile` dasar, aset brand, dan `tool/generate_brand_assets.dart`.
+- Berkas penting: `mobile/lib/features/floor_plan/model/fixture_model.dart`, `mobile/lib/features/floor_plan/view/fixture_tile.dart`.
+- Verifikasi: (segera diuji dengan analyzer dan test).
+- Belum: Tinjauan PR.
 
 **Blessly — belum.** Model UI katalog, layar `ProductCatalog` statis, dan
 `docs/ui-flow.md` belum ada.
