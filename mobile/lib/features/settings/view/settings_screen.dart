@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../core/session/app_session.dart';
 import '../../../core/session/user_role.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/sample_badge.dart';
 import '../model/store_profile.dart';
 import '../sample/settings_sample.dart';
 import '../view_model/settings_view_model.dart';
@@ -202,7 +202,7 @@ class _StoreProfileCard extends StatelessWidget {
               Expanded(
                 child: Text(profile.name, style: theme.textTheme.titleMedium),
               ),
-              const _SampleBadge(),
+              const SampleBadge(label: SettingsSample.sampleBadge),
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -213,32 +213,6 @@ class _StoreProfileCard extends StatelessWidget {
             style: theme.textTheme.bodySmall,
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Penanda bahwa nilai di sekitarnya masih data contoh.
-class _SampleBadge extends StatelessWidget {
-  const _SampleBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.xs,
-        vertical: AppSpacing.xxs,
-      ),
-      decoration: const BoxDecoration(
-        color: AppColors.primaryLight,
-        borderRadius: AppRadius.fixtureBorder,
-      ),
-      child: Text(
-        SettingsSample.sampleBadge,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: AppColors.primaryDark,
-        ),
       ),
     );
   }

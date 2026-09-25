@@ -66,6 +66,7 @@ mobile/lib/
 ├── app/                       # shell, routing, navigasi
 ├── core/
 │   ├── session/               # keadaan sesi lintas fitur, misalnya peran pengguna
+│   ├── format/                # pemformatan bersama, misalnya nominal rupiah
 │   ├── theme/                 # token warna, tipografi, spacing, radius
 │   └── widgets/               # komponen dasar yang dipakai lintas fitur
 └── features/<nama_fitur>/
@@ -80,6 +81,8 @@ mobile/lib/
 - Keadaan yang dipakai lintas fitur, misalnya peran pemilik atau kasir, disimpan di
   `core/session/` dan dibaca lewat `AppSessionScope.of(context)`. Jangan menyalin peran
   ke variabel lokal fitur.
+- Nominal rupiah ditampilkan lewat `formatRupiah` di `core/format/rupiah.dart`, dan
+  setiap nilai contoh ditandai `SampleBadge` dari `core/widgets/`.
 - Nama berkas memakai `snake_case`, kelas memakai `PascalCase`.
 - Gunakan satu ViewModel per fitur. Gunakan `ChangeNotifier` bawaan Flutter kecuali tim
   menyepakati pustaka lain, agar tidak menambah dependensi tanpa kebutuhan.
