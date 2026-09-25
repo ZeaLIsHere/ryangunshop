@@ -10,16 +10,16 @@ berjalan tanpa harus menebak dari riwayat commit.
   diselesaikan. Jangan menumpuk pembaruan status sampai akhir fase.
 - Satu orang hanya menyunting baris miliknya sendiri. Pemilik berkas tetap Tariq sesuai
   peta kepemilikan di `TEAM.md`.
-- Legenda: `belum` · `jalan` · `selesai`. Status `selesai` baru diberikan bila seluruh
-  poin "Definisi selesai" di `TEAM.md` terpenuhi, termasuk `flutter analyze` dan
-  `flutter test` yang lulus.
+- Legenda: `belum` · `jalan` · `review` · `selesai`. Pakai `review` bila kode dan
+  pengujian sudah selesai tetapi verifikasi emulator atau tinjauan PR belum ada, dan
+  `selesai` hanya bila seluruh poin "Definisi selesai" di `TEAM.md` terpenuhi.
 
 ## Ringkasan fase
 
 | Fase | Tariq | Farel | Blessly |
 |---|---|---|---|
 | 0 — Fondasi UI dan aset | selesai | belum | belum |
-| 1 — Kerangka aplikasi dan komponen dasar | jalan | belum | belum |
+| 1 — Kerangka aplikasi dan komponen dasar | review | belum | belum |
 | 2 — Splash, onboarding, dan dashboard | belum | belum | belum |
 | 3 — Denah operasional dan pemindai | belum | belum | belum |
 | 4 — Pembayaran, panorama, dan laporan | belum | belum | belum |
@@ -47,8 +47,19 @@ berjalan tanpa harus menebak dari riwayat commit.
 
 ### Fase 1 — Kerangka aplikasi dan komponen dasar
 
-**Tariq — jalan.** Sedang membangun app shell, routing, navigasi bawah, dan komponen
-dasar di `core/widgets`.
+**Tariq — review (2026-09-25)**
+
+- Lingkup: app shell, routing, navigasi bawah empat tab, dan komponen dasar di
+  `core/widgets` (`PrimaryAction`, `AppCard`, `AppTextField`, `AppBottomSheet`,
+  `AppDialog`, `BrandSpinner`, `RyanAppLogo`).
+- Berkas penting: `mobile/lib/app/shell/app_shell.dart`,
+  `mobile/lib/app/routing/app_router.dart`,
+  `mobile/lib/core/widgets/widgets.dart`.
+- Verifikasi: `flutter analyze` bersih, `flutter test` 15/15 lulus.
+- Belum: tampilan belum dijalankan di emulator Android dan PR belum ditinjau.
+- Catatan: isi tiap tab masih tampilan sementara sampai Farel dan Blessly mengirim
+  fiturnya. `RyanAppLogo` memakai penanda sementara karena aset logo belum ada; oper
+  `RyanAppLogo.defaultAssetPath` setelah asetnya didaftarkan di `pubspec.yaml`.
 
 **Farel — belum.** `StoreFloorPlan` mode lihat dan `ModeSwitch` belum dikerjakan.
 
