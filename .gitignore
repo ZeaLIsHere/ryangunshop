@@ -1,0 +1,11 @@
+# Lingkungan lokal
+.env
+.env.*
+
+# Editor dan sistem operasi
+.idea/
+.DS_Store
+Thumbs.db
+
+# Log
+*.log
