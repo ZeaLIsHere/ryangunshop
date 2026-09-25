@@ -9,6 +9,7 @@ Berkas ini melengkapi, bukan menggantikan:
 - `DESIGN.md` — aturan visual, komponen, dan aturan interaksi.
 - `README.md` — struktur proyek dan cara menjalankan.
 - `TEAM.md` — siapa mengerjakan apa dan siapa pemilik berkas mana.
+- `PROGRESS.md` — status pengerjaan terkini dan langkah berikutnya.
 - `TODO.md` — checklist fitur berdasarkan FR/NFR.
 
 ## 1. Ringkasan proyek
@@ -51,6 +52,8 @@ bukan instruksi untuk sekarang.
 - Pemilik dan kasir adalah dua peran pengguna. Mode edit denah hanya untuk pemilik.
 - Setiap anggota tim hanya mengubah berkas dalam cakupan miliknya pada `TEAM.md`.
   Perubahan pada berkas milik orang lain dilakukan lewat pull request.
+- Periksa `PROGRESS.md` sebelum mulai bekerja untuk mengetahui tugas yang sudah selesai,
+  lalu perbarui baris Anda pada pull request yang sama saat tugas selesai.
 - Tentukan Anda membantu siapa dari nama branch yang aktif: `feat/ui-shell-*`
   (Tariq), `feat/ui-spatial-*` (Farel), `feat/ui-commerce-*` (Blessly). Bila tidak
   jelas, tanyakan sebelum menulis kode.
