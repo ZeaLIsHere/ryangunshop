@@ -4,6 +4,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/widgets/ryan_app_logo.dart';
 import '../../features/dashboard/model/dashboard_shortcut.dart';
 import '../../features/dashboard/view/dashboard_screen.dart';
+import '../../features/settings/view/settings_screen.dart';
 import 'shell_destination.dart';
 import 'shell_placeholder_view.dart';
 
@@ -44,9 +45,10 @@ class _AppShellState extends State<AppShell> {
     switch (destination) {
       case ShellDestination.floorPlan:
         return DashboardScreen(onShortcutSelected: _selectShortcut);
+      case ShellDestination.settings:
+        return const SettingsScreen();
       case ShellDestination.catalog:
       case ShellDestination.cashier:
-      case ShellDestination.settings:
         return ShellPlaceholderView(destination: destination);
     }
   }

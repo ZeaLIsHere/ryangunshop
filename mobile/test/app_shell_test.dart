@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ryangunshop/app/routing/app_router.dart';
 import 'package:ryangunshop/app/shell/app_shell.dart';
 import 'package:ryangunshop/app/shell/shell_destination.dart';
+import 'package:ryangunshop/core/session/app_session.dart';
 import 'package:ryangunshop/core/theme/app_theme.dart';
 import 'package:ryangunshop/features/dashboard/model/dashboard_shortcut.dart';
 
@@ -77,7 +78,11 @@ void main() {
 }
 
 Widget _host(Widget child) {
-  return MaterialApp(theme: AppTheme.light(), home: child);
+  // Tab pengaturan membaca AppSessionScope, jadi sesi dipasang di sini juga.
+  return AppSessionScope(
+    session: AppSession(),
+    child: MaterialApp(theme: AppTheme.light(), home: child),
+  );
 }
 
 Finder _appBarTitle(String label) {

@@ -29,7 +29,7 @@ class DashboardScreen extends StatelessWidget {
           const SizedBox(height: AppSpacing.lg),
           Text(
             DashboardSample.shortcutsSectionTitle,
-            style: theme.textTheme.titleMedium,
+            style: theme.textTheme.headlineSmall,
           ),
           const SizedBox(height: AppSpacing.sm),
           for (final shortcut in DashboardSample.shortcuts) ...[
