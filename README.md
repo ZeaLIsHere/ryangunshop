@@ -4,6 +4,16 @@ Aplikasi kasir dan pengelolaan warung untuk Android berbasis Flutter/Dart, disus
 Mini-SRS RyanGunshop. Mini-SRS dipakai sebagai sumber requirement, bukan sebagai
 instruksi langsung.
 
+## Tim
+
+| Nama | NIM |
+|---|---|
+| M. Al Farel Azhar | 241401009 |
+| Tariq Rahmadari | 241401021 |
+| Blessly Victory Deo Silaban | 241401060 |
+
+Peran dan porsi kerja masing-masing ada di [TEAM.md](TEAM.md).
+
 ## Cakupan tahap ini: UI
 
 Tahap ini hanya mengerjakan **tampilan dan interaksi (frontend)**. Seluruh layar memakai

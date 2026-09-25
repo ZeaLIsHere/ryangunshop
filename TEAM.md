@@ -13,11 +13,11 @@ serta peta fitur beserta statusnya.
 
 ## Anggota dan peran
 
-| Anggota | Peran | Tanggung jawab utama |
-|---|---|---|
-| Tariq | Fondasi, Shell, dan Dashboard | Tema dan komponen dasar, kerangka aplikasi, navigasi, splash, onboarding, dashboard |
-| Farel | Pengalaman Spasial dan Aksesibilitas | Denah, objek ruang, mode lihat/edit, panorama 360, identitas visual, audit aksesibilitas |
-| Blessly | Katalog dan Kasir | Katalog produk, formulir produk, pemindai, keranjang, pembayaran |
+| Anggota | NIM | Peran | Tanggung jawab utama |
+|---|---|---|---|
+| Tariq Rahmadari (Tariq) | 241401021 | Fondasi, Shell, dan Dashboard | Tema dan komponen dasar, kerangka aplikasi, navigasi, splash, onboarding, dashboard |
+| M. Al Farel Azhar (Farel) | 241401009 | Pengalaman Spasial dan Aksesibilitas | Denah, objek ruang, mode lihat/edit, panorama 360, identitas visual, audit aksesibilitas |
+| Blessly Victory Deo Silaban (Blessly) | 241401060 | Katalog dan Kasir | Katalog produk, formulir produk, pemindai, keranjang, pembayaran |
 
 ## Peta kepemilikan berkas
 
