@@ -7,11 +7,9 @@ tim agar porsi kerja seimbang dan jejak kontribusinya terlihat jelas di GitHub.
 sinkronisasi, dan integrasi pembayaran nyata ditunda sampai UI selesai. Semua layar
 memakai data contoh lokal agar dapat dipreview tanpa layanan eksternal.
 
-Dokumen ini berbeda dari `TODO.md`: `TODO.md` adalah checklist fitur berdasarkan
-FR/NFR, sedangkan `TEAM.md` adalah peta **siapa mengerjakan apa**.
-
-Papan status pengerjaan ada di `PROGRESS.md`. Berkas itu mencatat tugas yang sudah
-selesai, yang sedang jalan, dan langkah berikutnya.
+`TEAM.md` adalah peta **siapa mengerjakan apa**, sedangkan papan status pengerjaan ada
+di `PROGRESS.md`. Berkas itu mencatat tugas yang sudah selesai, yang sedang jalan,
+serta peta fitur beserta statusnya.
 
 ## Anggota dan peran
 
@@ -31,7 +29,7 @@ dilakukan lewat pull request, bukan commit langsung.
 | `mobile/lib/main.dart`, `mobile/lib/app/**` (shell, routing, navigasi) | Tariq |
 | `mobile/lib/core/theme/**`, `mobile/lib/core/widgets/**` | Tariq |
 | `mobile/lib/features/onboarding/**`, `mobile/lib/features/dashboard/**` | Tariq |
-| `mobile/lib/features/reports/**`, `docs/COLOR_PALETTE.md`, `TODO.md` | Tariq |
+| `mobile/lib/features/reports/**`, `docs/COLOR_PALETTE.md` | Tariq |
 | `mobile/pubspec.yaml`, `mobile/analysis_options.yaml`, `.vscode/**` | Tariq |
 | `PROGRESS.md` (papan status) | Tariq |
 | `mobile/lib/features/floor_plan/**`, `mobile/lib/features/panorama/**` | Farel |
@@ -133,7 +131,7 @@ kontribusi karena setiap fase tetap satu PR per orang. Pekerjaan murni dokumen
 
 | Pemilik | Tugas | Bukti kontribusi |
 |---|---|---|
-| Tariq | Menyelaraskan `PRODUCT.md`, `DESIGN.md`, dan `README.md` dengan hasil UI, menutup checklist UI di `TODO.md`, dan menyiapkan konfigurasi `.vscode` akhir | PR dokumentasi + checklist UI tuntas |
+| Tariq | Menyelaraskan `PRODUCT.md`, `DESIGN.md`, dan `README.md` dengan hasil UI, menutup peta fitur di `PROGRESS.md`, dan menyiapkan konfigurasi `.vscode` akhir | PR dokumentasi + peta fitur tuntas |
 | Farel | Mengaudit aksesibilitas lintas layar (text scale 1.3, lebar 360 dp, kontras, semantic label, tooltip ikon), menulis `docs/a11y.md`, dan menambahkan golden test widget | PR audit + golden test |
 | Blessly | Menguji alur kasir pada perangkat kecil, membangun APK untuk pengujian internal, dan mendokumentasikan cara mempratinjau UI di `README.md` | PR rilis internal + APK terpasang |
 
@@ -182,9 +180,12 @@ menyentuh tampilan yang ditutup sekarang.
 - **Splash dan onboarding belum ada di `PRODUCT.md`.** `DESIGN.md` sudah merinci durasi
   dan jumlah halaman, jadi Core Experience `PRODUCT.md` ditambah bagian ringkas di
   Fase 5.
-- **Rujukan berkas yang belum ada.** `docs/COLOR_PALETTE.md`, `docs/ui-flow.md`,
-  `docs/a11y.md`, `TODO.md`, `.vscode/**`, serta aset branding dibuat pada Fase 0 dan
-  Fase 5 agar klaim dokumen terpenuhi.
+- **Rujukan berkas yang belum ada.** `docs/COLOR_PALETTE.md` dan `.vscode/**` sudah
+  dibuat pada Fase 0, sedangkan `docs/ui-flow.md` dan `docs/a11y.md` menyusul pada fase
+  masing-masing.
+- **`TODO.md` dibatalkan.** Checklist fitur sudah tercakup oleh `PROGRESS.md` lewat
+  ringkasan fase dan peta fitur, jadi tidak perlu berkas terpisah. `README.md` masih
+  menyebut `TODO.md`; penyelarasannya dikerjakan Blessly sebagai pemilik berkas.
 - **Nama repositori** `ryangunshp` berbeda dari nama produk `RyanGunshop`. Sepakati satu
   penulisan sebelum rilis internal agar nama paket, launcher, dan dokumentasi konsisten.
 - **Perubahan `README.md` menyusul.** Blok struktur di `README.md` masih menyebut

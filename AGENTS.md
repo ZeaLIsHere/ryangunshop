@@ -9,8 +9,7 @@ Berkas ini melengkapi, bukan menggantikan:
 - `DESIGN.md` — aturan visual, komponen, dan aturan interaksi.
 - `README.md` — struktur proyek dan cara menjalankan.
 - `TEAM.md` — siapa mengerjakan apa dan siapa pemilik berkas mana.
-- `PROGRESS.md` — status pengerjaan terkini dan langkah berikutnya.
-- `TODO.md` — checklist fitur berdasarkan FR/NFR.
+- `PROGRESS.md` — status pengerjaan terkini, peta fitur, dan langkah berikutnya.
 
 ## 1. Ringkasan proyek
 

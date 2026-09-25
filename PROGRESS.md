@@ -25,6 +25,26 @@ berjalan tanpa harus menebak dari riwayat commit.
 | 4 — Pembayaran, panorama, dan laporan | review | belum | belum |
 | 5 — Audit aksesibilitas dan rilis internal | belum | belum | belum |
 
+## Peta fitur
+
+Tempat setiap fitur berada dan siapa pemiliknya. Statusnya mengikuti ringkasan fase di
+atas. Bila Mini-SRS memiliki nomor FR/NFR, tambahkan kolomnya di tabel ini, bukan lewat
+berkas checklist terpisah.
+
+| Fitur | Folder | Pemilik | Status |
+|---|---|---|---|
+| Kerangka aplikasi, tema, komponen dasar | `mobile/lib/app/`, `mobile/lib/core/` | Tariq | review |
+| Perkenalan | `mobile/lib/features/onboarding/` | Tariq | review |
+| Dashboard | `mobile/lib/features/dashboard/` | Tariq | review |
+| Pengaturan dan peran pengguna | `mobile/lib/features/settings/`, `core/session/` | Tariq | review |
+| Riwayat dan laporan | `mobile/lib/features/reports/` | Tariq | review |
+| Denah dan objek ruang | `mobile/lib/features/floor_plan/` | Farel | belum |
+| Panorama 360 | `mobile/lib/features/panorama/` | Farel | belum |
+| Katalog produk | `mobile/lib/features/catalog/` | Blessly | belum |
+| Formulir produk | `mobile/lib/features/catalog/` | Blessly | belum |
+| Pemindai produk | `mobile/lib/features/scanner/` | Blessly | belum |
+| Keranjang dan pembayaran | `mobile/lib/features/checkout/`, `.../payment/` | Blessly | belum |
+
 ## Catatan per tugas
 
 ### Fase 0 — Fondasi UI dan aset
