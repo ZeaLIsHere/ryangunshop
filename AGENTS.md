@@ -9,8 +9,7 @@ Berkas ini melengkapi, bukan menggantikan:
 - `DESIGN.md` — aturan visual, komponen, dan aturan interaksi.
 - `README.md` — struktur proyek dan cara menjalankan.
 - `TEAM.md` — siapa mengerjakan apa dan siapa pemilik berkas mana.
-- `PROGRESS.md` — status pengerjaan terkini dan langkah berikutnya.
-- `TODO.md` — checklist fitur berdasarkan FR/NFR.
+- `PROGRESS.md` — status pengerjaan terkini, peta fitur, dan langkah berikutnya.
 
 ## 1. Ringkasan proyek
 
@@ -65,6 +64,8 @@ mobile/lib/
 ├── main.dart
 ├── app/                       # shell, routing, navigasi
 ├── core/
+│   ├── session/               # keadaan sesi lintas fitur, misalnya peran pengguna
+│   ├── format/                # pemformatan bersama, misalnya nominal rupiah
 │   ├── theme/                 # token warna, tipografi, spacing, radius
 │   └── widgets/               # komponen dasar yang dipakai lintas fitur
 └── features/<nama_fitur>/
@@ -76,6 +77,11 @@ mobile/lib/
 
 - Model UI dan data contoh disimpan di dalam folder fitur masing-masing, bukan di
   folder bersama.
+- Keadaan yang dipakai lintas fitur, misalnya peran pemilik atau kasir, disimpan di
+  `core/session/` dan dibaca lewat `AppSessionScope.of(context)`. Jangan menyalin peran
+  ke variabel lokal fitur.
+- Nominal rupiah ditampilkan lewat `formatRupiah` di `core/format/rupiah.dart`, dan
+  setiap nilai contoh ditandai `SampleBadge` dari `core/widgets/`.
 - Nama berkas memakai `snake_case`, kelas memakai `PascalCase`.
 - Gunakan satu ViewModel per fitur. Gunakan `ChangeNotifier` bawaan Flutter kecuali tim
   menyepakati pustaka lain, agar tidak menambah dependensi tanpa kebutuhan.

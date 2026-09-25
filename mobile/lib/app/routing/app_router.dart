@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/widgets/primary_action.dart';
+import '../../features/onboarding/view/onboarding_screen.dart';
+import '../../features/reports/view/reports_screen.dart';
 import '../shell/app_shell.dart';
+import '../splash/splash_screen.dart';
 
 /// Nama rute yang dikenal aplikasi.
 ///
@@ -11,25 +14,60 @@ import '../shell/app_shell.dart';
 /// satu titik masuk yang jelas. Denah, katalog, kasir, dan pengaturan tidak perlu
 /// rute terpisah karena diakses lewat navigasi bawah di dalam [AppShell].
 abstract final class AppRoutes {
+  /// Layar pembuka dengan signature motion.
+  static const String splash = '/';
+
+  /// Perkenalan tiga halaman untuk penggunaan pertama.
+  static const String onboarding = '/perkenalan';
+
   /// Kerangka utama berisi navigasi bawah.
-  static const String shell = '/';
+  static const String shell = '/utama';
+
+  /// Riwayat dan laporan transaksi.
+  static const String reports = '/riwayat';
 }
 
 /// Pembuat rute aplikasi.
 abstract final class AppRouter {
-  static Route<dynamic> onGenerateRoute(RouteSettings settings) {
-    switch (settings.name) {
+  /// Durasi crossfade antar layar besar.
+  static const Duration crossfadeDuration = Duration(milliseconds: 280);
+
+  /// Widget untuk sebuah nama rute.
+  static Widget pageFor(String? name) {
+    switch (name) {
+      case AppRoutes.splash:
+        return const SplashScreen();
+      case AppRoutes.onboarding:
+        return const OnboardingScreen();
       case AppRoutes.shell:
-        return MaterialPageRoute<dynamic>(
-          builder: (_) => const AppShell(),
-          settings: settings,
-        );
+        return const AppShell();
+      case AppRoutes.reports:
+        return const ReportsScreen();
       default:
-        return MaterialPageRoute<dynamic>(
-          builder: (_) => _UnknownRouteView(routeName: settings.name),
-          settings: settings,
-        );
+        return _UnknownRouteView(routeName: name);
     }
+  }
+
+  static Route<dynamic> onGenerateRoute(RouteSettings settings) {
+    return MaterialPageRoute<dynamic>(
+      builder: (_) => pageFor(settings.name),
+      settings: settings,
+    );
+  }
+
+  /// Rute dengan crossfade, atau transisi instan bila animasi dimatikan.
+  static Route<dynamic> crossfadeRoute(
+    String name, {
+    required bool reduceMotion,
+  }) {
+    final duration = reduceMotion ? Duration.zero : crossfadeDuration;
+    return PageRouteBuilder<dynamic>(
+      transitionDuration: duration,
+      reverseTransitionDuration: duration,
+      pageBuilder: (_, _, _) => pageFor(name),
+      transitionsBuilder: (_, animation, _, child) =>
+          FadeTransition(opacity: animation, child: child),
+    );
   }
 }
 

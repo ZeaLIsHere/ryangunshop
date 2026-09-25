@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_spacing.dart';
 import '../../core/widgets/ryan_app_logo.dart';
+import '../../features/dashboard/model/dashboard_shortcut.dart';
+import '../../features/dashboard/view/dashboard_screen.dart';
+import '../../features/settings/view/settings_screen.dart';
+import '../routing/app_router.dart';
 import 'shell_destination.dart';
 import 'shell_placeholder_view.dart';
 
@@ -23,6 +27,31 @@ class _AppShellState extends State<AppShell> {
     setState(() => _selectedIndex = index);
   }
 
+  void _selectShortcut(DashboardShortcut shortcut) {
+    switch (shortcut) {
+      case DashboardShortcut.reports:
+        Navigator.of(context).pushNamed(AppRoutes.reports);
+      case DashboardShortcut.catalog:
+        _selectDestination(ShellDestination.catalog.index);
+      case DashboardShortcut.cashier:
+        _selectDestination(ShellDestination.cashier.index);
+      case DashboardShortcut.settings:
+        _selectDestination(ShellDestination.settings.index);
+    }
+  }
+
+  Widget _viewFor(ShellDestination destination) {
+    switch (destination) {
+      case ShellDestination.floorPlan:
+        return DashboardScreen(onShortcutSelected: _selectShortcut);
+      case ShellDestination.settings:
+        return const SettingsScreen();
+      case ShellDestination.catalog:
+      case ShellDestination.cashier:
+        return ShellPlaceholderView(destination: destination);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final destination = ShellDestination.values[_selectedIndex];
@@ -38,8 +67,7 @@ class _AppShellState extends State<AppShell> {
         child: IndexedStack(
           index: _selectedIndex,
           children: [
-            for (final item in ShellDestination.values)
-              ShellPlaceholderView(destination: item),
+            for (final item in ShellDestination.values) _viewFor(item),
           ],
         ),
       ),

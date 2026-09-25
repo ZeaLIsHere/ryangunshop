@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ryangunshop/app/app.dart';
 import 'package:ryangunshop/app/routing/app_router.dart';
+import 'package:ryangunshop/app/shell/app_shell.dart';
 import 'package:ryangunshop/app/shell/shell_destination.dart';
+import 'package:ryangunshop/core/session/app_session.dart';
+import 'package:ryangunshop/core/theme/app_theme.dart';
+import 'package:ryangunshop/features/dashboard/model/dashboard_shortcut.dart';
 
 void main() {
-  testWidgets('aplikasi membuka kerangka utama dengan empat tab', (
-    tester,
-  ) async {
-    await tester.pumpWidget(const RyanGunshopApp());
+  testWidgets('kerangka utama menampilkan empat tab', (tester) async {
+    _usePhoneViewport(tester);
+    await tester.pumpWidget(_host(const AppShell()));
     await tester.pumpAndSettle();
 
     expect(find.byType(NavigationBar), findsOneWidget);
@@ -21,7 +23,8 @@ void main() {
   });
 
   testWidgets('memilih tab mengganti judul dan isi layar', (tester) async {
-    await tester.pumpWidget(const RyanGunshopApp());
+    _usePhoneViewport(tester);
+    await tester.pumpWidget(_host(const AppShell()));
     await tester.pumpAndSettle();
 
     expect(_appBarTitle(ShellDestination.floorPlan.label), findsOneWidget);
@@ -41,6 +44,23 @@ void main() {
     expect(stack.index, ShellDestination.catalog.index);
   });
 
+  testWidgets('pintasan dashboard memindahkan tab', (tester) async {
+    _usePhoneViewport(tester);
+    await tester.pumpWidget(_host(const AppShell()));
+    await tester.pumpAndSettle();
+
+    final tile = find.text(DashboardShortcut.settings.description);
+    await tester.ensureVisible(tile);
+    await tester.pumpAndSettle();
+    await tester.tap(tile);
+    await tester.pumpAndSettle();
+
+    final navigationBar = tester.widget<NavigationBar>(
+      find.byType(NavigationBar),
+    );
+    expect(navigationBar.selectedIndex, ShellDestination.settings.index);
+  });
+
   testWidgets('rute yang belum terdaftar menyediakan jalan kembali', (
     tester,
   ) async {
@@ -57,6 +77,20 @@ void main() {
   });
 }
 
+Widget _host(Widget child) {
+  // Tab pengaturan membaca AppSessionScope, jadi sesi dipasang di sini juga.
+  return AppSessionScope(
+    session: AppSession(),
+    child: MaterialApp(theme: AppTheme.light(), home: child),
+  );
+}
+
 Finder _appBarTitle(String label) {
   return find.descendant(of: find.byType(AppBar), matching: find.text(label));
+}
+
+void _usePhoneViewport(WidgetTester tester) {
+  tester.view.physicalSize = const Size(1080, 2400);
+  tester.view.devicePixelRatio = 3;
+  addTearDown(tester.view.reset);
 }
