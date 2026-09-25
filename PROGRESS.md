@@ -20,7 +20,7 @@ berjalan tanpa harus menebak dari riwayat commit.
 |---|---|---|---|
 | 0 — Fondasi UI dan aset | selesai | belum | belum |
 | 1 — Kerangka aplikasi dan komponen dasar | review | belum | belum |
-| 2 — Splash, onboarding, dan dashboard | belum | belum | belum |
+| 2 — Splash, onboarding, dan dashboard | review | belum | belum |
 | 3 — Denah operasional dan pemindai | belum | belum | belum |
 | 4 — Pembayaran, panorama, dan laporan | belum | belum | belum |
 | 5 — Audit aksesibilitas dan rilis internal | belum | belum | belum |
@@ -66,6 +66,28 @@ berjalan tanpa harus menebak dari riwayat commit.
 **Blessly — belum.** Pencarian dan filter `ProductCatalog` serta kerangka `ProductForm`
 belum dikerjakan.
 
+### Fase 2 — Splash, onboarding, dan dashboard
+
+**Tariq — review (2026-09-25)**
+
+- Lingkup: splash dengan signature motion 1,45 detik dan crossfade 280 ms,
+  `OnboardingCarousel` tiga halaman yang dapat dilewati, serta dashboard bento dengan
+  satu aksi utama dan tiga pintasan.
+- Berkas penting: `mobile/lib/app/splash/splash_screen.dart`,
+  `mobile/lib/features/onboarding/view/onboarding_screen.dart`,
+  `mobile/lib/features/dashboard/view/dashboard_screen.dart`.
+- Verifikasi: `flutter analyze` bersih, `flutter test` 23/23 lulus, termasuk pengujian
+  pada lebar layar 360 dp.
+- Belum: tampilan belum dijalankan di emulator Android dan PR belum ditinjau.
+- Catatan: penanda "sudah melihat perkenalan" masih ada di memori
+  (`AppStartupState`), jadi perkenalan muncul sekali per sesi; penyimpanan tetap
+  menyusul bersama lapisan data. Tab Denah kini menampilkan dashboard, dan kanvas denah
+  Farel disambungkan di sana pada Fase 3.
+
+**Farel — belum.** Mode edit denah dan `SyncPill` belum dikerjakan.
+
+**Blessly — belum.** `ProductForm` lengkap dan layar detail produk belum dikerjakan.
+
 ## Catatan untuk agen AI
 
 - Baca `AGENTS.md` lebih dahulu, lalu `TEAM.md`, lalu berkas ini untuk mengetahui posisi
@@ -79,3 +101,5 @@ belum dikerjakan.
   pull request.
 - Belum ada pekerjaan backend, sesuai cakupan tahap ini. Semua layar memakai data contoh
   lokal di folder `sample/` pada fitur masing-masing.
+- Alur pembuka aplikasi: splash menuju perkenalan (sekali per sesi), lalu kerangka utama.
+  Rutenya terdaftar di `mobile/lib/app/routing/app_router.dart`.
