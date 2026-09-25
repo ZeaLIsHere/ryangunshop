@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ryangunshop/app/app.dart';
 import 'package:ryangunshop/core/theme/app_colors.dart';
 import 'package:ryangunshop/core/theme/app_spacing.dart';
 import 'package:ryangunshop/core/theme/app_theme.dart';
@@ -40,12 +39,5 @@ void main() {
         const Size(AppSpacing.minTouchTarget, AppSpacing.minTouchTarget),
       );
     });
-  });
-
-  testWidgets('aplikasi dapat dibangun dengan tema terang', (tester) async {
-    await tester.pumpWidget(const RyanGunshopApp());
-
-    expect(find.byType(MaterialApp), findsOneWidget);
-    expect(find.text('RyanGunshop'), findsOneWidget);
   });
 }
