@@ -65,6 +65,7 @@ mobile/lib/
 ├── main.dart
 ├── app/                       # shell, routing, navigasi
 ├── core/
+│   ├── session/               # keadaan sesi lintas fitur, misalnya peran pengguna
 │   ├── theme/                 # token warna, tipografi, spacing, radius
 │   └── widgets/               # komponen dasar yang dipakai lintas fitur
 └── features/<nama_fitur>/
@@ -76,6 +77,9 @@ mobile/lib/
 
 - Model UI dan data contoh disimpan di dalam folder fitur masing-masing, bukan di
   folder bersama.
+- Keadaan yang dipakai lintas fitur, misalnya peran pemilik atau kasir, disimpan di
+  `core/session/` dan dibaca lewat `AppSessionScope.of(context)`. Jangan menyalin peran
+  ke variabel lokal fitur.
 - Nama berkas memakai `snake_case`, kelas memakai `PascalCase`.
 - Gunakan satu ViewModel per fitur. Gunakan `ChangeNotifier` bawaan Flutter kecuali tim
   menyepakati pustaka lain, agar tidak menambah dependensi tanpa kebutuhan.
