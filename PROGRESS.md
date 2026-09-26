@@ -18,7 +18,7 @@ berjalan tanpa harus menebak dari riwayat commit.
 
 | Fase | Tariq | Farel | Blessly |
 |---|---|---|---|
-| 0 — Fondasi UI dan aset | selesai | belum | belum |
+| 0 — Fondasi UI dan aset | selesai | belum | jalan |
 | 1 — Kerangka aplikasi dan komponen dasar | review | belum | belum |
 | 2 — Splash, onboarding, dan dashboard | review | belum | belum |
 | 3 — Denah operasional dan pemindai | review | belum | belum |
@@ -40,7 +40,7 @@ berkas checklist terpisah.
 | Riwayat dan laporan | `mobile/lib/features/reports/` | Tariq | review |
 | Denah dan objek ruang | `mobile/lib/features/floor_plan/` | Farel | belum |
 | Panorama 360 | `mobile/lib/features/panorama/` | Farel | belum |
-| Katalog produk | `mobile/lib/features/catalog/` | Blessly | belum |
+| Katalog produk | `mobile/lib/features/catalog/` | Blessly | jalan |
 | Formulir produk | `mobile/lib/features/catalog/` | Blessly | belum |
 | Pemindai produk | `mobile/lib/features/scanner/` | Blessly | belum |
 | Keranjang dan pembayaran | `mobile/lib/features/checkout/`, `.../payment/` | Blessly | belum |
@@ -62,8 +62,30 @@ berkas checklist terpisah.
 **Farel — belum.** Skema koordinat denah, `FixtureTile`, aset brand, dan
 `tool/generate_brand_assets.dart` belum ada.
 
-**Blessly — belum.** Model UI katalog, layar `ProductCatalog` statis, dan
-`docs/ui-flow.md` belum ada.
+**Blessly — jalan (2026-09-27)**
+
+- Lingkup Fase 0: model UI katalog, snapshot keranjang, state pembayaran dan data
+  contoh masing-masing fitur; `ProductCatalog` statis dengan harga rupiah, lokasi,
+  status stok, dan `SampleBadge`; dokumentasi `docs/ui-flow.md`.
+- Skenario daftar, memuat, kosong, gagal, dan offline dapat dicoba lewat pemilih
+  skenario. Tombol pemulihan mengembalikan daftar contoh; reduced motion memakai
+  indikator memuat statis.
+- Branch: `feat/ui-commerce-ui-catalog`. Perubahan disimpan dalam commit kecil
+  dengan identitas Git Blessly; belum di-push dan belum dibuat PR.
+- Pratinjau mandiri: `mobile/lib/features/catalog/sample/catalog_preview.dart`,
+  dibuka lewat CodeLens Debug ekstensi Flutter di VS Code pada Android. Tab Produk
+  di app shell belum disambungkan karena berkasnya milik Tariq.
+- Verifikasi proyek: `flutter analyze` dan `flutter test` sudah dicoba, keduanya
+  berhenti pada resolusi dependensi karena Dart lokal 3.9.2 tidak memenuhi
+  `sdk: ^3.13.3`. `mobile/pubspec.yaml` tidak diubah.
+- Pemeriksaan tambahan: salinan sementara di luar repository memakai batas SDK
+  `^3.9.2` dengan Flutter 3.35.7/Dart 3.9.2; `flutter analyze` bersih dan
+  `flutter test` 43/43 lulus (10 test baru). Cakupan meliputi state, pemulihan,
+  lebar 360 dp, skala teks 1,3, target sentuh, reduced motion, serta model kasir.
+  Hasil salinan ini belum menggantikan verifikasi pada SDK yang diminta proyek.
+- Belum: pemeriksaan pada SDK sesuai proyek, pratinjau emulator/perangkat Android,
+  integrasi app shell melalui PR, review, dan merge. Status belum dinaikkan ke
+  `review`/`selesai`. Pencarian, filter, dan formulir tetap tugas Fase 1 berikutnya.
 
 ### Fase 1 — Kerangka aplikasi dan komponen dasar
 
