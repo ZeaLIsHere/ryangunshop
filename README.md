@@ -82,6 +82,23 @@ flutter run
 
 Belum ada langkah code generation pada tahap ini karena belum ada basis data.
 
+### Pratinjau katalog Blessly — Fase 0
+
+Katalog statis dan model UI keranjang/pembayaran tersedia dengan data contoh lokal.
+Di VS Code, pilih perangkat Android, buka
+`mobile/lib/features/catalog/sample/catalog_preview.dart`, lalu klik **Debug**
+di atas `main()`. Coba state daftar, memuat, kosong, gagal, dan offline melalui
+pemilih **Skenario contoh**. Langkah lengkap dan batas implementasi ada di
+[docs/ui-flow.md](docs/ui-flow.md).
+
+Tab Produk pada aplikasi utama masih placeholder sampai integrasi app shell
+ditinjau bersama Tariq. Pencarian, filter, formulir, pemindai, dan layar pembayaran
+dikerjakan pada fase berikutnya, satu tugas per PR.
+
+Gunakan SDK Dart yang memenuhi `^3.13.3` sesuai `mobile/pubspec.yaml`. Flutter 3.35.7
+yang membawa Dart 3.9.2 belum memenuhi syarat ini; jangan menurunkan batas SDK
+proyek untuk mengatasi perbedaan instalasi lokal.
+
 ## Tahap berikutnya
 
 Bagian ini adalah rencana, bukan instruksi untuk sekarang. Berkas dan dependensinya
