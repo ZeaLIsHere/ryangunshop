@@ -47,6 +47,7 @@ class _ProductCatalogState extends State<ProductCatalog> {
           ),
           const SizedBox(height: AppSpacing.lg),
           DropdownButtonFormField<CatalogScenario>(
+            key: ValueKey(_viewModel.scenario),
             initialValue: _viewModel.scenario,
             isExpanded: true,
             decoration: const InputDecoration(labelText: 'Skenario contoh'),
