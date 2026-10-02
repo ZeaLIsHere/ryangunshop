@@ -187,3 +187,5 @@ dikerjakan.
   ditandai `SampleBadge` dari `core/widgets/widgets.dart`.
 - Alur pembuka aplikasi: splash menuju perkenalan (sekali per sesi), lalu kerangka utama.
   Rutenya terdaftar di `mobile/lib/app/routing/app_router.dart`.
+- Tab Denah, Pengaturan, dan Katalog sudah memakai fitur aslinya. Tab Kasir masih
+  tampilan sementara sampai pemindai dan keranjang disambungkan ke `app_shell.dart`.
