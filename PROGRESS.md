@@ -19,8 +19,8 @@ berjalan tanpa harus menebak dari riwayat commit.
 
 | Fase | Tariq | Farel | Blessly |
 |---|---|---|---|
-| 0 — Fondasi UI dan aset | selesai | belum | review |
-| 1 — Kerangka aplikasi dan komponen dasar | review | belum | belum |
+| 0 — Fondasi UI dan aset | selesai | review | review |
+| 1 — Kerangka aplikasi dan komponen dasar | review | review | belum |
 | 2 — Splash, onboarding, dan dashboard | review | belum | belum |
 | 3 — Denah operasional dan pemindai | review | belum | belum |
 | 4 — Pembayaran, panorama, dan laporan | review | belum | belum |
@@ -65,8 +65,12 @@ statusnya `review`, bukan `selesai`.
 - Verifikasi: `flutter analyze` bersih, `flutter test` 4/4 lulus.
 - Belum: tampilan belum dijalankan di emulator atau perangkat Android.
 
-**Farel — belum.** Skema koordinat denah, `FixtureTile`, aset brand, dan
-`tool/generate_brand_assets.dart` belum ada.
+**Farel — review (2026-09-25)**
+
+- Lingkup: Skema koordinat denah (FixtureModel), komponen `FixtureTile` dasar, aset brand, dan `tool/generate_brand_assets.dart`.
+- Berkas penting: `mobile/lib/features/floor_plan/model/fixture_model.dart`, `mobile/lib/features/floor_plan/view/fixture_tile.dart`.
+- Verifikasi: (segera diuji dengan analyzer dan test).
+- Belum: Tinjauan PR.
 
 **Blessly — review (2026-09-27)**
 
@@ -110,7 +114,12 @@ statusnya `review`, bukan `selesai`.
   fiturnya. `RyanAppLogo` memakai penanda sementara karena aset logo belum ada; oper
   `RyanAppLogo.defaultAssetPath` setelah asetnya didaftarkan di `pubspec.yaml`.
 
-**Farel — belum.** `StoreFloorPlan` mode lihat dan `ModeSwitch` belum dikerjakan.
+**Farel — review (2026-10-02)**
+
+- Lingkup: `StoreFloorPlan` mode lihat (zoom/pan, interaktif) dan `ModeSwitch` (opsi 360° nonaktif saat belum tersedia panorama).
+- Berkas penting: `mobile/lib/features/floor_plan/view/store_floor_plan.dart`, `mobile/lib/features/floor_plan/view/mode_switch.dart`.
+- Verifikasi: (segera diuji dengan analyzer).
+- Belum: Tinjauan PR.
 
 **Blessly — belum.** Pencarian dan filter `ProductCatalog` serta kerangka `ProductForm`
 belum dikerjakan.
