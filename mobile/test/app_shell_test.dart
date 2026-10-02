@@ -3,8 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ryangunshop/app/routing/app_router.dart';
 import 'package:ryangunshop/app/shell/app_shell.dart';
 import 'package:ryangunshop/app/shell/shell_destination.dart';
+import 'package:ryangunshop/app/shell/shell_placeholder_view.dart';
 import 'package:ryangunshop/core/session/app_session.dart';
 import 'package:ryangunshop/core/theme/app_theme.dart';
+import 'package:ryangunshop/features/catalog/view/product_catalog.dart';
 import 'package:ryangunshop/features/dashboard/model/dashboard_shortcut.dart';
 
 void main() {
@@ -40,7 +42,7 @@ void main() {
     expect(_appBarTitle(ShellDestination.catalog.label), findsOneWidget);
     expect(_appBarTitle(ShellDestination.floorPlan.label), findsNothing);
 
-    final stack = tester.widget<IndexedStack>(find.byType(IndexedStack));
+    final stack = tester.widget<IndexedStack>(find.byKey(AppShell.tabsKey));
     expect(stack.index, ShellDestination.catalog.index);
   });
 
@@ -59,6 +61,30 @@ void main() {
       find.byType(NavigationBar),
     );
     expect(navigationBar.selectedIndex, ShellDestination.settings.index);
+  });
+
+  testWidgets('tab katalog memakai katalog produk, bukan tampilan sementara', (
+    tester,
+  ) async {
+    _usePhoneViewport(tester);
+    await tester.pumpWidget(_host(const AppShell()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(_navLabel(ShellDestination.catalog.label));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ProductCatalog), findsOneWidget);
+    expect(find.byType(ShellPlaceholderView), findsNothing);
+
+    await tester.tap(_navLabel(ShellDestination.cashier.label));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ProductCatalog), findsNothing);
+    expect(
+      find.byType(ShellPlaceholderView),
+      findsOneWidget,
+      reason: 'tab kasir belum disambungkan, jadi masih tampilan sementara',
+    );
   });
 
   testWidgets('rute yang belum terdaftar menyediakan jalan kembali', (
@@ -87,6 +113,13 @@ Widget _host(Widget child) {
 
 Finder _appBarTitle(String label) {
   return find.descendant(of: find.byType(AppBar), matching: find.text(label));
+}
+
+Finder _navLabel(String label) {
+  return find.descendant(
+    of: find.byType(NavigationBar),
+    matching: find.text(label),
+  );
 }
 
 void _usePhoneViewport(WidgetTester tester) {
