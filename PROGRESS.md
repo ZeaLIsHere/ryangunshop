@@ -8,8 +8,9 @@ berjalan tanpa harus menebak dari riwayat commit.
 
 - Perbarui baris Anda di sini **pada pull request yang sama** dengan tugas yang
   diselesaikan. Jangan menumpuk pembaruan status sampai akhir fase.
-- Satu orang hanya menyunting baris miliknya sendiri. Pemilik berkas tetap Tariq sesuai
-  peta kepemilikan di `TEAM.md`.
+- Satu orang hanya menyunting baris miliknya sendiri. Bila anggota yang bersangkutan
+  belum sempat, pemilik berkas boleh memperbarui baris itu agar papan status tidak
+  basi, dan menyebutkannya di ringkasan pull request.
 - Legenda: `belum` · `jalan` · `review` · `selesai`. Pakai `review` bila kode dan
   pengujian sudah selesai tetapi verifikasi emulator atau tinjauan PR belum ada, dan
   `selesai` hanya bila seluruh poin "Definisi selesai" di `TEAM.md` terpenuhi.
@@ -18,7 +19,7 @@ berjalan tanpa harus menebak dari riwayat commit.
 
 | Fase | Tariq | Farel | Blessly |
 |---|---|---|---|
-| 0 — Fondasi UI dan aset | selesai | review | belum |
+| 0 — Fondasi UI dan aset | selesai | review | review |
 | 1 — Kerangka aplikasi dan komponen dasar | review | belum | belum |
 | 2 — Splash, onboarding, dan dashboard | review | belum | belum |
 | 3 — Denah operasional dan pemindai | review | belum | belum |
@@ -40,12 +41,17 @@ berkas checklist terpisah.
 | Riwayat dan laporan | `mobile/lib/features/reports/` | Tariq | review |
 | Denah dan objek ruang | `mobile/lib/features/floor_plan/` | Farel | belum |
 | Panorama 360 | `mobile/lib/features/panorama/` | Farel | belum |
-| Katalog produk | `mobile/lib/features/catalog/` | Blessly | belum |
+| Katalog produk | `mobile/lib/features/catalog/` | Blessly | review |
 | Formulir produk | `mobile/lib/features/catalog/` | Blessly | belum |
 | Pemindai produk | `mobile/lib/features/scanner/` | Blessly | belum |
 | Keranjang dan pembayaran | `mobile/lib/features/checkout/`, `.../payment/` | Blessly | belum |
 
 ## Catatan per tugas
+
+Catatan umum: Fase 0–4 Tariq sudah di-merge ke `main`, dan aplikasi sudah dipasang serta
+dijalankan pada perangkat Android SM A366B. Sisa poin definisi selesai adalah tinjauan
+silang anggota lain dan verifikasi text scale 1.3 yang masuk audit Fase 5. Karena itu
+statusnya `review`, bukan `selesai`.
 
 ### Fase 0 — Fondasi UI dan aset
 
@@ -66,8 +72,31 @@ berkas checklist terpisah.
 - Verifikasi: (segera diuji dengan analyzer dan test).
 - Belum: Tinjauan PR.
 
-**Blessly — belum.** Model UI katalog, layar `ProductCatalog` statis, dan
-`docs/ui-flow.md` belum ada.
+**Blessly — review (2026-09-27)**
+
+- Lingkup Fase 0: model UI katalog, snapshot keranjang, state pembayaran dan data
+  contoh masing-masing fitur; `ProductCatalog` statis dengan harga rupiah, lokasi,
+  status stok, dan `SampleBadge`; dokumentasi `docs/ui-flow.md`.
+- Skenario daftar, memuat, kosong, gagal, dan offline dapat dicoba lewat pemilih
+  skenario. Tombol pemulihan mengembalikan daftar contoh; reduced motion memakai
+  indikator memuat statis.
+- Branch `feat/ui-commerce-ui-catalog` sudah di-push dan di-merge ke `main` lewat PR #4.
+  Commit-nya memakai identitas Git Blessly.
+- Pratinjau mandiri: `mobile/lib/features/catalog/sample/catalog_preview.dart`,
+  dibuka lewat CodeLens Debug ekstensi Flutter di VS Code pada Android. Tab Produk
+  di app shell belum disambungkan karena berkasnya milik Tariq.
+- Verifikasi proyek: `flutter analyze` dan `flutter test` sudah dicoba, keduanya
+  berhenti pada resolusi dependensi karena Dart lokal 3.9.2 tidak memenuhi
+  `sdk: ^3.13.3`. `mobile/pubspec.yaml` tidak diubah.
+- Pemeriksaan tambahan: salinan sementara di luar repository memakai batas SDK
+  `^3.9.2` dengan Flutter 3.35.7/Dart 3.9.2; `flutter analyze` bersih dan
+  `flutter test` 43/43 lulus (10 test baru). Cakupan meliputi state, pemulihan,
+  lebar 360 dp, skala teks 1,3, target sentuh, reduced motion, serta model kasir.
+  Hasil salinan ini belum menggantikan verifikasi pada SDK yang diminta proyek.
+- Sudah dilanjutkan Tariq: `ProductCatalog` disambungkan ke tab Katalog pada branch
+  `feat/ui-shell-integrasi-katalog`, beserta test integrasinya.
+- Belum: verifikasi pada SDK sesuai proyek dan pratinjau pada perangkat Android.
+  Pencarian, filter, dan formulir tetap tugas Fase 1 berikutnya.
 
 ### Fase 1 — Kerangka aplikasi dan komponen dasar
 
@@ -169,3 +198,5 @@ dikerjakan.
   ditandai `SampleBadge` dari `core/widgets/widgets.dart`.
 - Alur pembuka aplikasi: splash menuju perkenalan (sekali per sesi), lalu kerangka utama.
   Rutenya terdaftar di `mobile/lib/app/routing/app_router.dart`.
+- Tab Denah, Pengaturan, dan Katalog sudah memakai fitur aslinya. Tab Kasir masih
+  tampilan sementara sampai pemindai dan keranjang disambungkan ke `app_shell.dart`.
