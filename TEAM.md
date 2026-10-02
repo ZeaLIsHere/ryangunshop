@@ -87,6 +87,16 @@ dahulu, lalu Farel dan Blessly bercabang dari `main`. Urutan ini tidak mengubah 
 kontribusi karena setiap fase tetap satu PR per orang. Pekerjaan murni dokumen
 (`docs/a11y.md`, `docs/ui-flow.md`) boleh berjalan paralel tanpa menunggu bootstrap.
 
+### Tugas integrasi berjalan
+
+Selain tugas fasenya, Tariq memegang `mobile/lib/app/**`, jadi ia yang menyambungkan
+fitur anggota lain ke kerangka aplikasi begitu fiturnya di-merge. Tugas ini tidak muncul
+di tabel fase padahal nyata, dan itulah sebabnya jumlah tugas fase Tariq lebih sedikit.
+
+Yang sudah disambungkan: tab Denah memakai dashboard, tab Pengaturan memakai halaman
+pengaturan, dan tab Katalog memakai `ProductCatalog` milik Blessly. Tab Kasir masih
+memakai tampilan sementara sampai pemindai dan keranjang tersedia.
+
 ### Fase 0 — Fondasi UI dan aset
 
 | Pemilik | Tugas | Bukti kontribusi |

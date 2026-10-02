@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_spacing.dart';
 import '../../core/widgets/ryan_app_logo.dart';
+import '../../features/catalog/view/product_catalog.dart';
 import '../../features/dashboard/model/dashboard_shortcut.dart';
 import '../../features/dashboard/view/dashboard_screen.dart';
 import '../../features/settings/view/settings_screen.dart';
@@ -12,6 +13,10 @@ import 'shell_placeholder_view.dart';
 /// Kerangka utama aplikasi: app bar, isi tab, dan navigasi bawah.
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
+
+  /// Kunci isi tab. Dipakai pengujian agar tidak tertukar dengan `IndexedStack`
+  /// internal widget lain, misalnya `DropdownButton`.
+  static const Key tabsKey = Key('app-shell-tabs');
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -44,9 +49,10 @@ class _AppShellState extends State<AppShell> {
     switch (destination) {
       case ShellDestination.floorPlan:
         return DashboardScreen(onShortcutSelected: _selectShortcut);
+      case ShellDestination.catalog:
+        return const ProductCatalog();
       case ShellDestination.settings:
         return const SettingsScreen();
-      case ShellDestination.catalog:
       case ShellDestination.cashier:
         return ShellPlaceholderView(destination: destination);
     }
@@ -65,6 +71,7 @@ class _AppShellState extends State<AppShell> {
       ),
       body: SafeArea(
         child: IndexedStack(
+          key: AppShell.tabsKey,
           index: _selectedIndex,
           children: [
             for (final item in ShellDestination.values) _viewFor(item),
