@@ -20,7 +20,7 @@ berjalan tanpa harus menebak dari riwayat commit.
 | Fase | Tariq | Farel | Blessly |
 |---|---|---|---|
 | 0 — Fondasi UI dan aset | selesai | review | review |
-| 1 — Kerangka aplikasi dan komponen dasar | review | belum | belum |
+| 1 — Kerangka aplikasi dan komponen dasar | review | review | belum |
 | 2 — Splash, onboarding, dan dashboard | review | belum | belum |
 | 3 — Denah operasional dan pemindai | review | belum | belum |
 | 4 — Pembayaran, panorama, dan laporan | review | belum | belum |
@@ -114,7 +114,12 @@ statusnya `review`, bukan `selesai`.
   fiturnya. `RyanAppLogo` memakai penanda sementara karena aset logo belum ada; oper
   `RyanAppLogo.defaultAssetPath` setelah asetnya didaftarkan di `pubspec.yaml`.
 
-**Farel — belum.** `StoreFloorPlan` mode lihat dan `ModeSwitch` belum dikerjakan.
+**Farel — review (2026-10-02)**
+
+- Lingkup: `StoreFloorPlan` mode lihat (zoom/pan, interaktif) dan `ModeSwitch` (opsi 360° nonaktif saat belum tersedia panorama).
+- Berkas penting: `mobile/lib/features/floor_plan/view/store_floor_plan.dart`, `mobile/lib/features/floor_plan/view/mode_switch.dart`.
+- Verifikasi: (segera diuji dengan analyzer).
+- Belum: Tinjauan PR.
 
 **Blessly — belum.** Pencarian dan filter `ProductCatalog` serta kerangka `ProductForm`
 belum dikerjakan.
