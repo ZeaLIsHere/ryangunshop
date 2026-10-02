@@ -34,7 +34,7 @@ class _ProductCatalogState extends State<ProductCatalog> {
       builder: (context, _) => ListView(
         padding: const EdgeInsets.all(AppSpacing.screen),
         children: [
-          Text('Katalog produk', style: theme.textTheme.headlineLarge),
+          Text('Katalog', style: theme.textTheme.headlineLarge),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Lihat harga, stok, dan letak produk di warung.',
