@@ -138,8 +138,9 @@ teknis yang lazim dipertahankan.
 
 ## 7. Cara menjalankan dan memverifikasi
 
-Pratinjau hanya lewat emulator atau perangkat Android melalui ekstensi Flutter di VS Code.
-Pratinjau web tidak dipakai untuk memvalidasi UI Android.
+Pratinjau validasi memakai emulator atau perangkat Android melalui ekstensi Flutter di VS
+Code. Pratinjau web (`flutter run -d chrome`) hanya untuk melihat susunan layar dengan
+cepat dan tidak dipakai untuk memvalidasi UI Android.
 
 ```bash
 cd mobile

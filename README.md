@@ -82,6 +82,22 @@ flutter run
 
 Belum ada langkah code generation pada tahap ini karena belum ada basis data.
 
+### Pratinjau cepat di Chrome
+
+Untuk melihat susunan layar tanpa membangun ke perangkat:
+
+```bash
+cd mobile
+flutter run -d chrome
+```
+
+Gunakan mode perangkat di DevTools (`Ctrl+Shift+M`) dan pilih lebar 360–430 dp, karena
+antarmuka dirancang untuk layar ponsel.
+
+Pratinjau web hanya untuk melihat susunan layar. Font yang dipakai adalah font sistem
+komputer, bukan font Android, dan perilaku gesture berbeda. Validasi tetap memakai
+emulator atau perangkat Android.
+
 ### Pratinjau katalog Blessly — Fase 0
 
 Katalog statis dan model UI keranjang/pembayaran tersedia dengan data contoh lokal.
