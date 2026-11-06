@@ -13,16 +13,19 @@ import 'product_form_screen.dart';
 class ProductDetailSheet extends StatelessWidget {
   const ProductDetailSheet({
     required this.product,
+    this.existingProducts = const [],
     this.onProductUpdated,
     super.key,
   });
 
   final CatalogProduct product;
+  final List<CatalogProduct> existingProducts;
   final ValueChanged<CatalogProduct>? onProductUpdated;
 
   static Future<void> show(
     BuildContext context, {
     required CatalogProduct product,
+    List<CatalogProduct> existingProducts = const [],
     ValueChanged<CatalogProduct>? onProductUpdated,
   }) {
     return showModalBottomSheet<void>(
@@ -31,6 +34,7 @@ class ProductDetailSheet extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (context) => ProductDetailSheet(
         product: product,
+        existingProducts: existingProducts,
         onProductUpdated: onProductUpdated,
       ),
     );
@@ -247,8 +251,10 @@ class ProductDetailSheet extends StatelessWidget {
                     final updated = await Navigator.of(context)
                         .push<CatalogProduct>(
                           MaterialPageRoute(
-                            builder: (_) =>
-                                ProductFormScreen(initialProduct: product),
+                            builder: (_) => ProductFormScreen(
+                              initialProduct: product,
+                              existingProducts: existingProducts,
+                            ),
                           ),
                         );
                     if (updated != null) {

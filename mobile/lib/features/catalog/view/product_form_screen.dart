@@ -1,17 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/primary_action.dart';
+import '../../../core/widgets/sample_badge.dart';
 import '../../floor_plan/sample/floor_plan_sample.dart';
 import '../model/catalog_product.dart';
 import '../sample/catalog_sample.dart';
 
 /// Layar formulir tambah / edit produk mobile satu kolom dengan section bertahap.
 class ProductFormScreen extends StatefulWidget {
-  const ProductFormScreen({this.initialProduct, this.onSave, super.key});
+  const ProductFormScreen({
+    this.initialProduct,
+    this.existingProducts = const [],
+    this.onSave,
+    super.key,
+  });
 
   final CatalogProduct? initialProduct;
+  final List<CatalogProduct> existingProducts;
   final ValueChanged<CatalogProduct>? onSave;
 
   @override
@@ -31,6 +40,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   String _selectedUnit = 'bungkus';
   String _selectedCategory = 'Sembako';
   String _selectedFixtureId = 'contoh-rak-sembako';
+  bool _hasSamplePhoto = false;
 
   final _units = ['bungkus', 'botol', 'kotak', 'pcs', 'kg', 'sachet', 'kaleng'];
   List<String> get _categories => CatalogSample.categories
@@ -46,18 +56,14 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       text: p != null ? p.price.toString() : '',
     );
     _costPriceController = TextEditingController(
-      text: p == null
-          ? ''
-          : (p.costPrice > 0 ? p.costPrice : (p.price * 0.8).toInt())
-                .toString(),
+      text: p == null || p.costPrice == 0 ? '' : p.costPrice.toString(),
     );
-    _stockController = TextEditingController(
-      text: p != null ? p.stock.toString() : '10',
-    );
+    _stockController = TextEditingController(text: p?.stock.toString() ?? '');
     _thresholdController = TextEditingController(
       text: p != null ? p.lowStockThreshold.toString() : '5',
     );
     _barcodeController = TextEditingController(text: p?.barcode ?? '');
+    _hasSamplePhoto = p?.hasSamplePhoto ?? false;
     if (p != null) {
       _selectedUnit = p.unit;
       _selectedFixtureId = p.fixtureId;
@@ -89,21 +95,18 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
           widget.initialProduct?.id ??
           'prod-${DateTime.now().millisecondsSinceEpoch}',
       name: _nameController.text.trim(),
-      price: int.parse(_priceController.text.replaceAll(RegExp(r'\D'), '')),
-      stock: int.parse(_stockController.text.replaceAll(RegExp(r'\D'), '')),
+      price: int.parse(_priceController.text.trim()),
+      stock: int.parse(_stockController.text.trim()),
       unit: _selectedUnit,
       fixtureId: _selectedFixtureId,
       locationLabel: fixture.name,
       category: _selectedCategory,
-      costPrice:
-          int.tryParse(
-            _costPriceController.text.replaceAll(RegExp(r'\D'), ''),
-          ) ??
-          0,
+      costPrice: int.tryParse(_costPriceController.text.trim()) ?? 0,
       barcode: _barcodeController.text.trim().isEmpty
           ? null
           : _barcodeController.text.trim(),
-      lowStockThreshold: int.tryParse(_thresholdController.text) ?? 5,
+      lowStockThreshold: int.tryParse(_thresholdController.text.trim()) ?? 5,
+      hasSamplePhoto: _hasSamplePhoto,
     );
 
     widget.onSave?.call(product);
@@ -121,6 +124,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       body: SafeArea(
         child: Form(
           key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: Column(
             children: [
               Expanded(
@@ -129,15 +133,91 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Section 1: Identitas Produk
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: SampleBadge(label: 'Pratinjau data contoh'),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
                       _SectionHeader(
                         number: '1',
+                        title: 'Foto Produk',
+                        subtitle: 'Pratinjau pilihan foto untuk katalog',
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Container(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        decoration: const BoxDecoration(
+                          color: AppColors.canvas,
+                          borderRadius: AppRadius.cardBorder,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  _hasSamplePhoto
+                                      ? Icons.image_outlined
+                                      : Icons.add_photo_alternate_outlined,
+                                  color: AppColors.primary,
+                                  size: AppSpacing.xl,
+                                ),
+                                const SizedBox(width: AppSpacing.sm),
+                                Expanded(
+                                  child: Text(
+                                    _hasSamplePhoto
+                                        ? 'Pratinjau foto contoh aktif'
+                                        : 'Belum ada foto produk',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size(
+                                  double.infinity,
+                                  AppSpacing.minTouchTarget,
+                                ),
+                              ),
+                              icon: Icon(
+                                _hasSamplePhoto
+                                    ? Icons.delete_outline
+                                    : Icons.photo_library_outlined,
+                              ),
+                              label: Text(
+                                _hasSamplePhoto
+                                    ? 'Hapus pratinjau'
+                                    : 'Gunakan pratinjau contoh',
+                              ),
+                              onPressed: () => setState(
+                                () => _hasSamplePhoto = !_hasSamplePhoto,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.xs),
+                            Text(
+                              'Pratinjau ini hanya contoh; belum memilih atau menyimpan berkas foto.',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: AppColors.muted),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+
+                      // Section 2: Identitas Produk
+                      _SectionHeader(
+                        number: '2',
                         title: 'Identitas Produk',
                         subtitle: 'Nama, kategori, dan barcode barang',
                       ),
                       const SizedBox(height: AppSpacing.sm),
                       TextFormField(
                         controller: _nameController,
+                        inputFormatters: [LengthLimitingTextInputFormatter(80)],
                         decoration: const InputDecoration(
                           labelText: 'Nama Produk *',
                           hintText: 'Misal: Beras Pandan Wangi 1 kg',
@@ -171,6 +251,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                       const SizedBox(height: AppSpacing.sm),
                       TextFormField(
                         controller: _barcodeController,
+                        inputFormatters: [LengthLimitingTextInputFormatter(40)],
                         decoration: InputDecoration(
                           labelText: 'Barcode / SKU (Opsional)',
                           hintText: '899275321001',
@@ -185,116 +266,127 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                             },
                           ),
                         ),
+                        validator: (value) {
+                          final barcode = value?.trim();
+                          if (barcode == null || barcode.isEmpty) return null;
+                          final duplicate = widget.existingProducts.any(
+                            (product) =>
+                                product.id != widget.initialProduct?.id &&
+                                product.barcode?.toLowerCase() ==
+                                    barcode.toLowerCase(),
+                          );
+                          return duplicate
+                              ? 'Barcode sudah dipakai produk lain'
+                              : null;
+                        },
                       ),
                       const SizedBox(height: AppSpacing.lg),
 
-                      // Section 2: Harga & Stok
+                      // Section 3: Harga & Stok
                       _SectionHeader(
-                        number: '2',
+                        number: '3',
                         title: 'Harga & Stok',
                         subtitle: 'Penetapan harga jual, modal, dan kuantitas',
                       ),
                       const SizedBox(height: AppSpacing.sm),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _priceController,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                labelText: 'Harga Jual *',
-                                prefixText: 'Rp ',
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Harga wajib diisi';
-                                }
-                                final p = int.tryParse(
-                                  value.replaceAll(RegExp(r'\D'), ''),
-                                );
-                                if (p == null || p <= 0) {
-                                  return 'Harga tidak valid';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: TextFormField(
-                              controller: _costPriceController,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                labelText: 'Harga Modal',
-                                prefixText: 'Rp ',
-                              ),
-                            ),
-                          ),
+                      TextFormField(
+                        controller: _priceController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
                         ],
+                        decoration: const InputDecoration(
+                          labelText: 'Harga Jual *',
+                          prefixText: 'Rp ',
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Harga jual wajib diisi';
+                          }
+                          final price = int.tryParse(value.trim());
+                          return price == null || price <= 0
+                              ? 'Masukkan harga jual lebih dari nol'
+                              : null;
+                        },
                       ),
                       const SizedBox(height: AppSpacing.sm),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _stockController,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                labelText: 'Stok Saat Ini *',
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Stok wajib diisi';
-                                }
-                                final s = int.tryParse(
-                                  value.replaceAll(RegExp(r'\D'), ''),
-                                );
-                                if (s == null || s < 0) {
-                                  return 'Stok tidak valid';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: DropdownButtonFormField<String>(
-                              initialValue: _selectedUnit,
-                              isExpanded: true,
-                              decoration: const InputDecoration(
-                                labelText: 'Satuan',
-                              ),
-                              items: [
-                                for (final unit in _units)
-                                  DropdownMenuItem(
-                                    value: unit,
-                                    child: Text(unit),
-                                  ),
-                              ],
-                              onChanged: (val) {
-                                if (val != null) {
-                                  setState(() => _selectedUnit = val);
-                                }
-                              },
-                            ),
-                          ),
+                      TextFormField(
+                        controller: _costPriceController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
                         ],
+                        decoration: const InputDecoration(
+                          labelText: 'Harga Modal (Opsional)',
+                          prefixText: 'Rp ',
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return null;
+                          }
+                          return int.tryParse(value.trim()) == null
+                              ? 'Masukkan harga modal berupa angka'
+                              : null;
+                        },
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      TextFormField(
+                        controller: _stockController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        decoration: const InputDecoration(
+                          labelText: 'Stok Saat Ini *',
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Stok wajib diisi';
+                          }
+                          return int.tryParse(value.trim()) == null
+                              ? 'Masukkan stok berupa angka nol atau lebih'
+                              : null;
+                        },
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      DropdownButtonFormField<String>(
+                        initialValue: _selectedUnit,
+                        isExpanded: true,
+                        decoration: const InputDecoration(labelText: 'Satuan'),
+                        items: [
+                          for (final unit in _units)
+                            DropdownMenuItem(value: unit, child: Text(unit)),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) setState(() => _selectedUnit = val);
+                        },
                       ),
                       const SizedBox(height: AppSpacing.sm),
                       TextFormField(
                         controller: _thresholdController,
                         keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
                         decoration: const InputDecoration(
                           labelText: 'Batas Peringatan Stok Menipis',
                           hintText: 'Misal: 5',
                           prefixIcon: Icon(Icons.warning_amber_rounded),
                         ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return null;
+                          }
+                          return int.tryParse(value.trim()) == null
+                              ? 'Masukkan batas stok berupa angka'
+                              : null;
+                        },
                       ),
                       const SizedBox(height: AppSpacing.lg),
 
-                      // Section 3: Penempatan Denah
+                      // Section 4: Penempatan Denah
                       _SectionHeader(
-                        number: '3',
+                        number: '4',
                         title: 'Lokasi Rak & Denah',
                         subtitle: 'Tautkan produk ke objek rak di denah warung',
                       ),
