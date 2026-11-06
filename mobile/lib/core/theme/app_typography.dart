@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 
 /// Token tipografi RyanGunshop.
 ///
-/// Skala mengikuti `DESIGN.md`: 28 sp judul halaman, 20 sp judul bagian, 16 sp
-/// label penting, dan 14 sp metadata. Judul halaman dan angka total memakai
-/// serif sistem sebagai aksen editorial, sedangkan label, input, tombol, dan
-/// metadata tetap memakai sans-serif sistem agar mudah dibaca cepat.
+/// Satu suara sans-serif untuk seluruh hierarki agar tampilan tenang dan padat,
+/// dengan tracking negatif yang makin rapat saat ukuran naik. Ukuran inti tetap
+/// mengikuti `DESIGN.md`: 28 sp judul halaman, 20 sp judul bagian, 16 sp label
+/// penting, dan 14 sp metadata. Serif hanya dipakai sebagai aksen editorial pada
+/// angka total pembayaran.
 abstract final class AppTypography {
   static const double pageTitleSize = 28;
   static const double sectionTitleSize = 20;
@@ -18,42 +19,81 @@ abstract final class AppTypography {
   static const FontWeight semibold = FontWeight.w600;
   static const FontWeight bold = FontWeight.w700;
 
-  /// Keluarga serif sistem untuk aksen editorial.
+  /// Keluarga serif sistem untuk aksen editorial pada angka total.
   static const String serifFamily = 'serif';
+
+  /// Angka rata lebar agar kolom nominal dan kuantitas tidak bergeser.
+  static const List<FontFeature> tabularFigures = <FontFeature>[
+    FontFeature.tabularFigures(),
+  ];
 
   /// Skala teks yang dipakai aplikasi.
   static TextTheme textTheme({required Color ink, required Color muted}) {
-    return TextTheme(
+    return const TextTheme().copyWith(
+      // Judul halaman.
       displaySmall: TextStyle(
         fontSize: pageTitleSize,
         fontWeight: bold,
-        fontFamily: serifFamily,
         color: ink,
-        height: 1.2,
+        height: 1.14,
+        letterSpacing: -0.6,
       ),
+      // Judul halaman untuk layar yang memakai headlineMedium.
+      headlineMedium: TextStyle(
+        fontSize: pageTitleSize,
+        fontWeight: bold,
+        color: ink,
+        height: 1.14,
+        letterSpacing: -1.0,
+      ),
+      // Judul bagian.
       headlineSmall: TextStyle(
         fontSize: sectionTitleSize,
         fontWeight: semibold,
         color: ink,
-        height: 1.25,
+        height: 1.2,
+        letterSpacing: -0.4,
       ),
+      // Angka ringkasan dan judul kartu besar.
+      titleLarge: TextStyle(
+        fontSize: 22,
+        fontWeight: semibold,
+        color: ink,
+        height: 1.2,
+        letterSpacing: -0.4,
+        fontFeatures: tabularFigures,
+      ),
+      // Label penting.
       titleMedium: TextStyle(
         fontSize: labelSize,
         fontWeight: semibold,
         color: ink,
         height: 1.3,
+        letterSpacing: -0.15,
       ),
-      labelLarge: TextStyle(
-        fontSize: labelSize,
+      titleSmall: TextStyle(
+        fontSize: bodySize,
         fontWeight: semibold,
         color: ink,
         height: 1.3,
+      ),
+      labelLarge: TextStyle(
+        fontSize: bodySize,
+        fontWeight: semibold,
+        color: ink,
+        height: 1.2,
+      ),
+      bodyLarge: TextStyle(
+        fontSize: 16,
+        fontWeight: regular,
+        color: ink,
+        height: 1.5,
       ),
       bodyMedium: TextStyle(
         fontSize: bodySize,
         fontWeight: regular,
         color: ink,
-        height: 1.45,
+        height: 1.5,
       ),
       labelMedium: TextStyle(
         fontSize: bodySize,
@@ -61,11 +101,18 @@ abstract final class AppTypography {
         color: muted,
         height: 1.3,
       ),
+      // Metadata.
       bodySmall: TextStyle(
         fontSize: captionSize,
         fontWeight: regular,
         color: muted,
-        height: 1.4,
+        height: 1.45,
+      ),
+      labelSmall: TextStyle(
+        fontSize: 11,
+        fontWeight: medium,
+        color: muted,
+        height: 1.3,
       ),
     );
   }
@@ -80,7 +127,9 @@ abstract final class AppTypography {
       fontWeight: bold,
       fontFamily: serifFamily,
       color: color,
-      height: 1.15,
+      height: 1.1,
+      letterSpacing: -0.5,
+      fontFeatures: tabularFigures,
     );
   }
 }

@@ -3,16 +3,17 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/widgets/primary_action.dart';
+import '../../features/catalog/view/product_form_screen.dart';
+import '../../features/chatbot/view/chatbot_screen.dart';
 import '../../features/onboarding/view/onboarding_screen.dart';
+import '../../features/panorama/view/panorama_viewer_screen.dart';
 import '../../features/reports/view/reports_screen.dart';
+import '../../features/scanner/view/product_scanner_screen.dart';
+import '../../features/statistics/view/statistics_screen.dart';
 import '../shell/app_shell.dart';
 import '../splash/splash_screen.dart';
 
 /// Nama rute yang dikenal aplikasi.
-///
-/// Rute fitur ditambahkan di sini seiring fiturnya selesai agar setiap layar punya
-/// satu titik masuk yang jelas. Denah, katalog, kasir, dan pengaturan tidak perlu
-/// rute terpisah karena diakses lewat navigasi bawah di dalam [AppShell].
 abstract final class AppRoutes {
   /// Layar pembuka dengan signature motion.
   static const String splash = '/';
@@ -25,6 +26,21 @@ abstract final class AppRoutes {
 
   /// Riwayat dan laporan transaksi.
   static const String reports = '/riwayat';
+
+  /// Pemindai barcode dan kamera.
+  static const String scanner = '/pemindai';
+
+  /// Penampil panorama 360 zona warung.
+  static const String panorama = '/panorama';
+
+  /// Formulir tambah/edit produk.
+  static const String productForm = '/produk-form';
+
+  /// Ringkasan statistik penjualan dan stok.
+  static const String statistics = '/statistik';
+
+  /// Chatbot bantuan.
+  static const String chatbot = '/chatbot';
 }
 
 /// Pembuat rute aplikasi.
@@ -43,6 +59,16 @@ abstract final class AppRouter {
         return const AppShell();
       case AppRoutes.reports:
         return const ReportsScreen();
+      case AppRoutes.scanner:
+        return const ProductScannerScreen();
+      case AppRoutes.panorama:
+        return const PanoramaViewerScreen();
+      case AppRoutes.productForm:
+        return const ProductFormScreen();
+      case AppRoutes.statistics:
+        return const StatisticsScreen();
+      case AppRoutes.chatbot:
+        return const ChatbotScreen();
       default:
         return _UnknownRouteView(routeName: name);
     }
@@ -72,8 +98,6 @@ abstract final class AppRouter {
 }
 
 /// Tampilan untuk rute yang belum terdaftar.
-///
-/// Sengaja menyediakan tindakan lanjutan, bukan hanya pesan kosong.
 class _UnknownRouteView extends StatelessWidget {
   const _UnknownRouteView({required this.routeName});
 

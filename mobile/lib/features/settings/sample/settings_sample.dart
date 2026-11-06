@@ -1,29 +1,32 @@
 import '../model/store_profile.dart';
 
-/// Data contoh dan teks untuk halaman pengaturan.
-///
-/// Semua nilai di sini adalah contoh dan diberi penanda "Data contoh" pada layar.
+/// Data profil dan teks untuk halaman pengaturan warung.
 abstract final class SettingsSample {
   static const StoreProfile storeProfile = StoreProfile(
-    name: 'Warung Ryan',
-    address: 'Jl. Melati No. 12',
+    name: 'RyanGunshop - Warung Modern',
+    address: 'Jl. Sisingamangaraja No. 45, Medan',
     cashierCount: 2,
   );
 
-  static const String rolesSectionTitle = 'Peran pengguna';
+  static const String rolesSectionTitle = 'Peran Pengguna';
   static const String rolesSectionNote =
-      'Pemilihan peran masih contoh. Setelah autentikasi tersedia, peran ditentukan '
-      'dari akun yang masuk.';
+      'Hak akses fitur aplikasi disesuaikan dengan peran pengguna yang aktif.';
 
-  static const String floorPlanAccessTitle = 'Mode edit denah';
+  static const String floorPlanAccessTitle = 'Mode Edit Denah';
   static const String floorPlanAccessAllowed = 'Tersedia untuk peran Pemilik.';
   static const String floorPlanAccessLocked = 'Terkunci untuk peran Kasir.';
 
-  static const String storeSectionTitle = 'Info warung';
+  static const String storeSectionTitle = 'Profil Warung';
   static const String sampleBadge = 'Data contoh';
 
-  static const String aboutSectionTitle = 'Tentang aplikasi';
+  static const String hardwareSectionTitle = 'Perangkat Kasir';
+  static const String printerStatus =
+      'Printer Thermal 58mm (Bluetooth) • Terhubung';
+
+  static const String syncSectionTitle = 'Sinkronisasi & Penyimpanan';
+  static const String syncStatus = 'Penyimpanan Lokal Aktif • Sinkron Otomatis';
+
+  static const String aboutSectionTitle = 'Tentang Aplikasi';
   static const String aboutDescription =
-      'Versi pratinjau UI. Seluruh data pada versi ini adalah contoh dan belum '
-      'terhubung layanan nyata.';
+      'RyanGunshop POS v1.0.0 — Aplikasi kasir dan pengelolaan warung berbasis denah spasial.';
 }

@@ -24,6 +24,16 @@ enum DashboardShortcut {
     label: 'Pengaturan',
     description: 'Peran pengguna dan info warung',
     icon: Icons.settings_outlined,
+  ),
+  statistics(
+    label: 'Statistik',
+    description: 'Ringkasan penjualan dan stok',
+    icon: Icons.insights_outlined,
+  ),
+  chatbot(
+    label: 'Chatbot',
+    description: 'Tanya bantuan lewat percakapan',
+    icon: Icons.chat_bubble_outline,
   );
 
   const DashboardShortcut({

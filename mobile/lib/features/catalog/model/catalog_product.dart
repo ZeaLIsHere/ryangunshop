@@ -8,11 +8,14 @@ class CatalogProduct {
     required this.unit,
     required this.fixtureId,
     required this.locationLabel,
+    required this.category,
+    this.costPrice = 0,
     this.barcode,
     this.lowStockThreshold = 5,
   }) : assert(price >= 0),
        assert(stock >= 0),
-       assert(lowStockThreshold >= 0);
+       assert(lowStockThreshold >= 0),
+       assert(costPrice >= 0);
 
   final String id;
   final String name;
@@ -21,6 +24,18 @@ class CatalogProduct {
   final String unit;
   final String fixtureId;
   final String locationLabel;
+
+  /// Kategori produk, dipakai filter kategori pada katalog.
+  final String category;
+
+  /// Harga modal satuan; 0 berarti belum diisi.
+  final int costPrice;
+
+  /// Margin kotor per unit dalam rupiah.
+  int get margin => price - costPrice;
+
+  /// Persentase margin terhadap harga jual (0-100).
+  double get marginPercent => price == 0 ? 0 : margin / price * 100;
   final String? barcode;
   final int lowStockThreshold;
 

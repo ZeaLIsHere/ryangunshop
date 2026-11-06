@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/session/app_session.dart';
 import '../../../core/session/user_role.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/sample_badge.dart';
@@ -81,6 +82,40 @@ class _SettingsContent extends StatelessWidget {
           const _SectionTitle(text: SettingsSample.storeSectionTitle),
           const SizedBox(height: AppSpacing.sm),
           _StoreProfileCard(profile: viewModel.storeProfile),
+          const SizedBox(height: AppSpacing.lg),
+          const _SectionTitle(text: SettingsSample.hardwareSectionTitle),
+          const SizedBox(height: AppSpacing.sm),
+          AppCard(
+            child: Row(
+              children: [
+                const Icon(Icons.print_outlined, color: AppColors.primary),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    SettingsSample.printerStatus,
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          const _SectionTitle(text: SettingsSample.syncSectionTitle),
+          const SizedBox(height: AppSpacing.sm),
+          AppCard(
+            child: Row(
+              children: [
+                const Icon(Icons.cloud_done_outlined, color: AppColors.success),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    SettingsSample.syncStatus,
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: AppSpacing.lg),
           const _SectionTitle(text: SettingsSample.aboutSectionTitle),
           const SizedBox(height: AppSpacing.sm),
@@ -198,19 +233,53 @@ class _StoreProfileCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(profile.name, style: theme.textTheme.titleMedium),
+              Container(
+                width: 44,
+                height: 44,
+                decoration: const BoxDecoration(
+                  color: AppColors.primaryLight,
+                  borderRadius: AppRadius.controlCompactBorder,
+                ),
+                child: const Icon(
+                  Icons.storefront_outlined,
+                  color: AppColors.primaryDark,
+                ),
               ),
-              const SampleBadge(label: SettingsSample.sampleBadge),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(profile.name, style: theme.textTheme.titleMedium),
+                    const SizedBox(height: AppSpacing.xxs),
+                    Text(
+                      profile.address,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.muted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(profile.address, style: theme.textTheme.bodyMedium),
-          const SizedBox(height: AppSpacing.xxs),
-          Text(
-            'Jumlah kasir: ${profile.cashierCount}',
-            style: theme.textTheme.bodySmall,
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            children: [
+              const SampleBadge(label: SettingsSample.sampleBadge),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  'Jumlah kasir: ${profile.cashierCount}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right,
+                  style: theme.textTheme.bodySmall,
+                ),
+              ),
+            ],
           ),
         ],
       ),

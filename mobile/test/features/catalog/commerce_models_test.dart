@@ -9,9 +9,13 @@ void main() {
   test('stok nol, ambang menipis, dan stok cukup dibedakan', () {
     final products = CatalogSample.products;
     expect(products.first.stockStatus, ProductStockStatus.available);
-    expect(products[2].stockStatus, ProductStockStatus.empty);
-    expect(products.last.stock, products.last.lowStockThreshold);
-    expect(products.last.stockStatus, ProductStockStatus.low);
+
+    final empty = products.firstWhere((p) => p.id == 'contoh-produk-3');
+    expect(empty.stockStatus, ProductStockStatus.empty);
+
+    final low = products.firstWhere((p) => p.id == 'contoh-produk-5');
+    expect(low.stock, low.lowStockThreshold);
+    expect(low.stockStatus, ProductStockStatus.low);
   });
 
   test('snapshot keranjang sesuai nominal contoh pembayaran', () {

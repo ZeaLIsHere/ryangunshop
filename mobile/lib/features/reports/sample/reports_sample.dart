@@ -1,20 +1,20 @@
 import '../model/report_payment_method.dart';
 import '../model/transaction_record.dart';
 
-/// Riwayat transaksi contoh beserta teks layarnya.
+/// Riwayat transaksi operasional beserta teks layarnya.
 abstract final class ReportsSample {
-  static const String summaryTitle = 'Total transaksi contoh';
-  static const String scenarioTitle = 'Skenario contoh';
+  static const String summaryTitle = 'Total Penjualan Hari Ini';
+  static const String scenarioTitle = 'Filter Status Riwayat';
   static const String scenarioNote =
-      'Pilih skenario untuk mencoba state kosong dan gagal.';
+      'Filter tampilan riwayat transaksi kasir.';
 
-  static const String loadingLabel = 'Memuat riwayat contoh';
+  static const String loadingLabel = 'Memuat riwayat transaksi...';
   static const String emptyTitle = 'Belum ada transaksi';
   static const String emptyDescription =
-      'Transaksi yang selesai akan muncul di sini.';
-  static const String errorTitle = 'Riwayat contoh gagal dimuat';
+      'Transaksi yang selesai diproses kasir akan tercatat di sini.';
+  static const String errorTitle = 'Riwayat transaksi gagal dimuat';
   static const String errorDescription =
-      'Ini skenario contoh, bukan kegagalan layanan nyata.';
+      'Terjadi kendala saat membaca data transaksi lokal.';
 
   static const List<TransactionRecord> records = <TransactionRecord>[
     TransactionRecord(

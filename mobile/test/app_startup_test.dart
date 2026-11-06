@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ryangunshop/app/app.dart';
+import 'package:ryangunshop/app/shell/app_shell.dart';
 import 'package:ryangunshop/app/startup/app_startup_state.dart';
 import 'package:ryangunshop/features/onboarding/sample/onboarding_sample.dart';
 
@@ -31,7 +32,7 @@ void main() {
     await tester.tap(find.text('Lewati'));
     await tester.pumpAndSettle();
 
-    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.byType(AppShell), findsOneWidget);
   });
 
   testWidgets('splash melewati perkenalan bila sudah pernah dilihat', (
@@ -43,7 +44,7 @@ void main() {
     await tester.pumpWidget(const RyanGunshopApp());
     await tester.pumpAndSettle();
 
-    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.byType(AppShell), findsOneWidget);
     expect(find.text('Lewati'), findsNothing);
   });
 }

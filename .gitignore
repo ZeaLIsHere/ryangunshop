@@ -3,6 +3,7 @@
 .env.*
 
 # Editor dan sistem operasi
+.freebuff/
 .idea/
 .DS_Store
 Thumbs.db

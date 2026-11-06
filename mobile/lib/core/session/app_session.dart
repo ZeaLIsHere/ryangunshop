@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import '../../features/checkout/view_model/cart_view_model.dart';
 import 'user_role.dart';
 
 /// Keadaan sesi yang dipakai lintas fitur, misalnya peran pengguna.
@@ -7,6 +8,8 @@ import 'user_role.dart';
 /// Dipisahkan dari fitur agar denah, pengaturan, dan kasir membaca peran dari satu
 /// sumber yang sama.
 class AppSession extends ChangeNotifier {
+  final CartViewModel cart = CartViewModel();
+
   UserRole _role = UserRole.owner;
 
   UserRole get role => _role;
@@ -20,6 +23,12 @@ class AppSession extends ChangeNotifier {
     }
     _role = role;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    cart.dispose();
+    super.dispose();
   }
 }
 

@@ -19,11 +19,11 @@ berjalan tanpa harus menebak dari riwayat commit.
 
 | Fase | Tariq | Farel | Blessly |
 |---|---|---|---|
-| 0 — Fondasi UI dan aset | selesai | belum | review |
-| 1 — Kerangka aplikasi dan komponen dasar | review | belum | belum |
-| 2 — Splash, onboarding, dan dashboard | review | belum | belum |
-| 3 — Denah operasional dan pemindai | review | belum | belum |
-| 4 — Pembayaran, panorama, dan laporan | review | belum | belum |
+| 0 — Fondasi UI dan aset | selesai | review | review |
+| 1 — Kerangka aplikasi dan komponen dasar | review | review | review |
+| 2 — Splash, onboarding, dan dashboard | review | review | review |
+| 3 — Denah operasional dan pemindai | review | review | review |
+| 4 — Pembayaran, panorama, dan laporan | review | review | review |
 | 5 — Audit aksesibilitas dan rilis internal | belum | belum | belum |
 
 ## Peta fitur
@@ -39,12 +39,13 @@ berkas checklist terpisah.
 | Dashboard | `mobile/lib/features/dashboard/` | Tariq | review |
 | Pengaturan dan peran pengguna | `mobile/lib/features/settings/`, `core/session/` | Tariq | review |
 | Riwayat dan laporan | `mobile/lib/features/reports/` | Tariq | review |
-| Denah dan objek ruang | `mobile/lib/features/floor_plan/` | Farel | belum |
-| Panorama 360 | `mobile/lib/features/panorama/` | Farel | belum |
+| Denah dan objek ruang | `mobile/lib/features/floor_plan/` | Farel | review |
+| Panorama 360 | `mobile/lib/features/panorama/` | Farel | review |
+| Aset brand & launcher | `mobile/assets/branding/`, `mobile/tool/` | Farel | review |
 | Katalog produk | `mobile/lib/features/catalog/` | Blessly | review |
-| Formulir produk | `mobile/lib/features/catalog/` | Blessly | belum |
-| Pemindai produk | `mobile/lib/features/scanner/` | Blessly | belum |
-| Keranjang dan pembayaran | `mobile/lib/features/checkout/`, `.../payment/` | Blessly | belum |
+| Formulir produk | `mobile/lib/features/catalog/` | Blessly | review |
+| Pemindai produk | `mobile/lib/features/scanner/` | Blessly | review |
+| Keranjang dan pembayaran | `mobile/lib/features/checkout/`, `.../payment/` | Blessly | review |
 
 ## Catatan per tugas
 
@@ -52,6 +53,25 @@ Catatan umum: Fase 0–4 Tariq sudah di-merge ke `main`, dan aplikasi sudah dipa
 dijalankan pada perangkat Android SM A366B. Sisa poin definisi selesai adalah tinjauan
 silang anggota lain dan verifikasi text scale 1.3 yang masuk audit Fase 5. Karena itu
 statusnya `review`, bukan `selesai`.
+
+**Pembaruan integrasi (2026-10-02) — Farel dan Blessly.**
+
+- Fitur Farel dan Blessly yang sebelumnya masih di branch/berkas kerja sudah disatukan ke
+  `main` dalam satu lintasan integrasi: `StoreFloorPlan` (mode lihat dan edit, `SyncPill`),
+  viewer panorama 360 per zona, `ProductForm`, layar detail produk, pencarian dan filter
+  katalog, `ProductScanner`, keranjang `CartCheckout`, `PaymentSheet` tunai/QRIS, dan
+  `PaymentSuccessScreen`.
+- Mode edit denah dilengkapi sesuai Fase 2: selain drag, putar, ganti nama, dan hapus,
+  kini tersedia kontrol ukuran (perbesar/perkecil) dan duplikat objek di
+  `mobile/lib/features/floor_plan/view_model/floor_plan_view_model.dart` dan
+  `.../view/store_floor_plan.dart`.
+- Kerangka aplikasi disambungkan: tab Kasir memakai `CartCheckoutScreen`, aksi utama
+  dashboard dan tombol Scan membuka `ProductScannerScreen`, dan "Lihat di Denah" pada hasil
+  pemindaian membuka denah dengan rak yang sesuai tersorot.
+- Verifikasi: `flutter analyze` bersih dan `flutter test` 55/55 lulus pada Flutter 3.47.4 /
+  Dart 3.13.3, termasuk state kosong, memuat, error, dan offline, target sentuh, serta
+  lebar 360 dp pada skala teks 1,3. Belum ada verifikasi emulator atau perangkat Android
+  dan belum ada tinjauan PR, jadi status tetap `review`.
 
 ### Fase 0 — Fondasi UI dan aset
 
@@ -65,8 +85,17 @@ statusnya `review`, bukan `selesai`.
 - Verifikasi: `flutter analyze` bersih, `flutter test` 4/4 lulus.
 - Belum: tampilan belum dijalankan di emulator atau perangkat Android.
 
-**Farel — belum.** Skema koordinat denah, `FixtureTile`, aset brand, dan
-`tool/generate_brand_assets.dart` belum ada.
+**Farel — review (2026-10-02).** Skema koordinat relatif 2D, `FixtureTile`, dan
+konstanta template area warung sudah ada. Aset brand ditambahkan:
+
+- `mobile/assets/branding/ryangunshop_logo.png` sebagai logo produksi, dipakai
+  `RyanAppLogo` lewat `RyanAppLogo.defaultAssetPath`.
+- `mobile/tool/generate_brand_assets.dart` membuat ulang launcher icon dan gambar
+  native splash dari PNG sumber tanpa mengubah proporsi, memakai zlib `dart:io`
+  tanpa menambah dependensi. Logo bawaan dibuat bila sumber tidak dioper.
+- Verifikasi: `flutter analyze` bersih dan uji `test/tool/brand_assets_test.dart`
+  (round-trip PNG, logo bawaan, dan generasi aset) lulus. Belum dijalankan di
+  perangkat Android untuk melihat launcher icon hasilnya.
 
 **Blessly — review (2026-09-27)**
 
@@ -106,9 +135,9 @@ statusnya `review`, bukan `selesai`.
   `mobile/lib/core/widgets/widgets.dart`.
 - Verifikasi: `flutter analyze` bersih, `flutter test` 15/15 lulus.
 - Belum: tampilan belum dijalankan di emulator Android dan PR belum ditinjau.
-- Catatan: isi tiap tab masih tampilan sementara sampai Farel dan Blessly mengirim
-  fiturnya. `RyanAppLogo` memakai penanda sementara karena aset logo belum ada; oper
-  `RyanAppLogo.defaultAssetPath` setelah asetnya didaftarkan di `pubspec.yaml`.
+- Catatan: `RyanAppLogo` kini memuat aset brand dari
+  `RyanAppLogo.defaultAssetPath` pada splash dan app bar, dengan penanda sementara
+  sebagai cadangan bila aset gagal dimuat.
 
 **Farel — belum.** `StoreFloorPlan` mode lihat dan `ModeSwitch` belum dikerjakan.
 
@@ -194,5 +223,6 @@ dikerjakan.
   ditandai `SampleBadge` dari `core/widgets/widgets.dart`.
 - Alur pembuka aplikasi: splash menuju perkenalan (sekali per sesi), lalu kerangka utama.
   Rutenya terdaftar di `mobile/lib/app/routing/app_router.dart`.
-- Tab Denah, Pengaturan, dan Katalog sudah memakai fitur aslinya. Tab Kasir masih
-  tampilan sementara sampai pemindai dan keranjang disambungkan ke `app_shell.dart`.
+- Keempat tab sudah memakai fitur aslinya. Tab Kasir memakai `CartCheckoutScreen`,
+  pemindai dan keranjang tersambung lewat `mobile/lib/app/shell/app_shell.dart`, dan rute
+  `AppRoutes.scanner`, `AppRoutes.panorama`, serta `AppRoutes.productForm` sudah terdaftar.

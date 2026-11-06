@@ -59,6 +59,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       body: SafeArea(
         child: ListenableBuilder(
@@ -66,6 +68,36 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           builder: (context, _) {
             return Column(
               children: [
+                // Bar atas: identitas di kiri, lewati di kanan.
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.screen,
+                    AppSpacing.sm,
+                    AppSpacing.xs,
+                    0,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.storefront_rounded,
+                        size: 20,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      Text(
+                        'RyanGunshop',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: AppColors.primaryDark,
+                        ),
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: _finish,
+                        child: const Text('Lewati'),
+                      ),
+                    ],
+                  ),
+                ),
                 Expanded(
                   child: PageView.builder(
                     controller: _pageController,
@@ -82,20 +114,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(AppSpacing.screen),
-                  child: Row(
-                    children: [
-                      TextButton(
-                        onPressed: _finish,
-                        child: const Text('Lewati'),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(
-                        child: PrimaryAction(
-                          label: _viewModel.isLastPage ? 'Mulai' : 'Lanjut',
-                          onPressed: _onAdvance,
-                        ),
-                      ),
-                    ],
+                  child: PrimaryAction(
+                    label: _viewModel.isLastPage ? 'Mulai' : 'Lanjut',
+                    icon: _viewModel.isLastPage
+                        ? Icons.check
+                        : Icons.arrow_forward,
+                    onPressed: _onAdvance,
                   ),
                 ),
               ],
@@ -117,20 +141,44 @@ class _OnboardingPageView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.md,
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            width: 168,
-            height: 168,
-            decoration: const BoxDecoration(
-              color: AppColors.primaryLight,
-              borderRadius: AppRadius.controlBorder,
+            height: 236,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [AppColors.primaryLight, AppColors.surface],
+              ),
+              borderRadius: AppRadius.panelBorder,
+              border: Border.all(color: AppColors.primaryLight),
             ),
-            child: Icon(page.icon, size: 72, color: AppColors.primaryDark),
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primaryDark.withValues(alpha: 0.12),
+                      blurRadius: 24,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Icon(page.icon, size: 56, color: AppColors.primary),
+              ),
+            ),
           ),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.xl),
           Text(
             page.title,
             textAlign: TextAlign.center,
@@ -140,9 +188,7 @@ class _OnboardingPageView extends StatelessWidget {
           Text(
             page.description,
             textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+            style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.muted),
           ),
         ],
       ),
@@ -170,8 +216,9 @@ class _OnboardingProgress extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           for (var index = 0; index < pageCount; index++)
-            Container(
-              width: index == currentIndex ? 24 : 8,
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: index == currentIndex ? 28 : 8,
               height: 8,
               margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xxs),
               decoration: BoxDecoration(

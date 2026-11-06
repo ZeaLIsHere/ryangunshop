@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../../core/format/rupiah.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/brand_spinner.dart';
 import '../../../core/widgets/primary_action.dart';
-import '../../../core/widgets/sample_badge.dart';
+import '../model/report_payment_method.dart';
 import '../model/report_scenario.dart';
 import '../model/transaction_record.dart';
 import '../sample/reports_sample.dart';
@@ -119,8 +120,23 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return AppCard(
+    return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.primary, AppColors.primaryDark],
+        ),
+        borderRadius: AppRadius.panelBorder,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryDark.withValues(alpha: 0.24),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -129,21 +145,46 @@ class _SummaryCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   ReportsSample.summaryTitle,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColors.surface.withValues(alpha: 0.8),
                   ),
                 ),
               ),
-              const SampleBadge(),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: AppSpacing.xxs,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.surface.withValues(alpha: 0.16),
+                  borderRadius: AppRadius.fixtureBorder,
+                ),
+                child: Text(
+                  'Hari ini',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.surface,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.xs),
-          Text(
-            formatRupiah(total),
-            style: AppTypography.total(color: AppColors.ink),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              formatRupiah(total),
+              style: AppTypography.total(color: AppColors.surface),
+            ),
           ),
           const SizedBox(height: AppSpacing.xxs),
-          Text('$transactionCount transaksi', style: theme.textTheme.bodySmall),
+          Text(
+            '$transactionCount transaksi',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: AppColors.surface.withValues(alpha: 0.8),
+            ),
+          ),
         ],
       ),
     );
@@ -191,12 +232,27 @@ class _RecordCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isCash = record.paymentMethod == ReportPaymentMethod.cash;
     return AppCard(
       semanticLabel:
           'Transaksi ${record.id}, ${formatRupiah(record.total)}, '
           '${record.paymentMethod.label}',
       child: Row(
         children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: const BoxDecoration(
+              color: AppColors.primaryLight,
+              borderRadius: AppRadius.controlCompactBorder,
+            ),
+            child: Icon(
+              isCash ? Icons.payments_outlined : Icons.qr_code_2,
+              size: 20,
+              color: AppColors.primaryDark,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -214,7 +270,12 @@ class _RecordCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
-          Text(formatRupiah(record.total), style: theme.textTheme.labelLarge),
+          Text(
+            formatRupiah(record.total),
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontFeatures: AppTypography.tabularFigures,
+            ),
+          ),
         ],
       ),
     );
