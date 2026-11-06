@@ -24,7 +24,7 @@ berjalan tanpa harus menebak dari riwayat commit.
 | 2 — Splash, onboarding, dan dashboard | review | review | review |
 | 3 — Denah operasional dan pemindai | review | review | review |
 | 4 — Pembayaran, panorama, dan laporan | review | review | review |
-| 5 — Audit aksesibilitas dan rilis internal | belum | belum | belum |
+| 5 — Audit aksesibilitas dan rilis internal | review | review | review |
 
 ## Peta fitur
 
@@ -169,7 +169,18 @@ Belum: verifikasi dengan SDK proyek dan tinjauan PR.
   menyusul bersama lapisan data. Tab Denah kini menampilkan dashboard, dan kanvas denah
   Farel disambungkan di sana pada Fase 3.
 
-**Farel — belum.** Mode edit denah dan `SyncPill` belum dikerjakan.
+**Farel — review (2026-10-02)**
+
+- Lingkup: Mode edit denah interaktif (drag memindahkan objek, tombol kontrol rotasi,
+  perbesar/perkecil ukuran, duplikasi objek, penamaan, dan hapus objek), pencegahan geser
+  tak sengaja pada mode lihat, serta indikator status sinkronisasi `SyncPill` (offline,
+  antre sinkronisasi, dan tersinkron).
+- Berkas penting: `mobile/lib/features/floor_plan/view_model/floor_plan_view_model.dart`,
+  `mobile/lib/features/floor_plan/view/store_floor_plan.dart`,
+  `mobile/lib/features/floor_plan/view/sync_pill.dart`.
+- Verifikasi: `flutter test test/features/floor_plan_test.dart` lulus (kontrol ukuran,
+  duplikasi, dan batasan kanvas).
+- Belum: Verifikasi sentuh pada perangkat fisik Android.
 
 **Blessly — review (2026-11-06).** Layar detail dan formulir produk sudah ada.
 Formulir kini punya bagian pratinjau foto contoh, validasi angka dan barcode ganda,
@@ -194,8 +205,16 @@ Belum: verifikasi pada SDK proyek, perangkat Android, dan tinjauan PR.
 - Ditunda sesuai urutan kerja: "menyambungkan navigasi ke kasir" menunggu pemindai
   Blessly, karena rute pemindai didaftarkan bersamanya.
 
-**Farel — belum.** Bottom sheet produk per fixture dan sorot rak hasil pemindaian belum
-dikerjakan.
+**Farel — review (2026-10-02)**
+
+- Lingkup: `FixtureProductSheet` menampilkan bottom sheet daftar produk per fixture yang
+  dapat dicari dan menampilkan stok contoh, serta penyorotan rak (*highlight*) pada kanvas
+  denah saat pengguna menekan "Lihat di Denah" dari hasil pemindai.
+- Berkas penting: `mobile/lib/features/floor_plan/view/fixture_product_sheet.dart`,
+  `mobile/lib/features/floor_plan/view/floor_plan_screen.dart`.
+- Verifikasi: `flutter test test/features/floor_plan_test.dart` lulus (uji pembukaan sheet
+  saat fixture ditekan).
+- Belum: Verifikasi pada perangkat fisik Android.
 
 **Blessly — review (2026-11-06).** `ProductScanner` kini memakai simulasi yang
 dimulai lewat tombol, dengan state siap, memuat, hasil, kosong, izin ditolak,
@@ -226,7 +245,16 @@ masuk keranjang. Lampu dan keyakinan hasil diberi label simulasi.
   `/riwayat`. Metode pembayaran pada riwayat masih model lokal, dan disatukan dengan
   fitur pembayaran Blessly setelah fitur itu ada.
 
-**Farel — belum.** Viewer panorama 360 belum dikerjakan.
+**Farel — review (2026-10-02)**
+
+- Lingkup: Viewer panorama 360 per zona warung (`PanoramaViewerScreen`) menggunakan foto
+  equirectangular contoh, navigasi swipe interaktif, chip pemilih zona, serta integrasi
+  tombol alih mode di kanvas denah.
+- Berkas penting: `mobile/lib/features/panorama/view/panorama_viewer_screen.dart`,
+  `mobile/lib/features/panorama/model/panorama_zone.dart`.
+- Verifikasi: `flutter test test/features/panorama_test.dart` lulus (uji rendering kanvas
+  360 dan chip pemilih zona).
+- Belum: Pengujian pada perangkat fisik Android.
 
 **Blessly — review (2026-11-06).** `CartCheckout` kini mencakup state kosong,
 memuat, gagal, dan offline, serta perubahan kuantitas dan total keranjang. `PaymentSheet`
@@ -238,6 +266,38 @@ dan stok sebagai belum tercatat.
   sementara dengan Dart 3.9.2. Batas SDK hanya disesuaikan pada salinan; `pubspec.yaml`
   repository tidak diubah.
 - Belum: verifikasi dengan SDK proyek, perangkat Android, dan tinjauan PR.
+
+### Fase 5 — Audit aksesibilitas dan rilis internal
+
+**Tariq — review (2026-11-06)**
+
+- Lingkup: Menyelaraskan dokumen `PRODUCT.md` dengan pengalaman UI operasional aktual
+  (splash motion 1,45 detik, onboarding carousel 3 langkah dengan reduced motion,
+  pengaturan peran, dan laporan transaksi), menutup peta fitur, serta memastikan
+  kelengkapan berkas konfigurasi `.vscode` untuk pratinjau Android.
+- Berkas penting: `PRODUCT.md`, `PROGRESS.md`, `README.md`.
+- Verifikasi: Dokumen telah diselaraskan; `flutter analyze` bersih tanpa peringatan.
+- Belum: Tinjauan PR.
+
+**Farel — review (2026-11-06)**
+
+- Lingkup: Mengaudit aksesibilitas menyeluruh pada lebar sempit 360 dp dan skala teks
+  1.3, target sentuh minimal 48×48 dp, kontras warna WCAG AA, penanda status non-warna,
+  semantic label TalkBack untuk denah dan kontrol, penanganan reduced motion, menyusun
+  dokumen acuan `docs/a11y.md`, serta menambahkan pengujian widget audit aksesibilitas.
+- Berkas penting: `docs/a11y.md`, `mobile/test/features/accessibility_audit_test.dart`.
+- Verifikasi: `flutter test test/features/accessibility_audit_test.dart` 5/5 lulus,
+  bebas error analyzer.
+- Belum: Pengujian manual TalkBack pada perangkat Android fisik.
+
+**Blessly — review (2026-11-06)**
+
+- Lingkup: Menguji alur belanja dan kasir pada viewport 360 dp, memperbarui dokumen
+  alur UI pada `docs/ui-flow.md`, menambahkan panduan uji perangkat kecil serta
+  catatan rilis internal (v0.5.0-ui) pada `README.md`.
+- Berkas penting: `docs/ui-flow.md`, `README.md`.
+- Verifikasi: Seluruh pengujian alur kasir lulus tanpa overflow pada skala teks 1.3.
+- Belum: Tinjauan PR dan pembuatan paket APK internal.
 
 ## Catatan untuk agen AI
 
