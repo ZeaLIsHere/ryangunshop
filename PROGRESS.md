@@ -139,7 +139,12 @@ konstanta template area warung sudah ada. Aset brand ditambahkan:
   `RyanAppLogo.defaultAssetPath` pada splash dan app bar, dengan penanda sementara
   sebagai cadangan bila aset gagal dimuat.
 
-**Farel — belum.** `StoreFloorPlan` mode lihat dan `ModeSwitch` belum dikerjakan.
+**Farel — review (2026-10-02)**
+
+- Lingkup: `StoreFloorPlan` mode lihat (zoom/pan, interaktif) dan `ModeSwitch` (opsi 360° nonaktif saat belum tersedia panorama).
+- Berkas penting: `mobile/lib/features/floor_plan/view/store_floor_plan.dart`, `mobile/lib/features/floor_plan/view/mode_switch.dart`.
+- Verifikasi: (segera diuji dengan analyzer).
+- Belum: Tinjauan PR.
 
 **Blessly — belum.** Pencarian dan filter `ProductCatalog` serta kerangka `ProductForm`
 belum dikerjakan.
