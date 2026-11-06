@@ -5,10 +5,11 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/primary_action.dart';
+import '../../../core/widgets/sample_badge.dart';
 import '../../checkout/model/cart_item.dart';
 import '../model/payment_preview.dart';
 
-/// Layar struk dan konfirmasi keberhasilan pembayaran transaksi kasir.
+/// Ringkasan hasil simulasi, tanpa klaim transaksi atau stok nyata.
 class PaymentSuccessScreen extends StatelessWidget {
   const PaymentSuccessScreen({
     required this.totalAmount,
@@ -30,15 +31,11 @@ class PaymentSuccessScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final now = DateTime.now();
-    final timeStr =
-        '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year} '
-        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-    final trxId =
-        'TRX-${now.year}${now.month}${now.day}-${now.millisecondsSinceEpoch.toString().substring(8)}';
+    final isCash = method == PaymentMethod.cash;
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
+      appBar: AppBar(title: const Text('Ringkasan Simulasi')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.screen),
@@ -46,214 +43,95 @@ class PaymentSuccessScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: AppSpacing.md),
-              // Success Icon Animation
               Center(
-                child: Container(
-                  width: 72,
-                  height: 72,
-                  decoration: const BoxDecoration(
-                    color: AppColors.success,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.check, color: Colors.white, size: 44),
+                child: Icon(
+                  isCash ? Icons.check_circle_outline : Icons.info_outline,
+                  size: AppSpacing.minTouchTarget,
+                  color: isCash ? AppColors.success : AppColors.primary,
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(
-                'Pembayaran Berhasil!',
+                isCash ? 'Simulasi Tunai Selesai' : 'Status QRIS Contoh',
                 textAlign: TextAlign.center,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.ink,
-                ),
+                style: theme.textTheme.headlineSmall,
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: AppSpacing.xs),
               Text(
-                'Transaksi telah dicatat dan stok warung diperbarui.',
+                'Pratinjau ini tidak mencatat transaksi, mengubah stok, atau mengirim pembayaran.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: AppColors.muted,
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
-
-              // Digital Receipt Card
               Container(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                decoration: BoxDecoration(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: const BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: AppRadius.panelBorder,
-                  border: Border.all(color: AppColors.primaryLight),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryDark.withValues(alpha: 0.06),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Center(
-                      child: Column(
-                        children: [
-                          Text(
-                            'RyanGunshop',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          const Text(
-                            'Warung & Kelontong Modern',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppColors.muted,
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.xs),
-                          Text(
-                            'No. Struk: $trxId',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.ink,
-                            ),
-                          ),
-                          Text(
-                            timeStr,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: AppColors.muted,
-                            ),
-                          ),
-                        ],
-                      ),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: SampleBadge(label: 'Ringkasan contoh'),
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    const Divider(height: 1),
-                    const SizedBox(height: AppSpacing.sm),
-
-                    // Itemized list
+                    Text('Daftar Barang', style: theme.textTheme.titleMedium),
+                    const SizedBox(height: AppSpacing.xs),
                     for (final item in items) ...[
                       Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.xxs,
+                        ),
                         child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    item.productName,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  Text(
-                                    '${item.quantity} x ${formatRupiah(item.unitPrice)}',
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: AppColors.muted,
-                                    ),
-                                  ),
-                                ],
+                              child: Text(
+                                '${item.productName} (${item.quantity} × ${formatRupiah(item.unitPrice)})',
+                                style: theme.textTheme.bodyMedium,
                               ),
                             ),
+                            const SizedBox(width: AppSpacing.xs),
                             Text(
                               formatRupiah(item.subtotal),
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: theme.textTheme.bodyMedium,
                             ),
                           ],
                         ),
                       ),
                     ],
-
                     const SizedBox(height: AppSpacing.sm),
-                    const Divider(height: 1),
-                    const SizedBox(height: AppSpacing.sm),
-
-                    // Payment summary
-                    _ReceiptRow(
-                      label: 'Total Pembayaran',
+                    const Divider(),
+                    _SummaryRow(
+                      label: 'Total',
                       value: formatRupiah(totalAmount),
-                      isBold: true,
+                      prominent: true,
                     ),
-                    const SizedBox(height: 4),
-                    _ReceiptRow(
-                      label: 'Metode Pembayaran',
-                      value: method == PaymentMethod.cash
-                          ? 'Tunai'
-                          : 'QRIS Dinamis',
+                    const SizedBox(height: AppSpacing.xs),
+                    _SummaryRow(
+                      label: 'Metode',
+                      value: isCash ? 'Tunai (contoh)' : 'QRIS (contoh)',
                     ),
-                    if (method == PaymentMethod.cash &&
-                        cashReceived != null) ...[
-                      const SizedBox(height: 4),
-                      _ReceiptRow(
-                        label: 'Uang Diterima',
+                    if (isCash && cashReceived != null) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      _SummaryRow(
+                        label: 'Uang diterima',
                         value: formatRupiah(cashReceived!),
                       ),
-                      const SizedBox(height: 4),
-                      _ReceiptRow(
+                      const SizedBox(height: AppSpacing.xs),
+                      _SummaryRow(
                         label: 'Kembalian',
                         value: formatRupiah(changeAmount ?? 0),
-                        valueColor: AppColors.success,
-                        isBold: true,
+                        prominent: true,
                       ),
                     ],
                   ],
                 ),
               ),
-
               const SizedBox(height: AppSpacing.lg),
-
-              // Action buttons: Print & Share
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.print_outlined),
-                      label: const Text('Cetak Struk'),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Mengirim struk ke Printer Thermal Bluetooth...',
-                            ),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.share_outlined),
-                      label: const Text('Bagikan'),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Tautan struk digital disalin'),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: AppSpacing.sm),
-
-              // Finish and New Transaction
               PrimaryAction(
                 label: 'Transaksi Baru',
                 icon: Icons.add_shopping_cart,
@@ -270,43 +148,36 @@ class PaymentSuccessScreen extends StatelessWidget {
   }
 }
 
-class _ReceiptRow extends StatelessWidget {
-  const _ReceiptRow({
+class _SummaryRow extends StatelessWidget {
+  const _SummaryRow({
     required this.label,
     required this.value,
-    this.isBold = false,
-    this.valueColor,
+    this.prominent = false,
   });
 
   final String label;
   final String value;
-  final bool isBold;
-  final Color? valueColor;
+  final bool prominent;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Flexible(
+        Expanded(
           child: Text(
             label,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 13,
-              color: isBold ? AppColors.ink : AppColors.muted,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-            ),
+            style: prominent
+                ? theme.textTheme.titleSmall
+                : theme.textTheme.bodyMedium,
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacing.xs),
         Text(
           value,
-          style: TextStyle(
-            fontSize: 13,
-            color: valueColor ?? (isBold ? AppColors.primary : AppColors.ink),
-            fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-          ),
+          style: prominent
+              ? theme.textTheme.titleSmall?.copyWith(color: AppColors.primary)
+              : theme.textTheme.bodyMedium,
         ),
       ],
     );

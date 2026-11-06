@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../catalog/model/catalog_product.dart';
 import '../model/cart_item.dart';
+import '../model/cart_scenario.dart';
 
 /// ViewModel untuk mengelola keranjang transaksi kasir.
 class CartViewModel extends ChangeNotifier {
@@ -24,10 +25,12 @@ class CartViewModel extends ChangeNotifier {
 
   int _discount = 0;
   String _note = '';
+  CartScenario _scenario = CartScenario.ready;
 
   List<CartItem> get items => List.unmodifiable(_items);
   int get discount => _discount;
   String get note => _note;
+  CartScenario get scenario => _scenario;
 
   int get totalItems => _items.fold(0, (sum, item) => sum + item.quantity);
 
@@ -39,6 +42,14 @@ class CartViewModel extends ChangeNotifier {
   }
 
   bool get isEmpty => _items.isEmpty;
+
+  void selectScenario(CartScenario scenario) {
+    if (_scenario == scenario) return;
+    _scenario = scenario;
+    notifyListeners();
+  }
+
+  void resetScenario() => selectScenario(CartScenario.ready);
 
   void addProduct(CatalogProduct product, {int quantity = 1}) {
     final index = _items.indexWhere((item) => item.productId == product.id);
