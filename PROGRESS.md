@@ -228,7 +228,16 @@ masuk keranjang. Lampu dan keyakinan hasil diberi label simulasi.
 
 **Farel — belum.** Viewer panorama 360 belum dikerjakan.
 
-**Blessly — belum.** `CartCheckout` dan `PaymentSheet` belum dikerjakan.
+**Blessly — review (2026-11-06).** `CartCheckout` kini mencakup state kosong,
+memuat, gagal, dan offline, serta perubahan kuantitas dan total keranjang. `PaymentSheet`
+mempratinjau pembayaran tunai dengan kembalian dan seluruh state QRIS; QRIS contoh tidak
+menyelesaikan transaksi atau mengosongkan keranjang. Ringkasan tunai menandai transaksi
+dan stok sebagai belum tercatat.
+
+- Verifikasi: `flutter analyze` bersih dan `flutter test` 79/79 lulus pada salinan
+  sementara dengan Dart 3.9.2. Batas SDK hanya disesuaikan pada salinan; `pubspec.yaml`
+  repository tidak diubah.
+- Belum: verifikasi dengan SDK proyek, perangkat Android, dan tinjauan PR.
 
 ## Catatan untuk agen AI
 

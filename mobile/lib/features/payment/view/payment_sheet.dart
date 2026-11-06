@@ -1,17 +1,19 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/format/rupiah.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/primary_action.dart';
+import '../../../core/widgets/sample_badge.dart';
 import '../../checkout/model/cart_item.dart';
 import '../model/payment_preview.dart';
+import '../sample/payment_sample.dart';
+import '../view_model/payment_view_model.dart';
 import 'payment_success_screen.dart';
 
-/// Bottom sheet pemilihan dan proses pembayaran kasir (Tunai & QRIS).
+/// Pratinjau metode tunai dan state QRIS tanpa pemrosesan pembayaran nyata.
 class PaymentSheet extends StatefulWidget {
   const PaymentSheet({
     required this.totalAmount,
@@ -22,10 +24,9 @@ class PaymentSheet extends StatefulWidget {
 
   final int totalAmount;
   final List<CartItem> cartItems;
-  final VoidCallback? onPaymentCompleted;
 
-  /// Gambar QRIS contoh untuk pratinjau pembayaran; belum terhubung gateway.
-  static const String qrisSampleAsset = 'assets/branding/QRIS.jpeg';
+  /// Dipanggil hanya setelah kasir menyelesaikan simulasi tunai secara eksplisit.
+  final VoidCallback? onPaymentCompleted;
 
   static Future<void> show(
     BuildContext context, {
@@ -36,10 +37,12 @@ class PaymentSheet extends StatefulWidget {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Padding(
+      useSafeArea: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(borderRadius: AppRadius.sheetBorder),
+      builder: (sheetContext) => Padding(
         padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
+          bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
         ),
         child: PaymentSheet(
           totalAmount: totalAmount,
@@ -55,60 +58,43 @@ class PaymentSheet extends StatefulWidget {
 }
 
 class _PaymentSheetState extends State<PaymentSheet> {
-  PaymentMethod _selectedMethod = PaymentMethod.cash;
+  late final PaymentViewModel _viewModel;
   final TextEditingController _cashController = TextEditingController();
-  int _cashReceived = 0;
-
-  // QRIS states
-  QrisStatus _qrisStatus = QrisStatus.awaitingPayment;
-  int _qrisCountdownSeconds = 300; // 5 menit
-  Timer? _qrisTimer;
 
   @override
   void initState() {
     super.initState();
-    _cashReceived = widget.totalAmount;
-    _cashController.text = widget.totalAmount.toString();
-    _startQrisTimer();
-  }
-
-  void _startQrisTimer() {
-    _qrisTimer?.cancel();
-    _qrisTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_qrisCountdownSeconds > 0) {
-        if (mounted) {
-          setState(() => _qrisCountdownSeconds--);
-        }
-      } else {
-        timer.cancel();
-        if (mounted) {
-          setState(() => _qrisStatus = QrisStatus.expired);
-        }
-      }
-    });
+    _viewModel = PaymentViewModel(totalAmount: widget.totalAmount);
   }
 
   @override
   void dispose() {
-    _qrisTimer?.cancel();
     _cashController.dispose();
+    _viewModel.dispose();
     super.dispose();
   }
 
-  int get _changeAmount => _cashReceived - widget.totalAmount;
-  bool get _isCashValid => _cashReceived >= widget.totalAmount;
+  void _chooseCashAmount(int amount) {
+    _cashController.text = amount.toString();
+    _viewModel.chooseCashAmount(amount);
+  }
 
-  void _completePayment(PaymentMethod method) {
+  void _completeCashPreview() {
+    if (!_viewModel.canCompleteCash) return;
+    final navigator = Navigator.of(context);
+    final items = List<CartItem>.of(widget.cartItems);
+    final cashReceived = _viewModel.cashReceived!;
+    final change = _viewModel.change!;
     widget.onPaymentCompleted?.call();
-    Navigator.of(context).pop(); // Tutup sheet
-    Navigator.of(context).push(
+    navigator.pop();
+    navigator.push(
       MaterialPageRoute<void>(
         builder: (_) => PaymentSuccessScreen(
           totalAmount: widget.totalAmount,
-          method: method,
-          items: widget.cartItems,
-          cashReceived: method == PaymentMethod.cash ? _cashReceived : null,
-          changeAmount: method == PaymentMethod.cash ? _changeAmount : null,
+          method: PaymentMethod.cash,
+          items: items,
+          cashReceived: cashReceived,
+          changeAmount: change,
         ),
       ),
     );
@@ -118,418 +104,298 @@ class _PaymentSheetState extends State<PaymentSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
-      ),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: AppRadius.sheetBorder,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Drag handle
-          Center(
-            child: Container(
-              margin: const EdgeInsets.only(
-                top: AppSpacing.sm,
-                bottom: AppSpacing.xs,
+    return ListenableBuilder(
+      listenable: _viewModel,
+      builder: (context, _) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.88,
+        ),
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: AppRadius.sheetBorder,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: AppSpacing.sm),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.screen,
               ),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.muted.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-
-          // Total Tagihan Header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screen),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Total Pembayaran',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.centerLeft,
-                        child: Text(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Total Pembayaran',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                        Text(
                           formatRupiah(widget.totalAmount),
-                          style: theme.textTheme.headlineMedium?.copyWith(
+                          style: theme.textTheme.headlineSmall?.copyWith(
                             color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  tooltip: 'Tutup',
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    tooltip: 'Tutup Pembayaran',
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-
-          // Method Selector Tabs
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screen),
-            child: SegmentedButton<PaymentMethod>(
-              segments: const [
-                ButtonSegment(
-                  value: PaymentMethod.cash,
-                  label: Text('Tunai (Cash)'),
-                  icon: Icon(Icons.money),
-                ),
-                ButtonSegment(
-                  value: PaymentMethod.qris,
-                  label: Text('QRIS Dinamis'),
-                  icon: Icon(Icons.qr_code_2),
-                ),
-              ],
-              selected: {_selectedMethod},
-              onSelectionChanged: (set) {
-                setState(() => _selectedMethod = set.first);
-              },
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: AppSpacing.screen),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: SampleBadge(label: 'Simulasi pembayaran'),
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          const Divider(height: 1),
-
-          // Tab Content
-          Flexible(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSpacing.screen),
-              child: _selectedMethod == PaymentMethod.cash
-                  ? _buildCashView(theme)
-                  : _buildQrisView(theme),
+            const SizedBox(height: AppSpacing.md),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.screen,
+              ),
+              child: SegmentedButton<PaymentMethod>(
+                segments: const [
+                  ButtonSegment(
+                    value: PaymentMethod.cash,
+                    label: Text('Tunai'),
+                    icon: Icon(Icons.payments_outlined),
+                  ),
+                  ButtonSegment(
+                    value: PaymentMethod.qris,
+                    label: Text('QRIS'),
+                    icon: Icon(Icons.qr_code_2),
+                  ),
+                ],
+                selected: {_viewModel.method},
+                onSelectionChanged: (selection) {
+                  _viewModel.selectMethod(selection.first);
+                },
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: AppSpacing.xs),
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(AppSpacing.screen),
+                child: _viewModel.method == PaymentMethod.cash
+                    ? _buildCashView(context)
+                    : _buildQrisView(context),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildCashView(ThemeData theme) {
+  Widget _buildCashView(BuildContext context) {
+    final theme = Theme.of(context);
+    final received = _viewModel.cashReceived;
+    final valid = _viewModel.canCompleteCash;
+    final insufficient = received != null && !valid;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          'Uang Diterima',
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        Text('Uang Diterima', style: theme.textTheme.titleMedium),
         const SizedBox(height: AppSpacing.xs),
         TextField(
           controller: _cashController,
           keyboardType: TextInputType.number,
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-          decoration: InputDecoration(
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          decoration: const InputDecoration(
+            labelText: 'Nominal uang diterima',
             prefixText: 'Rp ',
-            prefixStyle: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-            ),
-            border: OutlineInputBorder(borderRadius: AppRadius.controlBorder),
+            hintText: 'Masukkan nominal',
           ),
-          onChanged: (val) {
-            final parsed = int.tryParse(val.replaceAll(RegExp(r'\D'), '')) ?? 0;
-            setState(() => _cashReceived = parsed);
-          },
+          onChanged: _viewModel.setCashInput,
         ),
         const SizedBox(height: AppSpacing.sm),
-
-        // Quick amount chip buttons
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: AppSpacing.xs,
+          runSpacing: AppSpacing.xs,
           children: [
             ActionChip(
               label: const Text('Uang Pas'),
-              onPressed: () {
-                setState(() {
-                  _cashReceived = widget.totalAmount;
-                  _cashController.text = widget.totalAmount.toString();
-                });
-              },
+              onPressed: () => _chooseCashAmount(widget.totalAmount),
             ),
-            for (final amount in [20000, 50000, 100000, 200000])
-              if (amount >= widget.totalAmount || amount == 20000)
+            for (final amount in PaymentSample.quickCashAmounts)
+              if (amount >= widget.totalAmount)
                 ActionChip(
                   label: Text(formatRupiah(amount)),
-                  onPressed: () {
-                    setState(() {
-                      _cashReceived = amount;
-                      _cashController.text = amount.toString();
-                    });
-                  },
+                  onPressed: () => _chooseCashAmount(amount),
                 ),
           ],
         ),
-
         const SizedBox(height: AppSpacing.lg),
-
-        // Kembalian Display Card
         Container(
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            color: _isCashValid
+            color: valid
                 ? AppColors.success.withValues(alpha: 0.1)
-                : AppColors.error.withValues(alpha: 0.1),
+                : insufficient
+                ? AppColors.error.withValues(alpha: 0.1)
+                : AppColors.canvas,
             borderRadius: AppRadius.controlBorder,
-            border: Border.all(
-              color: _isCashValid
-                  ? AppColors.success.withValues(alpha: 0.3)
-                  : AppColors.error.withValues(alpha: 0.3),
-            ),
           ),
           child: Row(
             children: [
-              Expanded(
-                child: Text(
-                  _isCashValid ? 'Kembalian' : 'Uang Kurang',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: _isCashValid ? AppColors.success : AppColors.error,
-                  ),
-                ),
+              Icon(
+                valid
+                    ? Icons.check_circle_outline
+                    : insufficient
+                    ? Icons.warning_amber_rounded
+                    : Icons.info_outline,
+                color: valid
+                    ? AppColors.success
+                    : insufficient
+                    ? AppColors.error
+                    : AppColors.muted,
               ),
               const SizedBox(width: AppSpacing.xs),
-              Flexible(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    formatRupiah(_isCashValid ? _changeAmount : -_changeAmount),
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: _isCashValid ? AppColors.success : AppColors.error,
-                    ),
-                  ),
+              Expanded(
+                child: Text(
+                  valid
+                      ? 'Kembalian: ${formatRupiah(_viewModel.change!)}'
+                      : insufficient
+                      ? 'Uang kurang: ${formatRupiah(widget.totalAmount - received)}'
+                      : 'Masukkan uang diterima untuk menghitung kembalian.',
+                  style: theme.textTheme.bodyMedium,
                 ),
               ),
             ],
           ),
         ),
-
         const SizedBox(height: AppSpacing.lg),
-
         PrimaryAction(
-          label: 'Selesaikan Pembayaran Tunai',
+          label: 'Selesaikan Simulasi Tunai',
           icon: Icons.check,
-          onPressed: _isCashValid
-              ? () => _completePayment(PaymentMethod.cash)
-              : null,
+          onPressed: valid ? _completeCashPreview : null,
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          'Simulasi ini tidak mencatat transaksi atau mengurangi stok.',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodySmall?.copyWith(color: AppColors.muted),
         ),
       ],
     );
   }
 
-  Widget _buildQrisView(ThemeData theme) {
-    final minutes = (_qrisCountdownSeconds ~/ 60).toString().padLeft(2, '0');
-    final seconds = (_qrisCountdownSeconds % 60).toString().padLeft(2, '0');
+  Widget _buildQrisView(BuildContext context) {
+    final theme = Theme.of(context);
+    final status = _viewModel.qrisStatus;
+    final (icon, color, title, description) = switch (status) {
+      QrisStatus.creating => (
+        Icons.hourglass_top_outlined,
+        AppColors.primary,
+        'Membuat QRIS contoh',
+        'Tahap ini hanya pratinjau; tidak ada permintaan ke penyedia pembayaran.',
+      ),
+      QrisStatus.awaitingPayment => (
+        Icons.schedule_outlined,
+        AppColors.warning,
+        'Menunggu pembayaran contoh',
+        'Tidak ada QR yang dapat dibayar atau status yang diverifikasi.',
+      ),
+      QrisStatus.paid => (
+        Icons.info_outline,
+        AppColors.success,
+        'Status dibayar (simulasi)',
+        'Status ini hanya contoh. Keranjang tidak diubah dan transaksi tidak diselesaikan.',
+      ),
+      QrisStatus.expired => (
+        Icons.timer_off_outlined,
+        AppColors.error,
+        'QRIS contoh kedaluwarsa',
+        'Ulangi pratinjau atau pilih tunai untuk mencoba alur pembayaran.',
+      ),
+      QrisStatus.failed => (
+        Icons.error_outline,
+        AppColors.error,
+        'QRIS contoh gagal',
+        'Tidak ada pembayaran yang diproses. Coba ulang pratinjau.',
+      ),
+    };
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Center(
+        Row(
+          children: [
+            Icon(icon, color: color),
+            const SizedBox(width: AppSpacing.xs),
+            Expanded(child: Text(title, style: theme.textTheme.titleMedium)),
+            PopupMenuButton<QrisStatus>(
+              tooltip: 'Pilih Status QRIS Contoh',
+              icon: const Icon(Icons.tune),
+              onSelected: _viewModel.selectQrisStatus,
+              itemBuilder: (context) => const [
+                PopupMenuItem(
+                  value: QrisStatus.creating,
+                  child: Text('Membuat'),
+                ),
+                PopupMenuItem(
+                  value: QrisStatus.awaitingPayment,
+                  child: Text('Menunggu'),
+                ),
+                PopupMenuItem(value: QrisStatus.paid, child: Text('Dibayar')),
+                PopupMenuItem(
+                  value: QrisStatus.expired,
+                  child: Text('Kedaluwarsa'),
+                ),
+                PopupMenuItem(value: QrisStatus.failed, child: Text('Gagal')),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(description, style: theme.textTheme.bodyMedium),
+        const SizedBox(height: AppSpacing.lg),
+        Container(
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          decoration: const BoxDecoration(
+            color: AppColors.canvas,
+            borderRadius: AppRadius.panelBorder,
+          ),
           child: Column(
             children: [
-              Text(
-                'Scan QRIS untuk Membayar',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'RyanGunshop • Merchant ID: RG-009182',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: AppColors.muted,
-                ),
+              const Icon(
+                Icons.qr_code_2,
+                size: AppSpacing.minTouchTarget,
+                color: AppColors.muted,
               ),
               const SizedBox(height: AppSpacing.xs),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: _qrisStatus == QrisStatus.expired
-                      ? AppColors.error.withValues(alpha: 0.1)
-                      : AppColors.primaryLight,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  _qrisStatus == QrisStatus.expired
-                      ? 'Status: QRIS Kadaluarsa'
-                      : 'Status: Menunggu Pembayaran',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: _qrisStatus == QrisStatus.expired
-                        ? AppColors.error
-                        : AppColors.primaryDark,
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.md),
-
-              // Gambar QRIS (contoh) untuk pratinjau pembayaran.
-              Container(
-                width: 220,
-                height: 220,
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: AppRadius.panelBorder,
-                  border: Border.all(color: AppColors.primaryLight, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryDark.withValues(alpha: 0.08),
-                      blurRadius: 14,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: AppRadius.controlBorder,
-                  child: Image.asset(
-                    PaymentSheet.qrisSampleAsset,
-                    fit: BoxFit.contain,
-                    filterQuality: FilterQuality.medium,
-                    errorBuilder: (context, error, stackTrace) => CustomPaint(
-                      painter: _QrisCodePainter(amount: widget.totalAmount),
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: AppSpacing.sm),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.timer_outlined,
-                    size: 16,
-                    color: AppColors.muted,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Berlaku: $minutes:$seconds',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.muted,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.xxs),
               Text(
-                'QR contoh untuk pratinjau',
+                'QRIS contoh tidak dapat dipindai',
                 textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: AppColors.muted,
-                ),
+                style: theme.textTheme.bodyMedium,
               ),
             ],
           ),
         ),
-
         const SizedBox(height: AppSpacing.lg),
-
-        PrimaryAction(
-          label: 'Verifikasi Pembayaran QRIS',
-          icon: Icons.check_circle_outline,
-          onPressed: () => _completePayment(PaymentMethod.qris),
-        ),
+        if (status == QrisStatus.creating)
+          PrimaryAction(
+            label: 'Tampilkan Status Menunggu',
+            icon: Icons.arrow_forward,
+            onPressed: () =>
+                _viewModel.selectQrisStatus(QrisStatus.awaitingPayment),
+          )
+        else if (status == QrisStatus.expired || status == QrisStatus.failed)
+          PrimaryAction(
+            label: 'Ulangi Simulasi QRIS',
+            icon: Icons.refresh,
+            onPressed: () => _viewModel.selectQrisStatus(QrisStatus.creating),
+          ),
       ],
     );
   }
-}
-
-/// Custom painter untuk menggambar pola matriks QRIS dinamis.
-class _QrisCodePainter extends CustomPainter {
-  const _QrisCodePainter({required this.amount});
-
-  final int amount;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final darkPaint = Paint()..color = const Color(0xFF191A2E);
-
-    const int gridSize = 19;
-    final cellSize = size.width / gridSize;
-
-    // Helper draw position finder square
-    void drawFinder(double startX, double startY) {
-      final outerRect = Rect.fromLTWH(
-        startX,
-        startY,
-        cellSize * 5,
-        cellSize * 5,
-      );
-      canvas.drawRect(outerRect, darkPaint);
-
-      final innerWhite = Rect.fromLTWH(
-        startX + cellSize,
-        startY + cellSize,
-        cellSize * 3,
-        cellSize * 3,
-      );
-      canvas.drawRect(innerWhite, Paint()..color = Colors.white);
-
-      final centerDark = Rect.fromLTWH(
-        startX + cellSize * 1.5,
-        startY + cellSize * 1.5,
-        cellSize * 2,
-        cellSize * 2,
-      );
-      canvas.drawRect(centerDark, darkPaint);
-    }
-
-    // Three QR corners
-    drawFinder(0, 0);
-    drawFinder((gridSize - 5) * cellSize, 0);
-    drawFinder(0, (gridSize - 5) * cellSize);
-
-    // Simulated data dots
-    final randomSeed = amount.hashCode;
-    for (int r = 0; r < gridSize; r++) {
-      for (int c = 0; c < gridSize; c++) {
-        // Skip corner finder zones
-        if ((r < 5 && c < 5) ||
-            (r < 5 && c >= gridSize - 5) ||
-            (r >= gridSize - 5 && c < 5)) {
-          continue;
-        }
-
-        if (((r * 7 + c * 13 + randomSeed) % 3) == 0) {
-          final rect = Rect.fromLTWH(
-            c * cellSize + 0.5,
-            r * cellSize + 0.5,
-            cellSize - 1,
-            cellSize - 1,
-          );
-          canvas.drawRect(rect, darkPaint);
-        }
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _QrisCodePainter oldDelegate) =>
-      oldDelegate.amount != amount;
 }

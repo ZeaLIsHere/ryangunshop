@@ -1,6 +1,8 @@
 import '../model/payment_preview.dart';
 
 abstract final class PaymentSample {
+  static const quickCashAmounts = <int>[20000, 50000, 100000, 200000];
+
   static const cash = PaymentPreview(
     total: 23000,
     method: PaymentMethod.cash,
