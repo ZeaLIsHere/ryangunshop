@@ -197,7 +197,20 @@ Belum: verifikasi pada SDK proyek, perangkat Android, dan tinjauan PR.
 **Farel — belum.** Bottom sheet produk per fixture dan sorot rak hasil pemindaian belum
 dikerjakan.
 
-**Blessly — belum.** `ProductScanner` belum dikerjakan.
+**Blessly — review (2026-11-06).** `ProductScanner` kini memakai simulasi yang
+dimulai lewat tombol, dengan state siap, memuat, hasil, kosong, izin ditolak,
+gagal, offline, dan produk masuk keranjang. Pencarian manual tidak memilih
+produk lain ketika kata kunci tidak cocok; hasil harus dikonfirmasi sebelum
+masuk keranjang. Lampu dan keyakinan hasil diberi label simulasi.
+- Berkas penting: `mobile/lib/features/scanner/view/product_scanner_screen.dart`,
+  `.../view/manual_product_search_screen.dart`, dan
+  `.../view_model/scanner_view_model.dart`.
+- Verifikasi salinan sementara dengan Dart 3.9.2: `flutter analyze` bersih,
+  `flutter test` 75/75 lulus, termasuk lebar 360 dp, skala teks 1,3, dan target
+  sentuh. Pada proyek utama, kedua perintah masih tertahan karena SDK lokal
+  3.9.2 tidak memenuhi syarat `^3.13.2`.
+- Belum: verifikasi pada SDK proyek, perangkat Android, tinjauan PR, serta
+  kamera dan deteksi nyata yang memang di luar cakupan UI tahap ini.
 
 ### Fase 4 — Pembayaran, panorama, dan laporan
 
