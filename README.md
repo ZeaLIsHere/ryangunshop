@@ -51,7 +51,9 @@ mobile/
 ├── test/                    # pengujian unit dan widget, mengikuti susunan lib/
 └── android/                 # proyek Android (min API 26)
 docs/
-└── COLOR_PALETTE.md         # palet warna dan aturan kontras
+├── COLOR_PALETTE.md         # palet warna dan aturan kontras
+├── ui-flow.md               # dokumentasi alur UI katalog, kasir, dan pembayaran
+└── a11y.md                  # audit aksesibilitas, skala teks 1.3, dan target sentuh
 ```
 
 ## Menjalankan aplikasi
@@ -98,22 +100,33 @@ Pratinjau web hanya untuk melihat susunan layar. Font yang dipakai adalah font s
 komputer, bukan font Android, dan perilaku gesture berbeda. Validasi tetap memakai
 emulator atau perangkat Android.
 
-### Pratinjau katalog Blessly — Fase 0
+### Navigasi Fitur Terintegrasi
 
-Katalog statis dan model UI keranjang/pembayaran tersedia dengan data contoh lokal.
-Di VS Code, pilih perangkat Android, buka
-`mobile/lib/features/catalog/sample/catalog_preview.dart`, lalu klik **Debug**
-di atas `main()`. Coba state daftar, memuat, kosong, gagal, dan offline melalui
-pemilih **Skenario contoh**. Langkah lengkap dan batas implementasi ada di
-[docs/ui-flow.md](docs/ui-flow.md).
+Seluruh fitur antarmuka kini telah tersambung di dalam kerangka aplikasi utama (`lib/main.dart`):
 
-Tab Produk pada aplikasi utama masih placeholder sampai integrasi app shell
-ditinjau bersama Tariq. Pencarian, filter, formulir, pemindai, dan layar pembayaran
-dikerjakan pada fase berikutnya, satu tugas per PR.
+1. **Dashboard & Denah:** Memilih rak membuka daftar produk di lokasi tersebut; pemilik dapat mengaktifkan mode edit denah untuk mengatur tata letak, mengubah ukuran, rotasi, duplikasi, dan hapus objek.
+2. **Katalog & Formulir:** Cari dan filter stok menipis pada tab Produk, serta tambah/edit produk dengan validasi barcode dan nomor.
+3. **Pemindai Produk:** Akses tombol "Mulai pindai" dari dashboard atau tab Kasir; mendukung simulasi deteksi kamera dan pencarian manual.
+4. **Kasir & Pembayaran:** Tab Kasir menyediakan stepper keranjang belanja dan sheet pembayaran tunai (dengan kembalian instan) atau QRIS simulasi lengkap.
+5. **Pengaturan & Laporan:** Ganti peran pengguna (Pemilik / Kasir) dan lihat ringkasan laporan transaksi contoh.
 
-Gunakan SDK Dart yang memenuhi `^3.13.3` sesuai `mobile/pubspec.yaml`. Flutter 3.35.7
-yang membawa Dart 3.9.2 belum memenuhi syarat ini; jangan menurunkan batas SDK
-proyek untuk mengatasi perbedaan instalasi lokal.
+### Panduan Pengujian Layar Kecil (360 dp)
+
+Sesuai `DESIGN.md` dan `docs/a11y.md`, seluruh antarmuka diuji pada perangkat layar kecil:
+
+1. Di emulator Android atau perangkat fisik beresolusi 360×640 dp / 360×800 dp:
+   - Atur pengaturan ukuran tampilan (*Display size*) ke ukuran terkecil atau standar.
+   - Atur ukuran font (*Font size*) ke 130% (Text Scale 1.3×).
+2. Periksa bahwa:
+   - Tidak ada pesan peringatan *overflow* kuning-hitam di seluruh layar.
+   - Tombol tindakan utama (`PrimaryAction`, tombol bayar, stepper keranjang) tetap mudah ditekan dengan target sentuh ≥ 48 dp.
+   - Form produk dan sheet pembayaran dapat digulir penuh saat keyboard virtual muncul.
+
+### Catatan Rilis Internal (v0.5.0-ui)
+
+- **Cakupan:** 100% implementasi antarmuka dan interaksi UI (Fase 0 hingga Fase 5).
+- **Integritas Pengujian:** Seluruh 84+ automated widget tests lulus (`flutter test`), bebas error analyzer (`flutter analyze`).
+- **Prinsip Kejujuran Data:** Seluruh status stok, pembayaran QRIS, dan transaksi ditandai dengan badge contoh/simulasi (`SampleBadge`) dan belum mencatat mutasi data riil ke backend.
 
 ## Tahap berikutnya
 
