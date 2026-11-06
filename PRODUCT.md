@@ -20,25 +20,40 @@ teknis.
 
 ## Core Experience
 
-Dashboard merepresentasikan tata letak warung. RyanGunshop menyediakan template
-berisi area dinding, lorong, rak, lemari, kulkas, dan meja kasir. Pemilik dapat
-menambah, memindahkan, memutar, mengubah ukuran, memberi nama, dan menghubungkan
-produk ke setiap objek.
+Pengalaman pengguna RyanGunshop dibangun di atas alur operasional warung yang efisien:
 
-Denah adalah navigasi operasional, bukan dekorasi. Memilih suatu objek harus
-menampilkan barang dan status stok di lokasi tersebut. Hasil scan produk dapat
-menyorot lokasi raknya. Mode panorama 360 derajat adalah viewer tambahan yang
-terhubung ke zona denah; transaksi tetap dapat dilakukan tanpa panorama.
-
-Alur pembayaran dimulai setelah barang dikonfirmasi dan masuk keranjang:
-
-1. aplikasi menghitung total dari harga lokal yang tersimpan;
-2. kasir memilih tunai atau QRIS;
-3. tunai mencatat jumlah diterima dan kembalian;
-4. QRIS dinamis dibuat oleh payment gateway untuk nominal transaksi dan merchant
-   yang telah didaftarkan;
-5. transaksi QRIS baru dianggap berhasil setelah webhook provider tervalidasi;
-6. penyimpanan transaksi dan pengurangan stok dilakukan secara atomik.
+1. **Pembuka dan Orientasi:**
+   Splash screen menyajikan animasi logo berdurasi 1,45 detik menuju dashboard (atau onboarding
+   tiga langkah pengenalan visual bagi pengguna baru yang dapat dilewati dan mendukung reduced motion).
+2. **Denah dan Tata Letak Ruang:**
+   Dashboard merepresentasikan tata letak fisik warung melalui template kanvas 2D interaktif (dinding,
+   lorong, rak, lemari, kulkas, dan meja kasir). Denah berfungsi sebagai alat navigasi operasional:
+   memilih suatu objek akan menampilkan barang dan ketersediaan stok di lokasi tersebut. Hasil scan
+   produk dapat menyorot lokasi raknya secara instan.
+3. **Mode Edit Denah Khusus Pemilik:**
+   Pemilik warung dapat menambah, memindahkan (drag), memutar, mengubah ukuran, menduplikasi, memberi
+   nama, dan menghapus objek ruang pada denah, dengan batas kanvas yang aman dan proteksi terhadap
+   sentuhan kasir yang tidak sengaja.
+4. **Viewer Panorama 360 Derajat:**
+   Sebagai pendukung visualisasi spasial, denah terhubung ke foto panorama 360° per zona warung,
+   memberikan gambaran nyata kondisi rak tanpa membebani performa perangkat kelas bawah.
+5. **Katalog Produk dan Pencarian:**
+   Pencarian teks instan, filter kategori, pengurutan, peringatan stok menipis, serta formulir produk
+   mobile satu kolom dengan validasi kode batang dan penempatan rak warung.
+6. **Pemindai Produk & Pencarian Manual:**
+   Kamera layar penuh dengan bingkai bidik terarah dan konfirmasi eksplisit sebelum barang masuk
+   keranjang, dilengkapi jalan keluar pencarian manual jika kamera atau barcode bermasalah.
+7. **Transaksi dan Kasir:**
+   Alur pembayaran dimulai setelah barang dikonfirmasi dan masuk ke keranjang:
+   - aplikasi menghitung total belanja dari harga lokal yang tersimpan;
+   - kasir memilih metode tunai atau QRIS;
+   - tunai menyediakan opsi uang pas/cepat serta menghitung uang kembalian secara otomatis;
+   - QRIS dinamis dibuat oleh payment gateway untuk nominal transaksi dan merchant yang terdaftar;
+   - transaksi QRIS baru dianggap berhasil setelah webhook provider tervalidasi;
+   - penyimpanan transaksi dan pengurangan stok dilakukan secara atomik.
+8. **Pengaturan Peran dan Laporan:**
+   Pemisahan hak akses antara Pemilik dan Kasir, serta ringkasan riwayat transaksi harian/mingguan
+   untuk memantau perputaran omzet warung.
 
 ## Personality
 
