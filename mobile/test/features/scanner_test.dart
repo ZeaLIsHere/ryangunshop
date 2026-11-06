@@ -5,7 +5,7 @@ import 'package:ryangunshop/core/theme/app_theme.dart';
 import 'package:ryangunshop/features/scanner/view/product_scanner_screen.dart';
 
 void main() {
-  testWidgets('ProductScannerScreen menampilkan kontrol dan tombol barcode manual', (
+  testWidgets('Pratinjau pemindai menyediakan pencarian manual', (
     tester,
   ) async {
     _usePhoneViewport(tester);
@@ -23,15 +23,14 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.byTooltip('Input Manual'), findsOneWidget);
-    expect(find.byTooltip('Nyalakan Lampu'), findsOneWidget);
+    expect(find.byTooltip('Cari Produk Manual'), findsOneWidget);
+    expect(find.byTooltip('Nyalakan Lampu Simulasi'), findsOneWidget);
 
-    // Buka input manual barcode dialog
-    await tester.tap(find.byTooltip('Input Manual'));
+    await tester.tap(find.byTooltip('Cari Produk Manual'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.text('Input Barcode Manual'), findsOneWidget);
+    expect(find.text('Cari Produk Manual'), findsWidgets);
   });
 }
 
