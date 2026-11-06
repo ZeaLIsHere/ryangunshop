@@ -12,6 +12,7 @@ class CatalogProduct {
     this.costPrice = 0,
     this.barcode,
     this.lowStockThreshold = 5,
+    this.hasSamplePhoto = false,
   }) : assert(price >= 0),
        assert(stock >= 0),
        assert(lowStockThreshold >= 0),
@@ -38,6 +39,9 @@ class CatalogProduct {
   double get marginPercent => price == 0 ? 0 : margin / price * 100;
   final String? barcode;
   final int lowStockThreshold;
+
+  /// Penanda pratinjau foto contoh; belum menyimpan berkas gambar.
+  final bool hasSamplePhoto;
 
   ProductStockStatus get stockStatus {
     if (stock == 0) return ProductStockStatus.empty;

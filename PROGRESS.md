@@ -121,7 +121,7 @@ konstanta template area warung sudah ada. Aset brand ditambahkan:
 - Sudah dilanjutkan Tariq: `ProductCatalog` disambungkan ke tab Katalog pada branch
   `feat/ui-shell-integrasi-katalog`, beserta test integrasinya.
 - Belum: verifikasi pada SDK sesuai proyek dan pratinjau pada perangkat Android.
-  Pencarian, filter, dan formulir tetap tugas Fase 1 berikutnya.
+  Pencarian, filter, dan formulir kini dicatat pada Fase 1–2 di bawah.
 
 ### Fase 1 — Kerangka aplikasi dan komponen dasar
 
@@ -146,8 +146,10 @@ konstanta template area warung sudah ada. Aset brand ditambahkan:
 - Verifikasi: (segera diuji dengan analyzer).
 - Belum: Tinjauan PR.
 
-**Blessly — belum.** Pencarian dan filter `ProductCatalog` serta kerangka `ProductForm`
-belum dikerjakan.
+**Blessly — review (2026-11-06).** Pencarian, filter, dan urutan katalog sudah
+tersedia; kerangka `ProductForm` sudah terhubung ke alur tambah/edit produk. Widget
+test katalog dan validasi formulir berjalan pada salinan pratinjau sementara.
+Belum: verifikasi dengan SDK proyek dan tinjauan PR.
 
 ### Fase 2 — Splash, onboarding, dan dashboard
 
@@ -169,7 +171,14 @@ belum dikerjakan.
 
 **Farel — belum.** Mode edit denah dan `SyncPill` belum dikerjakan.
 
-**Blessly — belum.** `ProductForm` lengkap dan layar detail produk belum dikerjakan.
+**Blessly — review (2026-11-06).** Layar detail dan formulir produk sudah ada.
+Formulir kini punya bagian pratinjau foto contoh, validasi angka dan barcode ganda,
+serta susunan input satu kolom untuk layar kecil. Pratinjau foto belum memilih atau
+menyimpan berkas gambar. Pada salinan sementara dengan Dart 3.9.2,
+`flutter analyze` bersih dan `flutter test` 71/71 lulus; pratinjau Chrome dapat
+dijalankan. Pada proyek utama, kedua perintah belum dapat melewati resolusi
+dependensi karena SDK lokal 3.9.2 tidak memenuhi syarat `^3.13.2`.
+Belum: verifikasi pada SDK proyek, perangkat Android, dan tinjauan PR.
 
 ### Fase 3 — Denah operasional dan pemindai
 

@@ -46,7 +46,10 @@ class _ProductCatalogState extends State<ProductCatalog> {
   void _openProductForm([CatalogProduct? product]) async {
     final result = await Navigator.of(context).push<CatalogProduct>(
       MaterialPageRoute(
-        builder: (_) => ProductFormScreen(initialProduct: product),
+        builder: (_) => ProductFormScreen(
+          initialProduct: product,
+          existingProducts: _viewModel.allProducts,
+        ),
       ),
     );
 
@@ -63,6 +66,7 @@ class _ProductCatalogState extends State<ProductCatalog> {
     ProductDetailSheet.show(
       context,
       product: product,
+      existingProducts: _viewModel.allProducts,
       onProductUpdated: (updated) {
         _viewModel.updateProduct(updated);
       },
@@ -272,7 +276,8 @@ class _ProductCatalogState extends State<ProductCatalog> {
             icon: Icons.inventory_2_outlined,
             color: AppColors.muted,
             title: 'Belum ada produk',
-            description: 'Katalog produk warung masih kosong. Tambahkan produk baru sekarang.',
+            description:
+                'Katalog produk warung masih kosong. Tambahkan produk baru sekarang.',
           ),
           const SizedBox(height: AppSpacing.md),
           PrimaryAction(
@@ -287,7 +292,8 @@ class _ProductCatalogState extends State<ProductCatalog> {
             icon: Icons.error_outline,
             color: AppColors.error,
             title: 'Katalog gagal dimuat',
-            description: 'Terjadi kendala saat membaca data produk dari penyimpanan lokal.',
+            description:
+                'Terjadi kendala saat membaca data produk dari penyimpanan lokal.',
           ),
           const SizedBox(height: AppSpacing.md),
           PrimaryAction(
@@ -304,7 +310,8 @@ class _ProductCatalogState extends State<ProductCatalog> {
               icon: Icons.cloud_off_outlined,
               color: AppColors.warning,
               title: 'Mode Offline',
-              description: 'Katalog offline aktif. Semua produk tersimpan lokal dan siap ditransaksikan.',
+              description:
+                  'Katalog offline aktif. Semua produk tersimpan lokal dan siap ditransaksikan.',
             ),
             const SizedBox(height: AppSpacing.md),
           ],
@@ -326,8 +333,9 @@ class _ProductCatalogState extends State<ProductCatalog> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.right,
-                  style: Theme.of(context).textTheme.bodySmall
-                      ?.copyWith(color: AppColors.muted),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: AppColors.muted),
                 ),
               ),
             ],
