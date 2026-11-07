@@ -6,7 +6,6 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/primary_action.dart';
 import '../../../core/widgets/sample_badge.dart';
-import '../../floor_plan/sample/floor_plan_sample.dart';
 import '../model/catalog_product.dart';
 import '../sample/catalog_sample.dart';
 
@@ -85,11 +84,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   void _saveProduct() {
     if (!_formKey.currentState!.validate()) return;
 
-    final fixture = FloorPlanSample.defaultFixtures.firstWhere(
-      (f) => f.id == _selectedFixtureId,
-      orElse: () => FloorPlanSample.defaultFixtures.first,
-    );
-
     final product = CatalogProduct(
       id:
           widget.initialProduct?.id ??
@@ -99,7 +93,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       stock: int.parse(_stockController.text.trim()),
       unit: _selectedUnit,
       fixtureId: _selectedFixtureId,
-      locationLabel: fixture.name,
+      locationLabel: widget.initialProduct?.locationLabel ?? 'Etalase Toko',
       category: _selectedCategory,
       costPrice: int.tryParse(_costPriceController.text.trim()) ?? 0,
       barcode: _barcodeController.text.trim().isEmpty
@@ -168,9 +162,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                                     _hasSamplePhoto
                                         ? 'Pratinjau foto contoh aktif'
                                         : 'Belum ada foto produk',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodyMedium,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium,
                                   ),
                                 ),
                               ],
@@ -380,50 +374,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                           return int.tryParse(value.trim()) == null
                               ? 'Masukkan batas stok berupa angka'
                               : null;
-                        },
-                      ),
-                      const SizedBox(height: AppSpacing.lg),
-
-                      // Section 4: Penempatan Denah
-                      _SectionHeader(
-                        number: '4',
-                        title: 'Lokasi Rak & Denah',
-                        subtitle: 'Tautkan produk ke objek rak di denah warung',
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      DropdownButtonFormField<String>(
-                        initialValue: _selectedFixtureId,
-                        isExpanded: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Pilih Rak / Fixture',
-                          prefixIcon: Icon(Icons.table_rows_outlined),
-                        ),
-                        items: [
-                          for (final fixture in FloorPlanSample.defaultFixtures)
-                            DropdownMenuItem(
-                              value: fixture.id,
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    fixture.type.icon,
-                                    size: 18,
-                                    color: fixture.type.accentColor,
-                                  ),
-                                  const SizedBox(width: AppSpacing.xs),
-                                  Flexible(
-                                    child: Text(
-                                      fixture.name,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                        ],
-                        onChanged: (val) {
-                          if (val != null) {
-                            setState(() => _selectedFixtureId = val);
-                          }
                         },
                       ),
                     ],

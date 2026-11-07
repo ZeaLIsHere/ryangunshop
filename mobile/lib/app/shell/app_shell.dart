@@ -8,7 +8,6 @@ import '../../features/catalog/view/product_catalog.dart';
 import '../../features/checkout/view/cart_checkout_screen.dart';
 import '../../features/dashboard/model/dashboard_shortcut.dart';
 import '../../features/dashboard/view/dashboard_screen.dart';
-import '../../features/floor_plan/view/store_floor_plan.dart';
 import '../../features/scanner/view/product_scanner_screen.dart';
 import '../../features/settings/view/settings_screen.dart';
 import '../routing/app_router.dart';
@@ -56,32 +55,9 @@ class _AppShellState extends State<AppShell> {
     }
   }
 
-  void _openFloorPlanScreen({String? highlightFixtureId}) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => Scaffold(
-          appBar: AppBar(title: const Text('Denah Warung Interaktif')),
-          body: StoreFloorPlan(
-            initialHighlightFixtureId: highlightFixtureId,
-            onOpenPanorama: () {
-              Navigator.of(context).pushNamed(AppRoutes.panorama);
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
   void _openScanner() {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => ProductScannerScreen(
-          onHighlightOnFloorPlan: (fixtureId) {
-            _selectDestination(ShellDestination.floorPlan.index);
-            _openFloorPlanScreen(highlightFixtureId: fixtureId);
-          },
-        ),
-      ),
+      MaterialPageRoute<void>(builder: (_) => const ProductScannerScreen()),
     );
   }
 
@@ -90,7 +66,6 @@ class _AppShellState extends State<AppShell> {
       case ShellDestination.floorPlan:
         return DashboardScreen(
           onShortcutSelected: _selectShortcut,
-          onOpenFloorPlan: _openFloorPlanScreen,
           onStartScan: _openScanner,
         );
       case ShellDestination.cashier:
@@ -123,25 +98,20 @@ class _AppShellState extends State<AppShell> {
           ),
         ),
         actions: [
-          if (destination == ShellDestination.floorPlan) ...[
-            IconButton(
-              icon: const Icon(Icons.threesixty),
-              tooltip: 'Panorama 360° Zona',
-              onPressed: () =>
-                  Navigator.of(context).pushNamed(AppRoutes.panorama),
-            ),
-            IconButton(
-              icon: const Icon(Icons.map_outlined),
-              tooltip: 'Buka Denah 2D Penuh',
-              onPressed: _openFloorPlanScreen,
-            ),
-          ],
           IconButton(
-            icon: Icon(
-              isSettings
-                  ? ShellDestination.settings.selectedIcon
-                  : ShellDestination.settings.icon,
-              color: isSettings ? AppColors.primary : null,
+            icon: SizedBox(
+              width: 24,
+              height: 24,
+              child: Image.asset(
+                ShellDestination.settings.assetPath,
+                fit: BoxFit.contain,
+                errorBuilder: (_, _, _) => Icon(
+                  isSettings
+                      ? ShellDestination.settings.selectedIcon
+                      : ShellDestination.settings.icon,
+                  color: isSettings ? AppColors.primary : null,
+                ),
+              ),
             ),
             tooltip: 'Pengaturan',
             onPressed: () =>
@@ -277,9 +247,18 @@ class _BottomBarItem extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              selected ? destination.selectedIcon : destination.icon,
-              color: color,
+            SizedBox(
+              width: 24,
+              height: 24,
+              child: Image.asset(
+                destination.assetPath,
+                fit: BoxFit.contain,
+                errorBuilder: (_, _, _) => Icon(
+                  selected ? destination.selectedIcon : destination.icon,
+                  size: 24,
+                  color: color,
+                ),
+              ),
             ),
             const SizedBox(height: 2),
             Text(
@@ -336,10 +315,17 @@ class _CashierButton extends StatelessWidget {
                 ),
               ],
             ),
-            child: const Icon(
-              Icons.point_of_sale_rounded,
-              color: AppColors.surface,
-              size: 28,
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.xs),
+              child: Image.asset(
+                ShellDestination.cashier.assetPath,
+                fit: BoxFit.contain,
+                errorBuilder: (_, _, _) => const Icon(
+                  Icons.point_of_sale_rounded,
+                  color: AppColors.surface,
+                  size: 28,
+                ),
+              ),
             ),
           ),
         ),

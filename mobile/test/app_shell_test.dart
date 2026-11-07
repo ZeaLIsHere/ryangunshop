@@ -94,7 +94,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Layar tidak ditemukan'), findsOneWidget);
-    expect(find.text('Kembali ke denah'), findsOneWidget);
+    expect(find.text('Kembali ke beranda'), findsOneWidget);
   });
 }
 

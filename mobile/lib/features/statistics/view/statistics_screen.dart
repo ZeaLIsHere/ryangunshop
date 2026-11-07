@@ -48,6 +48,25 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             children: [
               Row(
                 children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    margin: const EdgeInsets.only(right: AppSpacing.xs),
+                    padding: const EdgeInsets.all(AppSpacing.xxs),
+                    decoration: const BoxDecoration(
+                      color: AppColors.primaryLight,
+                      borderRadius: AppRadius.controlCompactBorder,
+                    ),
+                    child: Image.asset(
+                      'assets/icon/05_statistik.png',
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, _, _) => const Icon(
+                        Icons.insights_outlined,
+                        size: 20,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                  ),
                   Expanded(
                     child: Text(
                       'Ringkasan warung',

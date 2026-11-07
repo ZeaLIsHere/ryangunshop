@@ -128,7 +128,7 @@ class _UnknownRouteView extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 PrimaryAction(
-                  label: 'Kembali ke denah',
+                  label: 'Kembali ke beranda',
                   icon: Icons.arrow_back,
                   expand: false,
                   onPressed: () => _backToShell(context),

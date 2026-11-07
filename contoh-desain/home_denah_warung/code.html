@@ -1,0 +1,356 @@
+<!DOCTYPE html><html lang="id"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>RyanGunshop - Dashboard &amp; Denah Toko</title>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-bright": "#faf8ff",
+            "primary-container": "#007bb9",
+            "surface-variant": "#dae2fd",
+            "on-primary-fixed": "#001d31",
+            "tertiary-fixed-dim": "#ffb690",
+            "on-tertiary-container": "#fffbff",
+            "primary-fixed": "#cce5ff",
+            "on-secondary": "#ffffff",
+            "inverse-surface": "#283044",
+            "inverse-primary": "#93ccff",
+            "surface-dim": "#d2d9f4",
+            "tertiary-container": "#c05400",
+            "surface-container": "#eaedff",
+            "tertiary-fixed": "#ffdbca",
+            "surface-tint": "#006398",
+            "on-secondary-fixed": "#002113",
+            "on-tertiary": "#ffffff",
+            "on-primary-container": "#fdfcff",
+            "on-background": "#131b2e",
+            "surface-container-highest": "#dae2fd",
+            "on-error-container": "#93000a",
+            "surface-container-lowest": "#ffffff",
+            "secondary-container": "#6cf8bb",
+            "secondary-fixed": "#6ffbbe",
+            "on-primary": "#ffffff",
+            "on-tertiary-fixed": "#341100",
+            "outline": "#707881",
+            "error": "#ba1a1a",
+            "surface-container-high": "#e2e7ff",
+            "surface-container-low": "#f2f3ff",
+            "on-primary-fixed-variant": "#004b73",
+            "on-surface-variant": "#3f4850",
+            "on-secondary-fixed-variant": "#005236",
+            "primary-fixed-dim": "#93ccff",
+            "outline-variant": "#bfc7d2",
+            "background": "#faf8ff",
+            "on-tertiary-fixed-variant": "#783200",
+            "inverse-on-surface": "#eef0ff",
+            "tertiary": "#994100",
+            "error-container": "#ffdad6",
+            "surface": "#faf8ff",
+            "secondary-fixed-dim": "#4edea3",
+            "on-surface": "#131b2e",
+            "secondary": "#006c49",
+            "primary": "#006194",
+            "on-error": "#ffffff",
+            "on-secondary-container": "#00714d"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "margin-mobile": "1rem",
+            "space-xl": "1.5rem",
+            "space-lg": "1.25rem",
+            "space-xs": "0.25rem",
+            "margin": "1.25rem",
+            "gutter": "1rem",
+            "space-sm": "0.5rem",
+            "space-md": "1rem",
+            "gutter-sm": "0.75rem"
+          },
+          "fontFamily": {
+            "body-sm": ["Plus Jakarta Sans"],
+            "display-hero": ["Plus Jakarta Sans"],
+            "label-numeric": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "title-card": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "label-caps": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "display-hero": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "label-numeric": ["15px", { "lineHeight": "20px", "fontWeight": "700" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "title-card": ["16px", { "lineHeight": "22px", "fontWeight": "600" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "label-caps": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #faf8ff;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .grid-matrix-bg {
+      background-size: 16px 16px;
+      background-image: radial-gradient(circle, #dae2fd 1.2px, transparent 1.2px);
+    }
+    .custom-shadow-card {
+      box-shadow: 0px 8px 24px -4px rgba(15, 23, 42, 0.05), 0px 2px 6px -1px rgba(15, 23, 42, 0.02);
+    }
+    .hero-blue-shadow {
+      box-shadow: 0 14px 28px -6px rgba(0, 97, 148, 0.32);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex justify-center selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- Mobile Simulator Max-Width Frame -->
+<div class="w-full max-w-md bg-background min-h-screen flex flex-col relative pb-28">
+<!-- TopAppBar (Shared Component) -->
+<header class="bg-surface dark:bg-inverse-surface flex justify-between items-center w-full px-margin-mobile pt-3 pb-2 sticky top-0 z-40">
+<div class="flex items-center gap-2">
+<div class="w-9 h-9 rounded-xl bg-surface-container flex items-center justify-center text-primary dark:text-inverse-primary hover:bg-surface-container dark:hover:bg-surface-variant transition-colors active:scale-95 transition-transform duration-150" style="background-color: rgb(245, 243, 255); color: rgb(124, 58, 237);">
+<span class="material-symbols-outlined text-[20px]" data-icon="storefront">storefront</span>
+</div>
+<div class="flex flex-col">
+<span class="text-headline-md font-headline-md font-bold text-on-surface dark:text-inverse-on-surface tracking-tight">RyanGunshop</span>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="w-2 h-2 rounded-full bg-secondary inline-block animate-pulse"></span>
+
+</div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<!-- Toggle Mode Kasir/Pemilik -->
+
+
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="px-margin-mobile flex flex-col gap-4 mt-2">
+<!-- Hero Profit & Omzet Card (Soft Gradient Blue referensi) -->
+<section class="w-full rounded-[24px] bg-gradient-to-br from-primary to-[#0369a1] text-on-primary p-5 hero-blue-shadow relative overflow-hidden transition-transform duration-200" style="background: linear-gradient(135deg, rgb(124, 58, 237) 0%, rgb(76, 29, 149) 100%); box-shadow: rgba(124, 58, 237, 0.35) 0px 14px 28px -6px;">
+<!-- Subtle background decorative circle -->
+<div class="absolute -right-10 -bottom-10 w-36 h-36 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex justify-between items-start">
+<span class="text-[13px] font-medium tracking-wide text-white/80">Omzet Hari Ini</span>
+
+</div>
+<div class="mt-2 mb-4">
+<h1 class="text-display-hero font-display-hero text-white tracking-tight">Rp 1.450.000</h1>
+<div class="flex items-center gap-2 text-white/90 text-body-sm font-body-sm mt-0.5">
+
+
+</div>
+</div>
+<div class="pt-3 border-t border-white/15 flex justify-between items-center text-white/90">
+<div class="flex items-center gap-3">
+<div>
+<span class="block text-[10px] text-white/70">Transaksi</span>
+<span class="text-label-numeric font-label-numeric text-white">42 Nota</span>
+</div>
+<div class="h-6 w-px bg-white/20"></div>
+<div>
+<span class="block text-[10px] text-white/70">Rata-rata</span>
+<span class="text-label-numeric font-label-numeric text-white">Rp 34.500</span>
+</div>
+</div>
+<button class="bg-white text-primary hover:bg-white/95 text-[12px] font-bold px-3.5 py-1.5 rounded-full flex items-center gap-1 shadow-sm active:scale-95 transition-all" style="color: rgb(124, 58, 237);">
+<span class="">Lihat Detail</span>
+<span class="material-symbols-outlined text-[14px]" data-icon="arrow_forward_ios">arrow_forward_ios</span>
+</button>
+</div>
+</section>
+<!-- Quick Action Print Struk Row -->
+<section class="w-full bg-surface-container-lowest rounded-2xl p-3 flex items-center justify-between custom-shadow-card">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary-fixed flex items-center justify-center text-primary" style="background-color: rgb(245, 243, 255); color: rgb(124, 58, 237);">
+<span class="material-symbols-outlined text-[20px]" data-icon="print">print</span>
+</div>
+<div>
+<h4 class="text-title-card font-title-card text-[14px] text-on-surface">Cetak Laporan Harian</h4>
+<p class="text-body-sm font-body-sm text-outline text-[11px]">Printer Bluetooth Siap</p>
+</div>
+</div>
+<button class="text-primary hover:text-primary-container p-1 rounded-full active:scale-90 transition-transform" style="color: rgb(124, 58, 237);">
+<span class="material-symbols-outlined text-[20px]" data-icon="chevron_right">chevron_right</span>
+</button>
+</section>
+<!-- Warung Spatial Layout Grid: Denah Tata Letak Warung 2D -->
+
+<!-- Aksi Cepat / Cashier Triggers (Bento / Soft Pastel Rounded Modules) -->
+<section class="w-full">
+<h3 class="text-headline-sm font-headline-sm text-on-surface text-[15px] mb-2.5">Aksi Cepat</h3>
+<div class="grid grid-cols-4 gap-2.5">
+<!-- Pindai Rak -->
+<button class="bg-surface-container-lowest rounded-2xl p-2.5 flex flex-col items-center justify-center custom-shadow-card active:scale-95 transition-transform group">
+<div class="w-12 h-12 rounded-[14px] bg-[#E0F2FE] flex items-center justify-center text-[#0284C7] mb-1.5 group-hover:scale-105 transition-transform" style="background-color: rgb(245, 243, 255); color: rgb(124, 58, 237);">
+<span class="material-symbols-outlined text-[22px]" data-icon="qr_code_scanner">qr_code_scanner</span>
+</div>
+<span class="text-body-sm font-body-sm text-on-surface text-[11px] text-center font-bold">Pindai Rak</span>
+</button>
+<!-- Buka Kasir -->
+<button class="bg-surface-container-lowest rounded-2xl p-2.5 flex flex-col items-center justify-center custom-shadow-card active:scale-95 transition-transform group">
+<div class="w-12 h-12 rounded-[14px] bg-[#ECFDF5] flex items-center justify-center text-[#059669] mb-1.5 group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[22px]" data-icon="point_of_sale">point_of_sale</span>
+</div>
+<span class="text-body-sm font-body-sm text-on-surface text-[11px] text-center font-bold">Buka Kasir</span>
+</button>
+<!-- Cek Stok Menipis -->
+<button class="bg-surface-container-lowest rounded-2xl p-2.5 flex flex-col items-center justify-center custom-shadow-card active:scale-95 transition-transform group relative">
+<span class="absolute top-1.5 right-1.5 w-4 h-4 bg-tertiary text-white rounded-full text-[9px] font-bold flex items-center justify-center">3</span>
+<div class="w-12 h-12 rounded-[14px] bg-[#FFF7ED] flex items-center justify-center text-[#EA580C] mb-1.5 group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[22px]" data-icon="notification_important">notification_important</span>
+</div>
+<span class="text-body-sm font-body-sm text-on-surface text-[11px] text-center font-bold leading-tight">Stok Menipis</span>
+</button>
+<!-- Panorama 360 -->
+<button class="bg-surface-container-lowest rounded-2xl p-2.5 flex flex-col items-center justify-center custom-shadow-card active:scale-95 transition-transform group">
+<div class="w-12 h-12 rounded-[14px] bg-[#F3E8FF] flex items-center justify-center text-[#7E22CE] mb-1.5 group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[22px]" data-icon="view_in_ar">view_in_ar</span>
+</div>
+<span class="text-body-sm font-body-sm text-on-surface text-[11px] text-center font-bold">Panorama 360°</span>
+</button>
+</div>
+</section>
+<!-- Aktivitas Transaksi Terbaru (Product List Card Pattern) -->
+<section class="w-full bg-surface-container-lowest rounded-[24px] p-4 custom-shadow-card mb-2">
+<div class="flex items-center justify-between mb-3">
+<div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface text-[16px]">Aktivitas Transaksi Terbaru</h3>
+
+</div>
+<button class="text-primary text-[12px] font-bold hover:underline" style="color: rgb(124, 58, 237);">Semua Nota</button>
+</div>
+<div class="divide-y divide-surface-container">
+<!-- Item Transaksi 1 -->
+<div class="py-3 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<img class="w-12 h-12 rounded-xl object-cover border border-surface-container bg-surface-bright flex-shrink-0" data-alt="A clean top-down photographic close-up of a premium packaged cooking oil pouch on a bright white minimalist warung grocery shelf. Soft natural diffused lighting highlights the warm golden translucent oil, reflecting a clean aesthetic with muted modern background elements in light mode." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvnrNSanqIW7gu__1PM_bD0069wXEYFbNE1DMJol3SXweSfxTwF7DHd_uV4CHDGvjuqwbnJuOlWHeXXjUvRNJYfTG6wXAzXZQTJQ0V55lBXdGHYhdg29OUFImfld7zmqtXgYZUF8GtmULjy4Xr7iDa2WwkdgVfojgZ993sbK_nA5uuICSDGW-5oY_b-hZ6QF7gL-WkVs4vNSVBhGPiy033FPOR7MG32PaEOpGU0bI">
+<div class="flex flex-col">
+<span class="text-title-card font-title-card text-[13px] text-on-surface leading-tight">Minyak Goreng Bimoli 2L</span>
+<span class="text-[11px] text-outline mt-0.5">Nota #TRX-9481 • 13:42 WIB</span>
+</div>
+</div>
+<div class="text-right">
+<span class="text-label-numeric font-label-numeric text-[13px] text-on-surface block">Rp 36.500</span>
+
+</div>
+</div>
+<!-- Item Transaksi 2 -->
+<div class="py-3 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<img class="w-12 h-12 rounded-xl object-cover border border-surface-container bg-surface-bright flex-shrink-0" data-alt="A minimalist studio still life of an instant noodle pack placed on an airy white grocery display table. Crisp product photography with gentle soft ambient light, accentuating warm orange and red packaging tones against an ultra-clean, modern pastel backdrop." src="https://lh3.googleusercontent.com/aida-public/AB6AXuATrIZqYRPYoit8afVfHOtwq8mlzQ96q716goLxdAXLMqYHq4VvLHrAYeDQK22EHPy6-MtiBQ12l9Vth0RFyqb7NfjH-dc1D-2tjoQ60D9kIh_em2jEiddKEHVwDIlpNOq3fkHFljgb2RgOuZKiqSO1Z8vDtazhf5RB9cA3v5Jnph9tWm_PWRR4P2uLFv8rtSmaw1O5XWxPfBMa7ANstPa5oG5CQU1xXYA8Z8OLATw">
+<div class="flex flex-col">
+<span class="text-title-card font-title-card text-[13px] text-on-surface leading-tight">Indomie Goreng Spesial (5 Pcs)</span>
+<span class="text-[11px] text-outline mt-0.5">Nota #TRX-9480 • 13:30 WIB</span>
+</div>
+</div>
+<div class="text-right">
+<span class="text-label-numeric font-label-numeric text-[13px] text-on-surface block">Rp 15.500</span>
+
+</div>
+</div>
+<!-- Item Transaksi 3 -->
+<div class="py-3 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<img class="w-12 h-12 rounded-xl object-cover border border-surface-container bg-surface-bright flex-shrink-0" data-alt="Modern high clarity commercial photograph of cold beverage bottles with fresh condensation drops inside a modern glass beverage cooler. Clean bright daylight styling, soft sky blue and teal tones reflecting off clear glass shelves in a sleek grocery store." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUXvEkfLgdyoxG7ZiXd-zov2ExlOlT400Z_8s7oiooGeH0hDhsFRn5oK4ibxGeuKbOPN0-j3i1almlCc-84vQJGo2Xv47sObjEgn1wp6Q2RdvwiX2d65SWPc6ojvr6wAkRYg4Nlh3Wr_Sg5BjgXWX-QqRG-CkrewWjtZIBgXA576ggsvZZngNQyqx2unL4C--Gcz4LttE4-cNHguRk3koGYsxQ-utMOT4kR0iPK-E">
+<div class="flex flex-col">
+<span class="text-title-card font-title-card text-[13px] text-on-surface leading-tight">Teh Pucuk Harum Dingin 350ml (2)</span>
+<span class="text-[11px] text-outline mt-0.5">Nota #TRX-9479 • 13:18 WIB</span>
+</div>
+</div>
+<div class="text-right">
+<span class="text-label-numeric font-label-numeric text-[13px] text-on-surface block">Rp 8.000</span>
+
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Shared Component - Tab "Home" Aktif) -->
+<nav class="bg-surface-container-lowest dark:bg-inverse-surface fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter-sm py-space-xs rounded-t-xl shadow-[0px_12px_32px_-4px_rgba(15,23,42,0.08)] dark:shadow-none max-w-md mx-auto right-0">
+<!-- Home (ACTIVE STATE as per JSON style_active_navigation) -->
+<a class="flex flex-col items-center justify-center text-primary dark:text-inverse-primary font-bold gap-0.5 active:scale-90 transition-transform duration-150" href="#" style="color: rgb(124, 58, 237);">
+<span class="material-symbols-outlined text-[24px]" data-icon="storefront" style="font-variation-settings: 'FILL' 1;">storefront</span>
+<span class="text-label-caps font-label-caps">Home</span>
+</a>
+<!-- Katalog -->
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant gap-0.5 hover:text-primary dark:hover:text-inverse-primary transition-colors active:scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[24px]" data-icon="inventory_2">inventory_2</span>
+<span class="text-label-caps font-label-caps">Katalog</span>
+</a>
+<!-- Scan (Floating Accent Scanner Button) -->
+<div class="-mt-5">
+<button class="w-13 h-13 w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-lg shadow-primary/30 active:scale-90 transition-transform duration-150" style="background: linear-gradient(135deg, rgb(139, 92, 246), rgb(124, 58, 237)); box-shadow: rgba(124, 58, 237, 0.45) 0px 10px 20px -3px;">
+<span class="material-symbols-outlined text-[24px]" data-icon="qr_code_scanner">qr_code_scanner</span>
+</button>
+</div>
+<!-- Kasir -->
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant gap-0.5 hover:text-primary dark:hover:text-inverse-primary transition-colors active:scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[24px]" data-icon="point_of_sale">point_of_sale</span>
+<span class="text-label-caps font-label-caps">Kasir</span>
+</a>
+<!-- Laporan -->
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant gap-0.5 hover:text-primary dark:hover:text-inverse-primary transition-colors active:scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[24px]" data-icon="bar_chart">bar_chart</span>
+<span class="text-label-caps font-label-caps">Laporan</span>
+</a>
+</nav>
+</div>
+<!-- Interactive Script for Denah Zone Selection & Role Mode -->
+<script>
+    function selectZone(title, count, status, toneClass) {
+      const shelfTitle = document.getElementById('shelf-title');
+      const shelfStatus = document.getElementById('shelf-status');
+      
+      shelfTitle.textContent = title + ' - ' + count;
+      shelfStatus.textContent = status;
+
+      // Animate card briefly
+      const infoCard = document.getElementById('shelf-info-card');
+      infoCard.classList.add('scale-[1.02]');
+      setTimeout(() => {
+        infoCard.classList.remove('scale-[1.02]');
+      }, 150);
+    }
+
+    // Toggle Kasir / Pemilik
+    const toggleBtn = document.getElementById('mode-toggle');
+    const modeText = document.getElementById('mode-text');
+    let isOwner = false;
+
+    toggleBtn.addEventListener('click', () => {
+      isOwner = !isOwner;
+      modeText.textContent = isOwner ? 'Pemilik' : 'Kasir';
+      toggleBtn.classList.toggle('bg-primary-fixed');
+    });
+  </script>
+
+
+</body></html>

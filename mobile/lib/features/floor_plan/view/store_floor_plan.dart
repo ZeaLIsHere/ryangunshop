@@ -191,10 +191,64 @@ class _StoreFloorPlanState extends State<StoreFloorPlan> {
                                 return Stack(
                                   clipBehavior: Clip.none,
                                   children: [
-                                    // Grid lines custom painter
+                                    // Grid lines & dot-matrix custom painter
                                     Positioned.fill(
                                       child: CustomPaint(
                                         painter: _FloorPlanGridPainter(),
+                                      ),
+                                    ),
+
+                                    // Floor Boundaries & Dimensions Header
+                                    Positioned(
+                                      top: 6,
+                                      left: 6,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.surface.withValues(
+                                            alpha: 0.92,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            5,
+                                          ),
+                                          border: Border.all(
+                                            color: AppColors.primaryLight,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                alpha: 0.04,
+                                              ),
+                                              blurRadius: 4,
+                                            ),
+                                          ],
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Container(
+                                              width: 5,
+                                              height: 5,
+                                              decoration: const BoxDecoration(
+                                                color: AppColors.success,
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '8.0m x 6.0m • Skala 0.5m',
+                                              style: theme.textTheme.labelSmall
+                                                  ?.copyWith(
+                                                    fontSize: 9,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: AppColors.ink,
+                                                  ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
 
@@ -495,20 +549,30 @@ class _StoreFloorPlanState extends State<StoreFloorPlan> {
   }
 }
 
-/// Painter untuk menggambar garis grid blueprint halus pada kanvas denah.
+/// Painter untuk menggambar matriks grid titik (dot matrix) dan garis halus kanvas denah.
 class _FloorPlanGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.primaryLight.withValues(alpha: 0.5)
-      ..strokeWidth = 0.8;
+    final dotPaint = Paint()
+      ..color = const Color(0xFFCBD5E1)
+      ..style = PaintingStyle.fill;
 
-    const step = 24.0;
+    final linePaint = Paint()
+      ..color = AppColors.primaryLight.withValues(alpha: 0.35)
+      ..strokeWidth = 0.6;
+
+    const step = 20.0;
     for (double x = 0; x < size.width; x += step) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), linePaint);
     }
     for (double y = 0; y < size.height; y += step) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
+    }
+
+    for (double x = 0; x < size.width; x += step) {
+      for (double y = 0; y < size.height; y += step) {
+        canvas.drawCircle(Offset(x, y), 1.2, dotPaint);
+      }
     }
   }
 

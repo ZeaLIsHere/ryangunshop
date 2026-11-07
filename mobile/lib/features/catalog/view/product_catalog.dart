@@ -139,20 +139,45 @@ class _ProductCatalogState extends State<ProductCatalog> {
               bottom: 80, // ruang untuk FAB
             ),
             children: [
-              Column(
+              Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Katalog Produk',
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+                  Container(
+                    width: 44,
+                    height: 44,
+                    margin: const EdgeInsets.only(right: AppSpacing.sm),
+                    padding: const EdgeInsets.all(AppSpacing.xxs),
+                    decoration: const BoxDecoration(
+                      color: AppColors.primaryLight,
+                      borderRadius: AppRadius.controlCompactBorder,
+                    ),
+                    child: Image.asset(
+                      'assets/icon/01_katalog_produk.png',
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, _, _) => const Icon(
+                        Icons.inventory_2_outlined,
+                        color: AppColors.primaryDark,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Harga, stok, dan posisi rak barang warung.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: AppColors.muted,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Katalog Produk',
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Harga, stok, dan posisi rak barang warung.',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: AppColors.muted,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -276,8 +301,7 @@ class _ProductCatalogState extends State<ProductCatalog> {
             icon: Icons.inventory_2_outlined,
             color: AppColors.muted,
             title: 'Belum ada produk',
-            description:
-                'Katalog produk warung masih kosong. Tambahkan produk baru sekarang.',
+            description: 'Katalog produk warung masih kosong. Tambahkan produk baru sekarang.',
           ),
           const SizedBox(height: AppSpacing.md),
           PrimaryAction(
@@ -292,8 +316,7 @@ class _ProductCatalogState extends State<ProductCatalog> {
             icon: Icons.error_outline,
             color: AppColors.error,
             title: 'Katalog gagal dimuat',
-            description:
-                'Terjadi kendala saat membaca data produk dari penyimpanan lokal.',
+            description: 'Terjadi kendala saat membaca data produk dari penyimpanan lokal.',
           ),
           const SizedBox(height: AppSpacing.md),
           PrimaryAction(
@@ -310,8 +333,7 @@ class _ProductCatalogState extends State<ProductCatalog> {
               icon: Icons.cloud_off_outlined,
               color: AppColors.warning,
               title: 'Mode Offline',
-              description:
-                  'Katalog offline aktif. Semua produk tersimpan lokal dan siap ditransaksikan.',
+              description: 'Katalog offline aktif. Semua produk tersimpan lokal dan siap ditransaksikan.',
             ),
             const SizedBox(height: AppSpacing.md),
           ],
@@ -333,9 +355,8 @@ class _ProductCatalogState extends State<ProductCatalog> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.right,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: AppColors.muted),
+                  style: Theme.of(context).textTheme.bodySmall
+                      ?.copyWith(color: AppColors.muted),
                 ),
               ),
             ],

@@ -27,29 +27,29 @@ abstract final class AppTheme {
         onPrimaryContainer: AppColors.primaryDark,
         secondary: AppColors.accent,
         onSecondary: AppColors.surface,
-        secondaryContainer: AppColors.primaryLight,
+        secondaryContainer: AppColors.primarySubtle,
         onSecondaryContainer: AppColors.primaryDark,
         error: AppColors.error,
         onError: AppColors.surface,
         surface: AppColors.surface,
         onSurface: AppColors.ink,
         onSurfaceVariant: AppColors.muted,
-        outline: AppColors.muted,
+        outline: AppColors.borderSubtle,
         outlineVariant: AppColors.primaryLight,
         surfaceContainerLowest: AppColors.surface,
-        surfaceContainerLow: AppColors.canvas,
+        surfaceContainerLow: AppColors.primarySubtle,
         surfaceContainer: AppColors.canvas,
         surfaceContainerHigh: AppColors.primaryLight,
         surfaceContainerHighest: AppColors.primaryLight,
         inverseSurface: AppColors.primaryDark,
         onInverseSurface: AppColors.surface,
         inversePrimary: AppColors.accent,
-        scrim: AppColors.primaryDark,
-        shadow: AppColors.primaryDark,
+        scrim: AppColors.ink,
+        shadow: AppColors.primary.withValues(alpha: 0.12),
       );
 
-  /// Warna shadow biru yang sangat lembut, bukan hitam pekat.
-  static final Color softShadow = AppColors.primaryDark.withValues(alpha: 0.10);
+  /// Warna shadow bernuansa violet yang lembut, bukan hitam pekat.
+  static final Color softShadow = AppColors.primary.withValues(alpha: 0.07);
 
   /// Tema terang aplikasi.
   static ThemeData light() {
@@ -113,7 +113,7 @@ abstract final class AppTheme {
         ),
       ),
 
-      // Kartu hairline tanpa elevasi, sesuai disiplin permukaan.
+      // Kartu hairline dengan border subtle dan sudut membulat 16 dp.
       cardTheme: CardThemeData(
         color: AppColors.surface,
         elevation: 0,
@@ -122,12 +122,12 @@ abstract final class AppTheme {
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
           borderRadius: AppRadius.cardBorder,
-          side: const BorderSide(color: AppColors.primaryLight),
+          side: const BorderSide(color: AppColors.borderSubtle),
         ),
       ),
 
       dividerTheme: const DividerThemeData(
-        color: AppColors.primaryLight,
+        color: AppColors.borderSubtle,
         thickness: 1,
         space: AppSpacing.md,
       ),
@@ -143,11 +143,11 @@ abstract final class AppTheme {
         labelStyle: textTheme.bodyMedium?.copyWith(color: AppColors.muted),
         border: const OutlineInputBorder(
           borderRadius: AppRadius.controlBorder,
-          borderSide: BorderSide(color: AppColors.primaryLight),
+          borderSide: BorderSide(color: AppColors.borderSubtle),
         ),
         enabledBorder: const OutlineInputBorder(
           borderRadius: AppRadius.controlBorder,
-          borderSide: BorderSide(color: AppColors.primaryLight),
+          borderSide: BorderSide(color: AppColors.borderSubtle),
         ),
         focusedBorder: const OutlineInputBorder(
           borderRadius: AppRadius.controlBorder,

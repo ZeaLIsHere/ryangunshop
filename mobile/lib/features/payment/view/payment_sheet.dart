@@ -85,6 +85,7 @@ class _PaymentSheetState extends State<PaymentSheet> {
     final items = List<CartItem>.of(widget.cartItems);
     final cashReceived = _viewModel.cashReceived!;
     final change = _viewModel.change!;
+
     widget.onPaymentCompleted?.call();
     navigator.pop();
     navigator.push(
@@ -218,12 +219,30 @@ class _PaymentSheetState extends State<PaymentSheet> {
           onChanged: _viewModel.setCashInput,
         ),
         const SizedBox(height: AppSpacing.sm),
+        Text(
+          'NOMINAL CEPAT UANG PAS',
+          style: theme.textTheme.labelSmall?.copyWith(
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: AppColors.muted,
+            letterSpacing: 0.6,
+          ),
+        ),
+        const SizedBox(height: 4),
         Wrap(
           spacing: AppSpacing.xs,
           runSpacing: AppSpacing.xs,
           children: [
             ActionChip(
-              label: const Text('Uang Pas'),
+              backgroundColor: const Color(0xFFECFDF5),
+              side: const BorderSide(color: Color(0xFF10B981)),
+              label: const Text(
+                'Uang Pas',
+                style: TextStyle(
+                  color: Color(0xFF059669),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               onPressed: () => _chooseCashAmount(widget.totalAmount),
             ),
             for (final amount in PaymentSample.quickCashAmounts)
@@ -234,40 +253,70 @@ class _PaymentSheetState extends State<PaymentSheet> {
                 ),
           ],
         ),
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: AppSpacing.md),
         Container(
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
             color: valid
-                ? AppColors.success.withValues(alpha: 0.1)
+                ? const Color(0xFFECFDF5)
                 : insufficient
                 ? AppColors.error.withValues(alpha: 0.1)
                 : AppColors.canvas,
-            borderRadius: AppRadius.controlBorder,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: valid ? const Color(0xFF6CF8BB) : Colors.transparent,
+            ),
           ),
           child: Row(
             children: [
-              Icon(
-                valid
-                    ? Icons.check_circle_outline
-                    : insufficient
-                    ? Icons.warning_amber_rounded
-                    : Icons.info_outline,
-                color: valid
-                    ? AppColors.success
-                    : insufficient
-                    ? AppColors.error
-                    : AppColors.muted,
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              Expanded(
-                child: Text(
-                  valid
-                      ? 'Kembalian: ${formatRupiah(_viewModel.change!)}'
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: valid
+                      ? AppColors.success
                       : insufficient
-                      ? 'Uang kurang: ${formatRupiah(widget.totalAmount - received)}'
-                      : 'Masukkan uang diterima untuk menghitung kembalian.',
-                  style: theme.textTheme.bodyMedium,
+                      ? AppColors.error
+                      : AppColors.muted,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  valid
+                      ? Icons.change_circle
+                      : insufficient
+                      ? Icons.warning_amber_rounded
+                      : Icons.info_outline,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (valid)
+                      const Text(
+                        'KEMBALIAN PELANGGAN',
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF059669),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    Text(
+                      valid
+                          ? 'Kembalian: ${formatRupiah(_viewModel.change!)}'
+                          : insufficient
+                          ? 'Uang kurang: ${formatRupiah(widget.totalAmount - received)}'
+                          : 'Masukkan uang diterima untuk menghitung kembalian.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: valid ? FontWeight.bold : FontWeight.normal,
+                        color: valid ? const Color(0xFF059669) : null,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],

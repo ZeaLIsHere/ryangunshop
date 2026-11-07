@@ -132,6 +132,25 @@ class PaymentSuccessScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(48, 48),
+                  shape: const StadiumBorder(),
+                ),
+                icon: const Icon(Icons.print_outlined),
+                label: const Text('Cetak Struk (Bluetooth)'),
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Mencetak struk ke printer Bluetooth siap...',
+                      ),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: AppSpacing.sm),
               PrimaryAction(
                 label: 'Transaksi Baru',
                 icon: Icons.add_shopping_cart,

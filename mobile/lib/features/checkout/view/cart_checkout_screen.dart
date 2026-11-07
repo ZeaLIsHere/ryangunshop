@@ -38,7 +38,7 @@ class CartCheckoutScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.screen,
-                  vertical: AppSpacing.sm,
+                  vertical: AppSpacing.xs,
                 ),
                 decoration: const BoxDecoration(
                   color: AppColors.surface,
@@ -51,6 +51,24 @@ class CartCheckoutScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
+                        Container(
+                          width: 34,
+                          height: 34,
+                          margin: const EdgeInsets.only(right: AppSpacing.xs),
+                          padding: const EdgeInsets.all(AppSpacing.xxs),
+                          decoration: const BoxDecoration(
+                            color: AppColors.primaryLight,
+                            borderRadius: AppRadius.controlCompactBorder,
+                          ),
+                          child: Image.asset(
+                            'assets/icon/02_keranjang.png',
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, _, _) => const Icon(
+                              Icons.point_of_sale_outlined,
+                              color: AppColors.primaryDark,
+                            ),
+                          ),
+                        ),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,7 +235,7 @@ class CartCheckoutScreen extends StatelessWidget {
                       const SizedBox(height: AppSpacing.md),
                       PrimaryAction(
                         label: 'Lanjut ke Pembayaran',
-                        icon: Icons.payment,
+                        icon: Icons.print,
                         onPressed: cart.total <= 0
                             ? null
                             : () {
@@ -226,6 +244,13 @@ class CartCheckoutScreen extends StatelessWidget {
                                   totalAmount: cart.total,
                                   cartItems: cart.items,
                                   onPaymentCompleted: () {
+                                    session.recordTransaction(
+                                      totalAmount: cart.total,
+                                      items: cart.items,
+                                      paymentMethod: 'Tunai',
+                                      cashReceived: null,
+                                      changeAmount: null,
+                                    );
                                     cart.clearCart();
                                   },
                                 );
@@ -298,21 +323,197 @@ class CartCheckoutScreen extends StatelessWidget {
   }
 
   Widget _buildItems(BuildContext context, CartViewModel cart) {
-    return ListView.separated(
+    final theme = Theme.of(context);
+    final totalPay = cart.total;
+
+    return ListView(
       padding: const EdgeInsets.all(AppSpacing.screen),
-      itemCount: cart.items.length,
-      separatorBuilder: (context, index) =>
+      children: [
+        // Hero Order Card (Violet Gradient referensi kasir_pembayaran)
+        Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.primary,
+                AppColors.primaryDark,
+                Color(0xFF4C1D95),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.3),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        'KASIR MEJA 01 • SHIFT SIANG',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Pesanan',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Total',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        formatRupiah(totalPay),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        // 3 Quick Cashier Action Pods
+        Row(
+          children: [
+            Expanded(
+              child: _CashierQuickPod(
+                icon: Icons.fastfood_outlined,
+                label: 'Tambah Menu',
+                bgColor: const Color(0xFFFFF7ED),
+                iconColor: const Color(0xFFEA580C),
+                onTap: onOpenCatalog ?? () {},
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            Expanded(
+              child: _CashierQuickPod(
+                icon: Icons.receipt_long,
+                label: 'Keranjang (${cart.totalItems})',
+                bgColor: const Color(0xFFF5F3FF),
+                iconColor: const Color(0xFF7C3AED),
+                isActive: true,
+                onTap: () {},
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+            Expanded(
+              child: _CashierQuickPod(
+                icon: Icons.local_offer_outlined,
+                label: cart.discount > 0
+                    ? 'Diskon ${formatRupiah(cart.discount)}'
+                    : 'Voucher/Diskon',
+                bgColor: const Color(0xFFECFDF5),
+                iconColor: const Color(0xFF059669),
+                onTap: () {
+                  if (cart.discount > 0) {
+                    cart.setDiscount(0);
+                  } else {
+                    cart.setDiscount(5000);
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        // Section Header Rincian Barang Belanja
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                'Rincian Barang Belanja',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.canvas,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: AppColors.primaryLight),
+              ),
+              child: const Text(
+                'DAFTAR PESANAN',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.muted,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        for (final item in cart.items) ...[
+          _CartItemTile(
+            item: item,
+            onQuantityChanged: (quantity) {
+              cart.updateQuantity(item.productId, quantity);
+            },
+            onRemove: () => cart.removeItem(item.productId),
+          ),
           const SizedBox(height: AppSpacing.xs),
-      itemBuilder: (context, index) {
-        final item = cart.items[index];
-        return _CartItemTile(
-          item: item,
-          onQuantityChanged: (quantity) {
-            cart.updateQuantity(item.productId, quantity);
-          },
-          onRemove: () => cart.removeItem(item.productId),
-        );
-      },
+        ],
+      ],
     );
   }
 
@@ -366,10 +567,16 @@ class CartCheckoutScreen extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.shopping_cart_outlined,
-              size: 56,
-              color: AppColors.muted,
+            Image.asset(
+              'assets/icon/02_keranjang.png',
+              width: 64,
+              height: 64,
+              fit: BoxFit.contain,
+              errorBuilder: (_, _, _) => const Icon(
+                Icons.shopping_cart_outlined,
+                size: 56,
+                color: AppColors.muted,
+              ),
             ),
             const SizedBox(height: AppSpacing.md),
             Text(
@@ -460,12 +667,12 @@ class _CartItemTile extends StatelessWidget {
             width: AppSpacing.minTouchTarget,
             height: AppSpacing.minTouchTarget,
             decoration: BoxDecoration(
-              color: AppColors.primaryLight,
+              color: AppColors.primarySubtle,
               borderRadius: AppRadius.fixtureBorder,
             ),
             child: const Icon(
               Icons.shopping_bag_outlined,
-              color: AppColors.primaryDark,
+              color: AppColors.primary,
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
@@ -473,6 +680,30 @@ class _CartItemTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 1,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0F9FF),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        _rackTagFor(item.productId),
+                        style: const TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0284C7),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
                 Text(
                   item.productName,
                   maxLines: 1,
@@ -532,6 +763,90 @@ class _CartItemTile extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  String _rackTagFor(String productId) {
+    if (productId.contains('1')) return 'SKU-01';
+    if (productId.contains('2')) return 'SKU-02';
+    if (productId.contains('3')) return 'SKU-03';
+    if (productId.contains('4')) return 'SKU-04';
+    return 'PRODUK';
+  }
+}
+
+class _CashierQuickPod extends StatelessWidget {
+  const _CashierQuickPod({
+    required this.icon,
+    required this.label,
+    required this.bgColor,
+    required this.iconColor,
+    required this.onTap,
+    this.isActive = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color bgColor;
+  final Color iconColor;
+  final VoidCallback onTap;
+  final bool isActive;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isActive
+                  ? AppColors.primary.withValues(alpha: 0.5)
+                  : AppColors.primaryLight,
+              width: isActive ? 1.5 : 1.0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: iconColor, size: 20),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontSize: 10.5,
+                  fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
+                  color: isActive ? AppColors.primary : AppColors.ink,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

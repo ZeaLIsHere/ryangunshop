@@ -51,7 +51,7 @@ void main() {
     await tester.pump();
 
     expect(find.text(ReportsSample.emptyTitle), findsOneWidget);
-    expect(find.text('Kembali ke denah'), findsOneWidget);
+    expect(find.text('Kembali ke beranda'), findsOneWidget);
   });
 
   testWidgets('skenario gagal menampilkan keadaan gagal dengan coba lagi', (

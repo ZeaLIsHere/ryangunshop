@@ -1,0 +1,417 @@
+<!DOCTYPE html><html lang="id"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>RyanGunshop - Katalog Produk &amp; Stok</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-bright": "#faf8ff",
+            "primary-container": "#007bb9",
+            "surface-variant": "#dae2fd",
+            "on-primary-fixed": "#001d31",
+            "tertiary-fixed-dim": "#ffb690",
+            "on-tertiary-container": "#fffbff",
+            "primary-fixed": "#cce5ff",
+            "on-secondary": "#ffffff",
+            "inverse-surface": "#283044",
+            "inverse-primary": "#93ccff",
+            "surface-dim": "#d2d9f4",
+            "tertiary-container": "#c05400",
+            "surface-container": "#eaedff",
+            "tertiary-fixed": "#ffdbca",
+            "surface-tint": "#006398",
+            "on-secondary-fixed": "#002113",
+            "on-tertiary": "#ffffff",
+            "on-primary-container": "#fdfcff",
+            "on-background": "#131b2e",
+            "surface-container-highest": "#dae2fd",
+            "on-error-container": "#93000a",
+            "surface-container-lowest": "#ffffff",
+            "secondary-container": "#6cf8bb",
+            "secondary-fixed": "#6ffbbe",
+            "on-primary": "#ffffff",
+            "on-tertiary-fixed": "#341100",
+            "outline": "#707881",
+            "error": "#ba1a1a",
+            "surface-container-high": "#e2e7ff",
+            "surface-container-low": "#f2f3ff",
+            "on-primary-fixed-variant": "#004b73",
+            "on-surface-variant": "#3f4850",
+            "on-secondary-fixed-variant": "#005236",
+            "primary-fixed-dim": "#93ccff",
+            "outline-variant": "#bfc7d2",
+            "background": "#faf8ff",
+            "on-tertiary-fixed-variant": "#783200",
+            "inverse-on-surface": "#eef0ff",
+            "tertiary": "#994100",
+            "error-container": "#ffdad6",
+            "surface": "#faf8ff",
+            "secondary-fixed-dim": "#4edea3",
+            "on-surface": "#131b2e",
+            "secondary": "#006c49",
+            "primary": "#006194",
+            "on-error": "#ffffff",
+            "on-secondary-container": "#00714d"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "margin-mobile": "1rem",
+            "space-xl": "1.5rem",
+            "space-lg": "1.25rem",
+            "space-xs": "0.25rem",
+            "margin": "1.25rem",
+            "gutter": "1rem",
+            "space-sm": "0.5rem",
+            "space-md": "1rem",
+            "gutter-sm": "0.75rem"
+          },
+          "fontFamily": {
+            "body-sm": ["Plus Jakarta Sans"],
+            "display-hero": ["Plus Jakarta Sans"],
+            "label-numeric": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "title-card": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "label-caps": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "display-hero": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "label-numeric": ["15px", { "lineHeight": "20px", "fontWeight": "700" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "title-card": ["16px", { "lineHeight": "22px", "fontWeight": "600" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "label-caps": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "700" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .soft-card-shadow {
+      box-shadow: 0px 8px 24px -4px rgba(15, 23, 42, 0.05), 0px 2px 6px -1px rgba(15, 23, 42, 0.02);
+    }
+    .hero-stat-shadow {
+      box-shadow: 0 12px 24px -6px rgba(2, 132, 199, 0.22);
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-[#F8FAFC] text-on-surface antialiased min-h-screen flex justify-center pb-24 selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- Mobile Frame Container (Responsive Max-w-md to Tablet) -->
+<div class="w-full max-w-md md:max-w-lg min-h-screen flex flex-col relative bg-[#F8FAFC]">
+<!-- TopAppBar (from Shared Components JSON) -->
+<header class="bg-surface dark:bg-inverse-surface flex justify-between items-center w-full px-margin-mobile pt-3 pb-2 sticky top-0 z-40">
+<div class="flex items-center gap-2">
+<button aria-label="Menu Toko" class="w-10 h-10 rounded-full flex items-center justify-center text-primary dark:text-inverse-primary hover:bg-surface-container dark:hover:bg-surface-variant transition-colors active:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined text-[24px]" data-icon="storefront">storefront</span>
+</button>
+<span class="text-headline-md font-headline-md font-bold text-on-surface dark:text-inverse-on-surface tracking-tight">RyanGunshop</span>
+</div>
+<div class="flex items-center gap-1">
+
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 px-margin-mobile pt-2 space-y-4">
+<!-- Hero Header & Quick Stats Bento Card -->
+<section class="rounded-3xl p-5 text-on-primary-container relative overflow-hidden hero-stat-shadow" style="background: linear-gradient(135deg, rgb(124, 58, 237) 0%, rgb(76, 29, 149) 100%);">
+<div class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex justify-between items-start mb-3">
+<div>
+
+<h1 class="text-headline-lg font-headline-lg text-white mt-0.5">Inventaris Warung</h1>
+</div>
+
+</div>
+<div class="grid grid-cols-2 gap-2.5 pt-2">
+<!-- Stat 1: Total Produk -->
+<div class="bg-white/15 backdrop-blur-sm rounded-2xl p-3 flex items-center justify-between">
+<div>
+<p class="text-label-caps font-label-caps text-violet-100 uppercase tracking-wider">Total Produk</p>
+<p class="text-headline-sm font-headline-sm text-white font-bold mt-0.5">142 Item</p>
+</div>
+<div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[20px]" data-icon="layers">layers</span>
+</div>
+</div>
+<!-- Stat 2: Perlu Restock Warning -->
+<div class="bg-[#FFF7ED]/95 backdrop-blur-sm rounded-2xl p-3 flex items-center justify-between text-[#EA580C] shadow-sm">
+<div>
+<p class="text-label-caps font-label-caps text-[#EA580C] uppercase tracking-wider font-bold">Perlu Restock</p>
+<div class="flex items-center gap-1 mt-0.5">
+<span class="text-headline-sm font-headline-sm text-[#EA580C] font-bold">4 Barang</span>
+<span class="text-[14px]">⚠️</span>
+</div>
+</div>
+<div class="w-9 h-9 rounded-xl bg-[#FFEDD5] flex items-center justify-center text-[#EA580C]">
+<span class="material-symbols-outlined text-[20px]" data-icon="production_quantity_limits">production_quantity_limits</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Instant Search & Quick Barcode Scan Section -->
+<section class="space-y-2">
+<div class="relative flex items-center">
+<div class="absolute left-4 text-outline flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-[22px]" data-icon="search">search</span>
+</div>
+<input class="w-full h-[52px] pl-11 pr-24 rounded-2xl bg-white soft-card-shadow border border-slate-100 text-on-surface placeholder:text-outline font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all" placeholder="Cari nama barang, SKU, atau rak..." type="text">
+<div class="absolute right-2 flex items-center gap-1">
+<button class="h-9 px-3 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary flex items-center gap-1 text-label-caps font-label-caps transition-all active:scale-95" title="Pindai Barcode">
+<span class="material-symbols-outlined text-[18px]" data-icon="qr_code_scanner">qr_code_scanner</span>
+<span class="hidden sm:inline">Scan</span>
+</button>
+</div>
+</div>
+<!-- Filter Kategori Horizontal Chips -->
+<div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 text-nowrap">
+<button class="px-4 py-2 rounded-xl bg-[#7C3AED] text-white font-body-sm text-body-sm font-semibold soft-card-shadow transition-transform active:scale-95">Semua (142)</button>
+<button class="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-on-surface-variant font-body-sm text-body-sm font-medium border border-slate-100 transition-colors active:scale-95">
+            Rak A (Sembako)
+          </button>
+<button class="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-on-surface-variant font-body-sm text-body-sm font-medium border border-slate-100 transition-colors active:scale-95">
+            Rak B (Snack/Mi)
+          </button>
+<button class="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-on-surface-variant font-body-sm text-body-sm font-medium border border-slate-100 transition-colors active:scale-95">
+            Rak C (Bumbu)
+          </button>
+<button class="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-on-surface-variant font-body-sm text-body-sm font-medium border border-slate-100 transition-colors active:scale-95">
+            Kulkas (Minuman)
+          </button>
+<button class="px-3.5 py-2 rounded-xl bg-[#FFF7ED] text-[#EA580C] font-body-sm text-body-sm font-bold border border-[#FDBA74]/40 flex items-center gap-1 active:scale-95">
+<span class="">Stok Menipis</span>
+<span class="">⚠️</span>
+</button>
+</div>
+</section>
+<!-- Section Title & Spatial Shelf Filter Mode -->
+<section class="flex justify-between items-center pt-1">
+<div class="flex items-center gap-2">
+<h2 class="text-headline-sm font-headline-sm text-on-surface">Daftar Produk</h2>
+<span class="text-label-caps font-label-caps px-2 py-0.5 rounded-full bg-slate-200/70 text-slate-700 font-bold">142 SKU</span>
+</div>
+<button class="flex items-center gap-1 text-primary text-body-sm font-body-sm font-semibold hover:underline">
+<span class="material-symbols-outlined text-[18px]" data-icon="tune">tune</span>
+<span class="">Urutkan</span>
+</button>
+</section>
+<!-- Product List Cards (Tactile POS Clean Cards) -->
+<section class="space-y-3 pb-4">
+<!-- Product Item 1: Minyak Goreng Sania 2L -->
+<article class="bg-white rounded-2xl p-3.5 soft-card-shadow flex items-center gap-3 transition-transform active:scale-[0.99] border border-slate-50">
+<div class="relative w-16 h-16 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Modern packaged cooking oil refill pouch standing against a clean minimalist studio backdrop with bright soft lighting and fresh golden liquid clarity in a clean organized store setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWATjRcOMVowMRulnNEfg-j0I-3-sIXQmkyVQIyHi92NpeUhL-hrzbfcHDCpp8RViqdmVsSP4vPQYEHOCd40jzX8e7XA1PDRWIyCThZzdmAEfEdt1F4GwRtkfupC3D3z7zzGJutrnCsL0KbXGW2KBsddcWXi9KZtVDrMxSHKhhy8IoJdtYLfFuAl5Ey5SUgLfXLo19ciTxKWnaRMv7jGumhJjc22s1XmtqOgL_bj0">
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="px-2 py-0.5 rounded-md bg-[#F5F3FF] text-[#7C3AED] text-label-caps font-label-caps font-bold">Rak A-02</span>
+
+</div>
+<h3 class="text-title-card font-title-card text-on-surface truncate mt-0.5">Minyak Goreng Sania 2L</h3>
+<div class="flex items-center justify-between mt-1">
+<p class="text-primary font-bold text-label-numeric font-label-numeric">Rp 34.500</p>
+
+</div>
+</div>
+<!-- Quick Actions: Add to Cart & Spatial Edit -->
+<div class="flex flex-col gap-1.5 flex-shrink-0 border-l border-slate-100 pl-2">
+<button aria-label="Tambah ke Keranjang Kasir" class="w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary-container active:scale-90 transition-transform shadow-sm" style="background-color: rgb(124, 58, 237);">
+<span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
+</button>
+<button aria-label="Edit Penempatan Rak" class="w-9 h-9 rounded-xl bg-slate-100 text-outline hover:text-on-surface flex items-center justify-center active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[18px]" data-icon="edit_location">edit_location</span>
+</button>
+</div>
+</article>
+<!-- Product Item 2: Beras Ramos 5kg (Low Stock Alert) -->
+<article class="bg-white rounded-2xl p-3.5 soft-card-shadow flex items-center gap-3 transition-transform active:scale-[0.99] border border-slate-50">
+<div class="relative w-16 h-16 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="A clean premium 5 kilogram white rice sack placed on a neat grocery wooden shelf with clear labels and natural bright ambient morning sunlight." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9mUWi1lOKFuk4JGqu7E38Nb5aNnbgN_0htgFBu0Ok-561Sb7Pgp5x0JPcAPhrjfksuWzCDI7WGIR473fI58lCzvGvUkpRZGkonzRlPpaImOXDKdachHiNkV38NN4K8goVfd2cWs8VZH0y4Kww9MVjd9k60k7Q_WNHVPgQp1JEpLhgXSQ2V_C1tS7d2DZjMcjG-UCKx8-Qf05Tu3IxpeeePzHPfljNpg0ITPvwVls">
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-label-caps font-label-caps font-bold">
+                Rak A-01 • Restock Segera!
+              </span>
+
+</div>
+<h3 class="text-title-card font-title-card text-on-surface truncate mt-0.5">Beras Ramos 5kg</h3>
+<div class="flex items-center justify-between mt-1">
+<p class="text-primary font-bold text-label-numeric font-label-numeric">Rp 68.000</p>
+
+</div>
+</div>
+<div class="flex flex-col gap-1.5 flex-shrink-0 border-l border-slate-100 pl-2">
+<button aria-label="Tambah ke Keranjang Kasir" class="w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary-container active:scale-90 transition-transform shadow-sm" style="background-color: rgb(124, 58, 237);">
+<span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
+</button>
+<button aria-label="Edit Penempatan Rak" class="w-9 h-9 rounded-xl bg-slate-100 text-outline hover:text-on-surface flex items-center justify-center active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[18px]" data-icon="edit_location">edit_location</span>
+</button>
+</div>
+</article>
+<!-- Product Item 3: Indomie Goreng -->
+<article class="bg-white rounded-2xl p-3.5 soft-card-shadow flex items-center gap-3 transition-transform active:scale-[0.99] border border-slate-50">
+<div class="relative w-16 h-16 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Packaged instant fried noodles in iconic colorful packaging resting on a minimalist white store countertop with clean soft commercial lighting and crisp details." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7cBgXmBDeFL_H3ZP7LXXG2uTVuzk9L55RcKy95E8xAWKENIH6SM9IwblduWVkjmx8sOS0hTF7pcI-1exxzNkfIRkzDrF8booExPcvS-JknZ21arYJFF2Rcf1Gl0fsuqmHUX0lXEiSyh3WFC2h-O0RbLscL25trC1KDyEzNwBXsYIg9LQCc-1JReCvaJDlNBwuhzSkg4mXkbWeJvVTVGOQ9MvFhGuc33K1L4sJSF0">
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="px-2 py-0.5 rounded-md bg-[#F5F3FF] text-[#7C3AED] text-label-caps font-label-caps font-bold">Rak B-04</span>
+<span class="text-outline text-label-caps font-label-caps">SKU-3120</span>
+</div>
+<h3 class="text-title-card font-title-card text-on-surface truncate mt-0.5">Indomie Goreng Original</h3>
+<div class="flex items-center justify-between mt-1">
+<p class="text-primary font-bold text-label-numeric font-label-numeric">Rp 3.100</p>
+
+</div>
+</div>
+<div class="flex flex-col gap-1.5 flex-shrink-0 border-l border-slate-100 pl-2">
+<button aria-label="Tambah ke Keranjang Kasir" class="w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary-container active:scale-90 transition-transform shadow-sm" style="background-color: rgb(124, 58, 237);">
+<span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
+</button>
+<button aria-label="Edit Penempatan Rak" class="w-9 h-9 rounded-xl bg-slate-100 text-outline hover:text-on-surface flex items-center justify-center active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[18px]" data-icon="edit_location">edit_location</span>
+</button>
+</div>
+</article>
+<!-- Product Item 4: Teh Botol Sosro -->
+<article class="bg-white rounded-2xl p-3.5 soft-card-shadow flex items-center gap-3 transition-transform active:scale-[0.99] border border-slate-50">
+<div class="relative w-16 h-16 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Chilled glass bottle of jasmine iced tea with cold water droplets condensed on the surface in a clear glass refrigerator with bright crisp white lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFQ5weUW972UDGal311g9mBJdiZ4owlEDIiMlZZEy5DyFakiMEiPQqLt2ODvk0QmbC_QaoQfhfIxPp-aVSlfVI9qnx93sng-B2j_R7KusXbG0OuQTCIut5RUJNaaVGWZUCg5P0T8_PEG6xqK-OJ9l3KjIv97E1wJQhJBvySqhOD1VBifZfq3QydCWOtM8ggojR8RYKVtMvAAHA_BEn3WM1MmarTdkxb46bgDJCa1U">
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="px-2 py-0.5 rounded-md bg-[#ECFDF5] text-[#059669] text-label-caps font-label-caps font-bold">
+                Kulkas-01
+              </span>
+<span class="text-outline text-label-caps font-label-caps">SKU-4418</span>
+</div>
+<h3 class="text-title-card font-title-card text-on-surface truncate mt-0.5">Teh Botol Sosro 450ml</h3>
+<div class="flex items-center justify-between mt-1">
+<p class="text-primary font-bold text-label-numeric font-label-numeric">Rp 6.000</p>
+
+</div>
+</div>
+<div class="flex flex-col gap-1.5 flex-shrink-0 border-l border-slate-100 pl-2">
+<button aria-label="Tambah ke Keranjang Kasir" class="w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary-container active:scale-90 transition-transform shadow-sm" style="background-color: rgb(124, 58, 237);">
+<span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
+</button>
+<button aria-label="Edit Penempatan Rak" class="w-9 h-9 rounded-xl bg-slate-100 text-outline hover:text-on-surface flex items-center justify-center active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[18px]" data-icon="edit_location">edit_location</span>
+</button>
+</div>
+</article>
+<!-- Product Item 5: Royco Bumbu Kaldu Ayam (Low Stock) -->
+<article class="bg-white rounded-2xl p-3.5 soft-card-shadow flex items-center gap-3 transition-transform active:scale-[0.99] border border-slate-50">
+<div class="relative w-16 h-16 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Packets of culinary seasoning bouillon chicken flavor neatly aligned in a small grocer spice shelf basket under soft bright daylight." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZLU6krK9TFPrTwGppWo-G4qkWbxoUq1PNW4izDrHVxxEnMlCkjLba6JYpMOKZL4xg3DjvTuumt0MbW2yKKKB9DdeQR40VPwZ5smoGjuhAQiuaoo9a25daIwnFqMdFy73GMNc4Ebra6gWEYTqjxBjEriJINAvgL2eLwr5mnxq-Bs6BDatLm0XlrVrG_8jyVC2bGM8-t1vlR0QXZMqTsDX6neEpBIXJrFLBdS3vl90">
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-label-caps font-label-caps font-bold">
+                Rak C-01 • Sisa Sedikit
+              </span>
+<span class="text-outline text-label-caps font-label-caps">SKU-5021</span>
+</div>
+<h3 class="text-title-card font-title-card text-on-surface truncate mt-0.5">Royco Rasa Ayam 230g</h3>
+<div class="flex items-center justify-between mt-1">
+<p class="text-primary font-bold text-label-numeric font-label-numeric">Rp 10.500</p>
+
+</div>
+</div>
+<div class="flex flex-col gap-1.5 flex-shrink-0 border-l border-slate-100 pl-2">
+<button aria-label="Tambah ke Keranjang Kasir" class="w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary-container active:scale-90 transition-transform shadow-sm" style="background-color: rgb(124, 58, 237);">
+<span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
+</button>
+<button aria-label="Edit Penempatan Rak" class="w-9 h-9 rounded-xl bg-slate-100 text-outline hover:text-on-surface flex items-center justify-center active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[18px]" data-icon="edit_location">edit_location</span>
+</button>
+</div>
+</article>
+</section>
+<!-- Warung Spatial Shelf Helper Floating Widget -->
+<section class="rounded-2xl p-4 bg-white border border-dashed border-primary/30 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px]" data-icon="grid_view">grid_view</span>
+</div>
+<div>
+<h4 class="text-title-card font-title-card text-on-surface">Peta Rak Spasial Toko</h4>
+<p class="text-body-sm font-body-sm text-outline">Atur susunan visual rak A, B, C &amp; Kulkas</p>
+</div>
+</div>
+<button class="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-primary font-body-sm font-semibold active:scale-95 transition-transform">
+          Buka
+        </button>
+</section>
+</main>
+<!-- Bottom Navigation Bar (from Shared Components JSON: Active is 'Katalog' with index 1) -->
+<nav class="bg-surface-container-lowest dark:bg-inverse-surface fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter-sm py-space-xs rounded-t-xl shadow-[0px_12px_32px_-4px_rgba(15,23,42,0.08)] dark:shadow-none">
+<!-- Slot 1: Home -->
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant gap-0.5 hover:text-primary dark:hover:text-inverse-primary transition-colors active:scale-90 transition-transform duration-150 py-1" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="storefront">storefront</span>
+<span class="text-label-caps font-label-caps">Home</span>
+</a>
+<!-- Slot 2: Katalog (ACTIVE - Direct Match) -->
+<a class="flex flex-col items-center justify-center text-primary dark:text-inverse-primary font-bold gap-0.5 hover:text-primary dark:hover:text-inverse-primary transition-colors active:scale-90 transition-transform duration-150 py-1 relative" href="#">
+<div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-[22px] text-primary" data-icon="inventory_2" data-weight="fill" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+</div>
+<span class="text-label-caps font-label-caps">Katalog</span>
+</a>
+<!-- Slot 3: Scan (Center Action Ring) -->
+<a class="flex flex-col items-center justify-center -mt-5 hover:text-primary dark:hover:text-inverse-primary transition-colors active:scale-90 transition-transform duration-150" href="#">
+<div class="w-13 h-13 p-3 rounded-full bg-primary text-white shadow-lg shadow-primary/30 flex items-center justify-center" style="background-color: rgb(124, 58, 237); box-shadow: rgba(124, 58, 237, 0.4) 0px 10px 25px -5px;">
+<span class="material-symbols-outlined text-[26px]" data-icon="qr_code_scanner">qr_code_scanner</span>
+</div>
+<span class="text-label-caps font-label-caps text-outline mt-1">Scan</span>
+</a>
+<!-- Slot 4: Kasir -->
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant gap-0.5 hover:text-primary dark:hover:text-inverse-primary transition-colors active:scale-90 transition-transform duration-150 py-1" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="point_of_sale">point_of_sale</span>
+<span class="text-label-caps font-label-caps">Kasir</span>
+</a>
+<!-- Slot 5: Laporan -->
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant gap-0.5 hover:text-primary dark:hover:text-inverse-primary transition-colors active:scale-90 transition-transform duration-150 py-1" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="bar_chart">bar_chart</span>
+<span class="text-label-caps font-label-caps">Laporan</span>
+</a>
+</nav>
+</div>
+
+
+</body></html>

@@ -1,0 +1,435 @@
+<!DOCTYPE html><html lang="id"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>RyanGunshop - Kasir &amp; Checkout</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Plus Jakarta Sans Font -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-bright": "#faf8ff",
+            "primary-container": "#007bb9",
+            "surface-variant": "#dae2fd",
+            "on-primary-fixed": "#001d31",
+            "tertiary-fixed-dim": "#ffb690",
+            "on-tertiary-container": "#fffbff",
+            "primary-fixed": "#cce5ff",
+            "on-secondary": "#ffffff",
+            "inverse-surface": "#283044",
+            "inverse-primary": "#93ccff",
+            "surface-dim": "#d2d9f4",
+            "tertiary-container": "#c05400",
+            "surface-container": "#eaedff",
+            "tertiary-fixed": "#ffdbca",
+            "surface-tint": "#006398",
+            "on-secondary-fixed": "#002113",
+            "on-tertiary": "#ffffff",
+            "on-primary-container": "#fdfcff",
+            "on-background": "#131b2e",
+            "surface-container-highest": "#dae2fd",
+            "on-error-container": "#93000a",
+            "surface-container-lowest": "#ffffff",
+            "secondary-container": "#6cf8bb",
+            "secondary-fixed": "#6ffbbe",
+            "on-primary": "#ffffff",
+            "on-tertiary-fixed": "#341100",
+            "outline": "#707881",
+            "error": "#ba1a1a",
+            "surface-container-high": "#e2e7ff",
+            "surface-container-low": "#f2f3ff",
+            "on-primary-fixed-variant": "#004b73",
+            "on-surface-variant": "#3f4850",
+            "on-secondary-fixed-variant": "#005236",
+            "primary-fixed-dim": "#93ccff",
+            "outline-variant": "#bfc7d2",
+            "background": "#faf8ff",
+            "on-tertiary-fixed-variant": "#783200",
+            "inverse-on-surface": "#eef0ff",
+            "tertiary": "#994100",
+            "error-container": "#ffdad6",
+            "surface": "#faf8ff",
+            "secondary-fixed-dim": "#4edea3",
+            "on-surface": "#131b2e",
+            "secondary": "#006c49",
+            "primary": "#006194",
+            "on-error": "#ffffff",
+            "on-secondary-container": "#00714d"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "2xl": "1.25rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "margin-mobile": "1rem",
+            "space-xl": "1.5rem",
+            "space-lg": "1.25rem",
+            "space-xs": "0.25rem",
+            "margin": "1.25rem",
+            "gutter": "1rem",
+            "space-sm": "0.5rem",
+            "space-md": "1rem",
+            "gutter-sm": "0.75rem"
+          },
+          "fontFamily": {
+            "body-sm": ["Plus Jakarta Sans"],
+            "display-hero": ["Plus Jakarta Sans"],
+            "label-numeric": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "title-card": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "label-caps": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "display-hero": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "label-numeric": ["15px", { "lineHeight": "20px", "fontWeight": "700" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "title-card": ["16px", { "lineHeight": "22px", "fontWeight": "600" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "label-caps": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-background text-on-surface min-h-screen antialiased flex flex-col font-body-md text-body-md pb-28">
+<!-- TOP APP BAR (Shared Component Anchor) -->
+<header class="bg-surface dark:bg-inverse-surface flex justify-between items-center w-full px-margin-mobile pt-3 pb-2 sticky top-0 z-40">
+<div class="flex items-center gap-2">
+<div class="w-9 h-9 rounded-xl bg-surface-container flex items-center justify-center text-primary dark:text-inverse-primary hover:bg-surface-container dark:hover:bg-surface-variant transition-colors active:scale-95 transition-transform duration-150 cursor-pointer">
+<span class="material-symbols-outlined" data-icon="storefront">storefront</span>
+</div>
+<div>
+<h1 class="text-headline-md font-headline-md font-bold text-on-surface dark:text-inverse-on-surface tracking-tight leading-none">RyanGunshop</h1>
+
+</div>
+</div>
+
+</header>
+<!-- MAIN CANVAS -->
+<main class="w-full max-w-lg mx-auto px-margin-mobile pt-3 space-y-4">
+<!-- HERO ORDER CARD: Soft Modern Sky Theme -->
+<div class="relative overflow-hidden rounded-2xl p-space-lg text-on-primary shadow-[0px_12px_28px_-6px_rgba(0,97,148,0.28)]" style="background: linear-gradient(135deg, rgb(124, 58, 237) 0%, rgb(76, 29, 149) 100%); box-shadow: rgba(124, 58, 237, 0.35) 0px 12px 28px -6px;">
+<div class="flex justify-between items-start mb-3">
+<div>
+<span class="inline-flex items-center gap-1 text-label-caps font-label-caps tracking-widest text-primary-fixed bg-white/15 px-2 py-0.5 rounded-full mb-1">
+            KASIR MEJA 01 • SHIFT SIANG
+          </span>
+<h2 class="text-headline-lg font-headline-lg text-white">Pesanan</h2>
+</div>
+<div class="text-right">
+
+</div>
+</div>
+<div class="flex items-end justify-between pt-2 border-t border-white/15">
+<div>
+<p class="text-label-caps font-label-caps text-primary-fixed">Total</p>
+<p class="text-display-hero font-display-hero text-white tracking-tight leading-none mt-0.5">Rp 74.500</p>
+</div>
+
+</div>
+</div>
+<!-- QUICK CASHIER ACTION PODS (Inspired by reference layout) -->
+<div class="grid grid-cols-3 gap-3">
+<div class="bg-surface-container-lowest p-3 rounded-2xl shadow-[0px_8px_24px_-4px_rgba(15,23,42,0.05)] flex flex-col items-center justify-center text-center cursor-pointer active:scale-95 transition-transform duration-150">
+<div class="w-12 h-12 rounded-[14px] bg-[#FFF7ED] flex items-center justify-center text-[#EA580C] mb-1.5">
+<span class="material-symbols-outlined" data-icon="fastfood">fastfood</span>
+</div>
+<span class="font-title-card text-title-card text-xs text-on-surface">Tambah Menu</span>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded-2xl shadow-[0px_8px_24px_-4px_rgba(15,23,42,0.05)] border-2 border-primary/20 flex flex-col items-center justify-center text-center cursor-pointer active:scale-95 transition-transform duration-150">
+<div class="w-12 h-12 rounded-[14px] bg-[#F0F9FF] flex items-center justify-center text-primary mb-1.5" style="background-color: rgb(245, 243, 255); color: rgb(124, 58, 237);">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+</div>
+<span class="font-title-card text-title-card text-xs text-primary font-bold">Keranjang (4)</span>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded-2xl shadow-[0px_8px_24px_-4px_rgba(15,23,42,0.05)] flex flex-col items-center justify-center text-center cursor-pointer active:scale-95 transition-transform duration-150">
+<div class="w-12 h-12 rounded-[14px] bg-[#ECFDF5] flex items-center justify-center text-[#059669] mb-1.5">
+<span class="material-symbols-outlined" data-icon="local_offer">local_offer</span>
+</div>
+<span class="font-title-card text-title-card text-xs text-on-surface">Voucher/Diskon</span>
+</div>
+</div>
+<!-- ITEM ORDER LIST -->
+<div class="space-y-2.5">
+<div class="flex items-center justify-between px-1">
+<h3 class="text-headline-sm font-headline-sm text-on-surface">Rincian Barang Belanja</h3>
+<span class="text-label-caps font-label-caps text-outline uppercase tracking-wider">Modul Rak Toko</span>
+</div>
+<!-- Item Card 1 -->
+<div class="bg-surface-container-lowest rounded-2xl p-3 shadow-[0px_8px_24px_-4px_rgba(15,23,42,0.05)] flex items-center gap-3">
+<div class="w-14 h-14 rounded-xl bg-surface-container flex-shrink-0 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-2xl" data-icon="coffee">coffee</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-1.5 mb-0.5">
+<span class="text-label-caps font-label-caps px-1.5 py-0.2 bg-[#F0F9FF] text-[#0284C7] rounded" style="background-color: rgb(245, 243, 255); color: rgb(124, 58, 237);">Rak A1</span>
+
+</div>
+<h4 class="font-title-card text-title-card text-sm text-on-surface truncate">Kopi Susu Gula Aren 250ml</h4>
+<p class="text-body-sm font-body-sm text-outline">Rp 18.000 / btl</p>
+</div>
+<div class="flex flex-col items-end gap-1.5">
+<span class="text-label-numeric font-label-numeric text-on-surface">Rp 36.000</span>
+<div class="flex items-center bg-surface-container-low rounded-lg p-0.5 border border-outline-variant/40">
+<button class="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-xs" data-icon="remove">remove</span>
+</button>
+<span class="px-2 text-label-numeric font-label-numeric text-xs">2</span>
+<button class="w-6 h-6 rounded bg-surface-container-lowest shadow-sm flex items-center justify-center text-primary active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-xs" data-icon="add">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Item Card 2 -->
+<div class="bg-surface-container-lowest rounded-2xl p-3 shadow-[0px_8px_24px_-4px_rgba(15,23,42,0.05)] flex items-center gap-3">
+<div class="w-14 h-14 rounded-xl bg-surface-container flex-shrink-0 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-2xl" data-icon="cookie">cookie</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-1.5 mb-0.5">
+<span class="text-label-caps font-label-caps px-1.5 py-0.2 bg-[#FFF7ED] text-[#EA580C] rounded">Rak B3</span>
+
+</div>
+<h4 class="font-title-card text-title-card text-sm text-on-surface truncate">Biskuit Cokelat Crispy</h4>
+<p class="text-body-sm font-body-sm text-outline">Rp 12.500 / bks</p>
+</div>
+<div class="flex flex-col items-end gap-1.5">
+<span class="text-label-numeric font-label-numeric text-on-surface">Rp 12.500</span>
+<div class="flex items-center bg-surface-container-low rounded-lg p-0.5 border border-outline-variant/40">
+<button class="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-xs" data-icon="remove">remove</span>
+</button>
+<span class="px-2 text-label-numeric font-label-numeric text-xs">1</span>
+<button class="w-6 h-6 rounded bg-surface-container-lowest shadow-sm flex items-center justify-center text-primary active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-xs" data-icon="add">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Item Card 3 -->
+<div class="bg-surface-container-lowest rounded-2xl p-3 shadow-[0px_8px_24px_-4px_rgba(15,23,42,0.05)] flex items-center gap-3">
+<div class="w-14 h-14 rounded-xl bg-surface-container flex-shrink-0 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-2xl" data-icon="water_drop">water_drop</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-1.5 mb-0.5">
+<span class="text-label-caps font-label-caps px-1.5 py-0.2 bg-[#ECFDF5] text-[#059669] rounded">Rak D2</span>
+
+</div>
+<h4 class="font-title-card text-title-card text-sm text-on-surface truncate">Air Mineral Pegunungan 600ml</h4>
+<p class="text-body-sm font-body-sm text-outline">Rp 4.000 / btl</p>
+</div>
+<div class="flex flex-col items-end gap-1.5">
+<span class="text-label-numeric font-label-numeric text-on-surface">Rp 4.000</span>
+<div class="flex items-center bg-surface-container-low rounded-lg p-0.5 border border-outline-variant/40">
+<button class="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-xs" data-icon="remove">remove</span>
+</button>
+<span class="px-2 text-label-numeric font-label-numeric text-xs">1</span>
+<button class="w-6 h-6 rounded bg-surface-container-lowest shadow-sm flex items-center justify-center text-primary active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-xs" data-icon="add">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Item Card 4 -->
+<div class="bg-surface-container-lowest rounded-2xl p-3 shadow-[0px_8px_24px_-4px_rgba(15,23,42,0.05)] flex items-center gap-3">
+<div class="w-14 h-14 rounded-xl bg-surface-container flex-shrink-0 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-2xl" data-icon="inventory_2">inventory_2</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center gap-1.5 mb-0.5">
+<span class="text-label-caps font-label-caps px-1.5 py-0.2 bg-[#F0F9FF] text-[#0284C7] rounded" style="background-color: rgb(245, 243, 255); color: rgb(124, 58, 237);">Rak A4</span>
+
+</div>
+<h4 class="font-title-card text-title-card text-sm text-on-surface truncate">Baterai Alkaline AA 2-pack</h4>
+<p class="text-body-sm font-body-sm text-outline">Rp 22.000 / pack</p>
+</div>
+<div class="flex flex-col items-end gap-1.5">
+<span class="text-label-numeric font-label-numeric text-on-surface">Rp 22.000</span>
+<div class="flex items-center bg-surface-container-low rounded-lg p-0.5 border border-outline-variant/40">
+<button class="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-xs" data-icon="remove">remove</span>
+</button>
+<span class="px-2 text-label-numeric font-label-numeric text-xs">1</span>
+<button class="w-6 h-6 rounded bg-surface-container-lowest shadow-sm flex items-center justify-center text-primary active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-xs" data-icon="add">add</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- METODE PEMBAYARAN SEGMENTED -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md shadow-[0px_8px_24px_-4px_rgba(15,23,42,0.05)] space-y-3">
+<div class="flex items-center justify-between">
+<h3 class="text-title-card font-title-card text-on-surface">Metode Pembayaran</h3>
+
+</div>
+<!-- Segmented Buttons -->
+<div class="grid grid-cols-2 p-1 bg-surface-container rounded-xl gap-1">
+<button class="py-2.5 rounded-lg font-headline-sm text-xs md:text-sm font-bold flex items-center justify-center gap-1.5 transition-all bg-surface-container-lowest text-primary shadow-sm" id="tab-cash" onclick="switchPayment('cash')">
+<span class="material-symbols-outlined text-base" data-icon="payments">payments</span>
+          Tunai (Cash)
+        </button>
+<button class="py-2.5 rounded-lg font-headline-sm text-xs md:text-sm font-bold flex items-center justify-center gap-1.5 transition-all text-outline hover:text-on-surface" id="tab-qris" onclick="switchPayment('qris')">
+<span class="material-symbols-outlined text-base" data-icon="qr_code_2">qr_code_2</span>
+          QRIS Dinamis
+        </button>
+</div>
+<!-- Cash Content -->
+<div class="space-y-3 pt-1" id="cash-panel">
+<div>
+<span class="text-label-caps font-label-caps text-outline mb-1.5 block">NOMINAL CEPAT UANG PAS</span>
+<div class="grid grid-cols-3 gap-2">
+<button class="py-2 px-2 rounded-xl border border-secondary bg-[#ECFDF5] text-secondary font-label-numeric text-xs text-center active:scale-95 transition-transform" onclick="setAmount(74500)">
+              Uang Pas <span class="block font-bold">Rp 74.500</span>
+</button>
+<button class="py-2 px-2 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface font-label-numeric text-xs text-center hover:bg-surface-container active:scale-95 transition-transform" onclick="setAmount(80000)">
+              Rp 80.000
+            </button>
+<button class="py-2 px-2 rounded-xl border-2 border-primary bg-primary/5 text-primary font-label-numeric text-xs text-center active:scale-95 transition-transform font-bold" onclick="setAmount(100000)" style="border-color: rgb(124, 58, 237); background-color: rgb(245, 243, 255); color: rgb(124, 58, 237);">
+              Rp 100.000
+            </button>
+</div>
+</div>
+<div class="p-3 rounded-xl bg-surface-container-low border border-surface-container flex items-center justify-between">
+<span class="text-body-sm font-body-sm text-on-surface-variant">Uang Diterima:</span>
+<div class="flex items-center gap-1 text-label-numeric font-label-numeric text-on-surface">
+<span class="text-primary font-bold" style="color: rgb(124, 58, 237);">Rp 100.000</span>
+<span class="material-symbols-outlined text-outline text-sm" data-icon="edit">edit</span>
+</div>
+</div>
+<!-- Kembalian Badge Fresh Mint Green -->
+<div class="rounded-xl p-3 bg-[#ECFDF5] border border-secondary-container flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-secondary text-white flex items-center justify-center">
+<span class="material-symbols-outlined text-lg" data-icon="change_circle">change_circle</span>
+</div>
+<div>
+<p class="text-label-caps font-label-caps text-[#059669]">KEMBALIAN PELANGGAN</p>
+
+</div>
+</div>
+<span class="text-headline-md font-headline-md font-bold text-[#059669]">Rp 25.500</span>
+</div>
+</div>
+<!-- QRIS Content (Hidden togglable) -->
+<div class="hidden space-y-3 pt-1" id="qris-panel">
+<div class="flex flex-col items-center justify-center p-4 bg-surface-container-low rounded-xl border border-dashed border-outline-variant text-center">
+<div class="w-36 h-36 bg-surface-container-lowest p-2 rounded-xl shadow-inner flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-8xl text-on-surface" data-icon="qr_code_scanner">qr_code_scanner</span>
+</div>
+<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary font-label-caps text-label-caps mb-1">
+<span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+            QRIS Statis &amp; Dinamis Terintegrasi
+          </div>
+<p class="text-body-sm font-body-sm text-outline">NMID: ID10293847562 • RyanGunshop POS</p>
+</div>
+</div>
+</div>
+<!-- RINGKASAN BIAYA & STATUS CHECKOUT -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md shadow-[0px_8px_24px_-4px_rgba(15,23,42,0.05)] space-y-2">
+<div class="flex justify-between text-body-sm font-body-sm text-outline">
+<span class="">Subtotal (4 Item)</span>
+<span class="font-label-numeric text-on-surface">Rp 74.500</span>
+</div>
+<div class="flex justify-between text-body-sm font-body-sm text-outline">
+<span class="">Diskon Toko</span>
+<span class="font-label-numeric text-secondary">- Rp 0</span>
+</div>
+<div class="flex justify-between text-body-sm font-body-sm text-outline">
+<span class="">Pajak PB1 (0% Bebas UMKM)</span>
+<span class="font-label-numeric text-on-surface">Rp 0</span>
+</div>
+<div class="pt-2 border-t border-surface-container flex justify-between items-baseline">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">Total Bayar</span>
+<span class="text-display-hero font-display-hero text-primary tracking-tight" style="color: rgb(99, 14, 212);">Rp 74.500</span>
+</div>
+</div>
+<!-- PRIMARY ACTION BUTTON: 52px Full Capsule Pill -->
+<button class="w-full h-[52px] rounded-full bg-primary hover:bg-primary-container text-white font-title-card text-title-card flex items-center justify-center gap-2 shadow-[0px_12px_24px_-6px_rgba(0,97,148,0.35)] active:scale-95 transition-transform duration-150" style="background: linear-gradient(135deg, rgb(124, 58, 237) 0%, rgb(99, 14, 212) 100%); box-shadow: rgba(109, 40, 217, 0.45) 0px 12px 24px -6px;">
+<span class="material-symbols-outlined text-xl" data-icon="print">print</span>
+<span class="">Selesaikan Pembayaran &amp; Cetak Struk</span>
+</button>
+</main>
+<!-- BOTTOM NAVIGATION BAR (Shared Component Anchor) -->
+<!-- Context Active State: 'Kasir' is the active intent of this POS Checkout screen -->
+<nav class="bg-surface-container-lowest dark:bg-inverse-surface fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter-sm py-space-xs rounded-t-xl shadow-[0px_12px_32px_-4px_rgba(15,23,42,0.08)] dark:shadow-none">
+<!-- Tab 1: Home -->
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant gap-0.5 hover:text-primary dark:hover:text-inverse-primary transition-colors active:scale-90 transition-transform duration-150 py-1 px-2" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="storefront">storefront</span>
+<span class="text-label-caps font-label-caps">Home</span>
+</a>
+<!-- Tab 2: Katalog -->
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant gap-0.5 hover:text-primary dark:hover:text-inverse-primary transition-colors active:scale-90 transition-transform duration-150 py-1 px-2" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="inventory_2">inventory_2</span>
+<span class="text-label-caps font-label-caps">Katalog</span>
+</a>
+<!-- Tab 3: Scan (Floating Pill Center) -->
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant gap-0.5 hover:text-primary dark:hover:text-inverse-primary transition-colors active:scale-90 transition-transform duration-150 py-1 px-2" href="#">
+<div class="w-12 h-12 -mt-5 rounded-full bg-primary text-white flex items-center justify-center shadow-[0px_8px_20px_-2px_rgba(0,97,148,0.4)]" style="background: linear-gradient(135deg, rgb(124, 58, 237) 0%, rgb(99, 14, 212) 100%); box-shadow: rgba(109, 40, 217, 0.45) 0px 8px 20px -2px;">
+<span class="material-symbols-outlined text-2xl" data-icon="qr_code_scanner">qr_code_scanner</span>
+</div>
+<span class="text-label-caps font-label-caps mt-0.5">Scan</span>
+</a>
+<!-- Tab 4: Kasir (ACTIVE STATE MAPPED) -->
+<a class="flex flex-col items-center justify-center text-primary dark:text-inverse-primary font-bold gap-0.5 active:scale-90 transition-transform duration-150 py-1 px-2" href="#">
+<span class="material-symbols-outlined text-2xl text-primary" data-icon="point_of_sale" style="font-variation-settings: &quot;FILL&quot; 1; color: rgb(99, 14, 212);">point_of_sale</span>
+<span class="text-label-caps font-label-caps text-primary" style="color: rgb(99, 14, 212);">Kasir</span>
+</a>
+<!-- Tab 5: Laporan -->
+<a class="flex flex-col items-center justify-center text-outline dark:text-outline-variant gap-0.5 hover:text-primary dark:hover:text-inverse-primary transition-colors active:scale-90 transition-transform duration-150 py-1 px-2" href="#">
+<span class="material-symbols-outlined text-2xl" data-icon="bar_chart">bar_chart</span>
+<span class="text-label-caps font-label-caps">Laporan</span>
+</a>
+</nav>
+<!-- Lightweight Inline JS for Interactive Toggle -->
+<script>
+    function switchPayment(mode) {
+      const cashBtn = document.getElementById('tab-cash');
+      const qrisBtn = document.getElementById('tab-qris');
+      const cashPanel = document.getElementById('cash-panel');
+      const qrisPanel = document.getElementById('qris-panel');
+
+      if (mode === 'cash') {
+        cashBtn.className = "py-2.5 rounded-lg font-headline-sm text-xs md:text-sm font-bold flex items-center justify-center gap-1.5 transition-all bg-surface-container-lowest text-primary shadow-sm";
+        qrisBtn.className = "py-2.5 rounded-lg font-headline-sm text-xs md:text-sm font-bold flex items-center justify-center gap-1.5 transition-all text-outline hover:text-on-surface";
+        cashPanel.classList.remove('hidden');
+        qrisPanel.classList.add('hidden');
+      } else {
+        qrisBtn.className = "py-2.5 rounded-lg font-headline-sm text-xs md:text-sm font-bold flex items-center justify-center gap-1.5 transition-all bg-surface-container-lowest text-primary shadow-sm";
+        cashBtn.className = "py-2.5 rounded-lg font-headline-sm text-xs md:text-sm font-bold flex items-center justify-center gap-1.5 transition-all text-outline hover:text-on-surface";
+        cashPanel.classList.add('hidden');
+        qrisPanel.classList.remove('hidden');
+      }
+    }
+
+    function setAmount(val) {
+      // micro interaction helper
+    }
+  </script>
+
+
+</body></html>

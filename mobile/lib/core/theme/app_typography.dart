@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
-/// Token tipografi RyanGunshop.
+/// Token tipografi RyanGunshop (Plus Jakarta Sans / Modern Geometric Sans).
 ///
-/// Satu suara sans-serif untuk seluruh hierarki agar tampilan tenang dan padat,
-/// dengan tracking negatif yang makin rapat saat ukuran naik. Ukuran inti tetap
-/// mengikuti `DESIGN.md`: 28 sp judul halaman, 20 sp judul bagian, 16 sp label
-/// penting, dan 14 sp metadata. Serif hanya dipakai sebagai aksen editorial pada
-/// angka total pembayaran.
+/// Hierarki modern geometris dengan Plus Jakarta Sans untuk seluruh tampilan POS,
+/// dengan tracking negatif rapat pada display & headline, serta tabular figures
+/// pada nominal rupiah dan kuantitas barang.
 abstract final class AppTypography {
+  static const String primaryFontFamily = 'Plus Jakarta Sans';
+  static const List<String> fontFallbacks = <String>['sans-serif'];
+
+  static const double displayHeroSize = 32;
   static const double pageTitleSize = 28;
   static const double sectionTitleSize = 20;
   static const double labelSize = 16;
@@ -30,8 +32,21 @@ abstract final class AppTypography {
   /// Skala teks yang dipakai aplikasi.
   static TextTheme textTheme({required Color ink, required Color muted}) {
     return const TextTheme().copyWith(
+      // Judul hero omzet / saldo.
+      displayMedium: TextStyle(
+        fontFamily: primaryFontFamily,
+        fontFamilyFallback: fontFallbacks,
+        fontSize: displayHeroSize,
+        fontWeight: bold,
+        color: ink,
+        height: 1.12,
+        letterSpacing: -0.64,
+        fontFeatures: tabularFigures,
+      ),
       // Judul halaman.
       displaySmall: TextStyle(
+        fontFamily: primaryFontFamily,
+        fontFamilyFallback: fontFallbacks,
         fontSize: pageTitleSize,
         fontWeight: bold,
         color: ink,
@@ -40,6 +55,8 @@ abstract final class AppTypography {
       ),
       // Judul halaman untuk layar yang memakai headlineMedium.
       headlineMedium: TextStyle(
+        fontFamily: primaryFontFamily,
+        fontFamilyFallback: fontFallbacks,
         fontSize: pageTitleSize,
         fontWeight: bold,
         color: ink,
@@ -48,6 +65,8 @@ abstract final class AppTypography {
       ),
       // Judul bagian.
       headlineSmall: TextStyle(
+        fontFamily: primaryFontFamily,
+        fontFamilyFallback: fontFallbacks,
         fontSize: sectionTitleSize,
         fontWeight: semibold,
         color: ink,
@@ -56,6 +75,8 @@ abstract final class AppTypography {
       ),
       // Angka ringkasan dan judul kartu besar.
       titleLarge: TextStyle(
+        fontFamily: primaryFontFamily,
+        fontFamilyFallback: fontFallbacks,
         fontSize: 22,
         fontWeight: semibold,
         color: ink,
@@ -65,6 +86,8 @@ abstract final class AppTypography {
       ),
       // Label penting.
       titleMedium: TextStyle(
+        fontFamily: primaryFontFamily,
+        fontFamilyFallback: fontFallbacks,
         fontSize: labelSize,
         fontWeight: semibold,
         color: ink,
@@ -72,30 +95,40 @@ abstract final class AppTypography {
         letterSpacing: -0.15,
       ),
       titleSmall: TextStyle(
+        fontFamily: primaryFontFamily,
+        fontFamilyFallback: fontFallbacks,
         fontSize: bodySize,
         fontWeight: semibold,
         color: ink,
         height: 1.3,
       ),
       labelLarge: TextStyle(
+        fontFamily: primaryFontFamily,
+        fontFamilyFallback: fontFallbacks,
         fontSize: bodySize,
         fontWeight: semibold,
         color: ink,
         height: 1.2,
       ),
       bodyLarge: TextStyle(
+        fontFamily: primaryFontFamily,
+        fontFamilyFallback: fontFallbacks,
         fontSize: 16,
         fontWeight: regular,
         color: ink,
         height: 1.5,
       ),
       bodyMedium: TextStyle(
+        fontFamily: primaryFontFamily,
+        fontFamilyFallback: fontFallbacks,
         fontSize: bodySize,
         fontWeight: regular,
         color: ink,
         height: 1.5,
       ),
       labelMedium: TextStyle(
+        fontFamily: primaryFontFamily,
+        fontFamilyFallback: fontFallbacks,
         fontSize: bodySize,
         fontWeight: medium,
         color: muted,
@@ -103,12 +136,16 @@ abstract final class AppTypography {
       ),
       // Metadata.
       bodySmall: TextStyle(
+        fontFamily: primaryFontFamily,
+        fontFamilyFallback: fontFallbacks,
         fontSize: captionSize,
         fontWeight: regular,
         color: muted,
         height: 1.45,
       ),
       labelSmall: TextStyle(
+        fontFamily: primaryFontFamily,
+        fontFamilyFallback: fontFallbacks,
         fontSize: 11,
         fontWeight: medium,
         color: muted,

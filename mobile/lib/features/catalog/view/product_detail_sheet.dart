@@ -197,46 +197,6 @@ class ProductDetailSheet extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: AppSpacing.sm),
-
-          // Location in Floor Plan
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: AppRadius.controlBorder,
-              border: Border.all(color: AppColors.primaryLight),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.table_rows_outlined,
-                  color: AppColors.primary,
-                  size: 20,
-                ),
-                const SizedBox(width: AppSpacing.xs),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Lokasi di Denah Warung',
-                        style: TextStyle(fontSize: 11, color: AppColors.muted),
-                      ),
-                      Text(
-                        product.locationLabel,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
           const SizedBox(height: AppSpacing.lg),
 
           // Actions

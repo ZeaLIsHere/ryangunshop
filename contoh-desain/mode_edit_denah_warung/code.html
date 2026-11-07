@@ -1,0 +1,473 @@
+<!DOCTYPE html><html lang="id"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>RyanGunshop - Editor Denah Toko (Owner Mode)</title>
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-secondary": "#ffffff",
+            "on-background": "#0b1c30",
+            "tertiary-fixed": "#6ffbbe",
+            "outline-variant": "#ccc3d8",
+            "border-subtle": "#EDE8F5",
+            "on-secondary-fixed": "#2c0051",
+            "surface": "#FAF8FE",
+            "primary-fixed": "#eaddff",
+            "on-error": "#ffffff",
+            "inverse-surface": "#213145",
+            "on-error-container": "#93000a",
+            "on-primary-container": "#ede0ff",
+            "on-tertiary-container": "#76ffc2",
+            "violet-vibrant": "#6D28D9",
+            "surface-container-lowest": "#ffffff",
+            "on-secondary-container": "#fffbff",
+            "tertiary-fixed-dim": "#4edea3",
+            "on-tertiary": "#ffffff",
+            "on-primary-fixed-variant": "#5a00c6",
+            "surface-container-low": "#F5F3FF",
+            "text-muted": "#64748B",
+            "tertiary-container": "#c05400",
+            "lavender-tint": "#EDE9FE",
+            "surface-variant": "#EDE9FE",
+            "outline": "#7b7487",
+            "on-surface-variant": "#4a4455",
+            "primary": "#7c3aed",
+            "on-surface": "#0b1c30",
+            "status-warning": "#F59E0B",
+            "primary-fixed-dim": "#d2bbff",
+            "tertiary": "#994100",
+            "surface-bright": "#FAF8FE",
+            "surface-container-highest": "#EDE9FE",
+            "secondary-container": "#9c48ea",
+            "status-danger": "#EF4444",
+            "error": "#ba1a1a",
+            "secondary-fixed": "#f0dbff",
+            "on-tertiary-fixed-variant": "#783200",
+            "surface-dim": "#cbdbf5",
+            "surface-base": "#FAF8FE",
+            "inverse-primary": "#d2bbff",
+            "on-primary": "#ffffff",
+            "status-success": "#10B981",
+            "on-tertiary-fixed": "#341100",
+            "surface-container-high": "#EDE9FE",
+            "surface-container": "#F5F3FF",
+            "violet-deep": "#4C1D95",
+            "primary-container": "#6D28D9",
+            "surface-tint": "#7c3aed",
+            "error-container": "#ffdad6",
+            "on-primary-fixed": "#25005a",
+            "secondary": "#006c49",
+            "background": "#FAF8FE",
+            "secondary-fixed-dim": "#ddb7ff",
+            "surface-card": "#FFFFFF",
+            "on-secondary-fixed-variant": "#6900b3",
+            "lavender-subtle": "#F5F3FF",
+            "inverse-on-surface": "#eaf1ff",
+            "text-primary": "#0F172A"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "2xl": "1.25rem",
+            "3xl": "1.5rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "margin": "1.25rem",
+            "space-xs": "0.25rem",
+            "space-md": "1rem",
+            "gutter-sm": "0.75rem",
+            "space-xl": "1.5rem",
+            "space-sm": "0.5rem",
+            "space-lg": "1.25rem",
+            "margin-mobile": "1rem",
+            "gutter": "1rem"
+          },
+          "fontFamily": {
+            "headline-md": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "label-numeric": ["Plus Jakarta Sans"],
+            "label-caps": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "display-hero": ["Plus Jakarta Sans"],
+            "body-md": ["Plus Jakarta Sans"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "title-card": ["Plus Jakarta Sans"],
+            "body-lg": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "label-numeric": ["15px", { "lineHeight": "20px", "fontWeight": "700" }],
+            "label-caps": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "700" }],
+            "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "display-hero": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+            "title-card": ["16px", { "lineHeight": "22px", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+      font-size: 20px;
+      line-height: 1;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .grid-matrix {
+      background-size: 20px 20px;
+      background-image: radial-gradient(circle, #cbd5e1 1.2px, transparent 1.2px);
+    }
+    .shadow-soft-card {
+      box-shadow: 0px 8px 24px -4px rgba(15, 23, 42, 0.05), 0px 2px 6px -1px rgba(15, 23, 42, 0.02);
+    }
+    .shadow-floating-bar {
+      box-shadow: 0px 12px 32px -4px rgba(15, 23, 42, 0.12), 0px 4px 12px -2px rgba(15, 23, 42, 0.04);
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased min-h-screen flex justify-center selection:bg-primary selection:text-on-primary">
+<!-- Mobile Container Wrapper -->
+<main class="w-full max-w-md min-h-screen flex flex-col bg-surface relative pb-28">
+<!-- 1. Top App Header (Editor Mode) -->
+<header class="sticky top-0 z-40 bg-surface/95 backdrop-blur-md px-margin-mobile pt-3 pb-3 flex items-center justify-between border-b border-border-subtle">
+<div class="flex items-center gap-2.5">
+<button aria-label="Kembali ke Dashboard" class="w-10 h-10 rounded-xl bg-surface-container-lowest flex items-center justify-center text-on-surface shadow-soft-card active:scale-95 transition-transform" type="button">
+<span class="material-symbols-outlined text-[22px]">arrow_back</span>
+</button>
+<div>
+<div class="flex items-center gap-1.5">
+<h1 class="font-headline-sm text-headline-sm text-on-surface font-bold tracking-tight">Editor Denah</h1>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant font-label-caps text-label-caps font-bold">
+              Owner
+            </span>
+</div>
+<p class="font-body-sm text-body-sm text-outline flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary inline-block"></span>
+            Grid Snap 0.5m Aktif
+          </p>
+</div>
+</div>
+<!-- Quick Action Controls -->
+<div class="flex items-center gap-1.5">
+<button aria-label="Undo" class="w-9 h-9 rounded-xl bg-surface-container-lowest text-on-surface-variant flex items-center justify-center shadow-soft-card active:scale-90 transition-transform" title="Batalkan perubahan" type="button">
+<span class="material-symbols-outlined text-[19px]">undo</span>
+</button>
+<button aria-label="Redo" class="w-9 h-9 rounded-xl bg-surface-container-lowest text-outline-variant flex items-center justify-center shadow-soft-card cursor-not-allowed" title="Ulangi perubahan" type="button">
+<span class="material-symbols-outlined text-[19px]">redo</span>
+</button>
+<button class="ml-1 px-3.5 h-9 rounded-xl bg-[#7c3aed] text-white font-headline-sm text-[13px] font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-transform hover:bg-[#6D28D9]" type="button">
+<span class="material-symbols-outlined text-[17px]">save</span>
+<span class="">Simpan</span>
+</button>
+</div>
+</header>
+<!-- 2. Security Banner & Mode Controls -->
+<section class="px-margin-mobile pt-3 pb-1">
+<div class="bg-lavender-tint/70 border border-primary/20 rounded-2xl p-3 flex items-start gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-primary text-on-primary flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+</div>
+<div class="flex-1">
+<h2 class="font-title-card text-[13px] font-bold text-violet-deep leading-tight">Akses Terproteksi Pemilik</h2>
+<p class="font-body-sm text-[11.5px] text-text-muted leading-relaxed mt-0.5">
+            Perubahan posisi rak tidak akan memutus transaksi kasir yang sedang aktif saat ini.
+          </p>
+</div>
+</div>
+<!-- Quick Toggles Pill Bar -->
+<div class="flex items-center justify-between mt-3 px-1">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[17px] text-outline">tune</span>
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Alat Bantu Denah:</span>
+</div>
+<div class="flex items-center gap-1.5">
+<button class="px-2.5 py-1 rounded-lg bg-surface-container-lowest text-primary border border-primary/20 font-label-caps text-label-caps flex items-center gap-1 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[14px]">grid_4x4</span>
+<span class="">Grid ON</span>
+</button>
+<button class="px-2.5 py-1 rounded-lg bg-surface-container-lowest text-on-surface-variant font-label-caps text-label-caps flex items-center gap-1 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+<span class="">Kasir Terkunci</span>
+</button>
+</div>
+</div>
+</section>
+<!-- 3. Interactive 2D Spatial Layout Canvas -->
+<section class="px-margin-mobile mt-3">
+<div class="relative w-full h-[360px] bg-slate-50 grid-matrix rounded-3xl border-2 border-slate-200/80 overflow-hidden shadow-soft-card flex flex-col justify-between p-3 select-none">
+<!-- Floor Boundaries & Dimensions Header -->
+<div class="flex justify-between items-center text-[10px] font-label-caps text-outline tracking-wider z-10 pointer-events-none">
+<div class="bg-surface-container-lowest/90 px-2 py-0.5 rounded-md border border-slate-200 shadow-xs flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="">Ukuran Warung: 8.0m x 6.0m</span>
+</div>
+<div class="bg-surface-container-lowest/90 px-2 py-0.5 rounded-md border border-slate-200 shadow-xs">
+            Skala: 1 kotak = 0.5m
+          </div>
+</div>
+<!-- Canvas Objects Placement Area -->
+<div class="absolute inset-0 pt-8 pb-10 px-4">
+<!-- Objek 1: Kulkas Minuman 2 Pintu (Kiri Atas) -->
+<div class="absolute top-10 left-5 w-24 h-16 bg-surface-container-lowest rounded-xl border border-primary/20 p-2 shadow-sm flex flex-col justify-between cursor-pointer hover:border-primary transition-colors">
+<div class="flex items-center justify-between">
+<span class="material-symbols-outlined text-primary text-[17px]">kitchen</span>
+<span class="px-1 py-0.2 rounded bg-lavender-tint text-primary font-label-caps text-[9px]">4°C</span>
+</div>
+<div>
+<p class="font-title-card text-[11px] font-bold text-on-surface leading-none">Kulkas 2 Pintu</p>
+<p class="font-body-sm text-[9.5px] text-outline leading-tight mt-0.5">Minuman Dingin</p>
+</div>
+</div>
+<!-- Objek 2: Meja Gudang / Galon (Kiri Bawah) -->
+<div class="absolute bottom-14 left-5 w-20 h-14 bg-surface-container-lowest rounded-xl border border-dashed border-slate-300 p-1.5 flex flex-col justify-between opacity-90">
+<div class="flex items-center justify-between">
+<span class="material-symbols-outlined text-tertiary text-[16px]">water_drop</span>
+<span class="text-[9px] font-label-caps text-outline">G-01</span>
+</div>
+<p class="font-title-card text-[10.5px] font-semibold text-on-surface leading-tight">Area Galon &amp; Gas</p>
+</div>
+<!-- Objek 3: Rak B (Snack & Mi Instan) - Tengah Atas -->
+<div class="absolute top-12 left-36 w-32 h-14 bg-surface-container-lowest rounded-xl border border-slate-200 p-2 shadow-sm flex items-center gap-2 cursor-pointer hover:border-primary transition-all">
+<div class="w-8 h-8 rounded-lg bg-orange-50 text-tertiary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">inventory_2</span>
+</div>
+<div class="overflow-hidden">
+<p class="font-title-card text-[11px] font-bold text-on-surface truncate">Rak B (Snack)</p>
+<p class="font-body-sm text-[9.5px] text-outline">Lorong 1 • 64 SKU</p>
+</div>
+</div>
+<!-- Objek 4: Rak C (Bumbu & Sachet) - Dinding Kanan -->
+<div class="absolute top-20 right-4 w-16 h-36 bg-surface-container-lowest rounded-xl border border-slate-200 p-2 shadow-sm flex flex-col justify-between items-center text-center cursor-pointer hover:border-primary">
+<div class="w-7 h-7 rounded-lg bg-emerald-50 text-secondary flex items-center justify-center">
+<span class="material-symbols-outlined text-[17px]">shelves</span>
+</div>
+<div class="w-full">
+<span class="font-label-caps text-[9px] text-secondary font-bold bg-emerald-50 px-1 py-0.5 rounded">98 SKU</span>
+<p class="font-title-card text-[10.5px] font-bold text-on-surface mt-1 leading-tight">Rak C Bumbu</p>
+</div>
+</div>
+<!-- Objek 5: AKTIF / TERPILIH -> Rak A (Sembako Utama) -->
+<div class="absolute top-32 left-28 w-36 h-20 bg-surface-card rounded-xl border-2 border-primary shadow-lg p-2.5 flex flex-col justify-between z-20 ring-4 ring-primary/20">
+<!-- Selection Corner Handles -->
+<div class="absolute -top-1.5 -left-1.5 w-3 h-3 bg-primary border-2 border-white rounded-full"></div>
+<div class="absolute -top-1.5 -right-1.5 w-3 h-3 bg-primary border-2 border-white rounded-full"></div>
+<div class="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-primary border-2 border-white rounded-full"></div>
+<div class="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-primary border-2 border-white rounded-full"></div>
+<!-- Floating Quick Action Bubble di Atas Bounding Box -->
+<div class="absolute -top-9 left-1/2 -translate-x-1/2 bg-inverse-surface text-inverse-on-surface px-2 py-1 rounded-xl shadow-md flex items-center gap-2 whitespace-nowrap z-30">
+<button class="hover:text-primary-fixed-dim transition-colors flex items-center" title="Putar 90°" type="button">
+<span class="material-symbols-outlined text-[14px]">rotate_right</span>
+</button>
+<div class="w-px h-3 bg-slate-600"></div>
+<button class="hover:text-primary-fixed-dim transition-colors flex items-center" title="Duplikat" type="button">
+<span class="material-symbols-outlined text-[14px]">content_copy</span>
+</button>
+<div class="w-px h-3 bg-slate-600"></div>
+<button class="hover:text-primary-fixed-dim transition-colors flex items-center" title="Kunci Posisi" type="button">
+<span class="material-symbols-outlined text-[14px]">lock_open</span>
+</button>
+<div class="w-px h-3 bg-slate-600"></div>
+<button class="text-error-container hover:text-red-300 transition-colors flex items-center" title="Hapus Rak" type="button">
+<span class="material-symbols-outlined text-[14px]">delete</span>
+</button>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[18px]">table_restaurant</span>
+<span class="font-title-card text-[12px] font-bold text-on-surface">Rak A (Sembako)</span>
+</div>
+<span class="px-1.5 py-0.5 rounded bg-lavender-tint text-violet-deep font-label-caps text-[9px] font-bold">2.0m × 0.8m</span>
+</div>
+<div class="flex items-center justify-between mt-1 pt-1 border-t border-slate-100">
+<span class="font-body-sm text-[10px] text-outline">Lorong Depan (4 Susun)</span>
+<span class="font-label-caps text-[10px] font-bold text-secondary">Terisi 92%</span>
+</div>
+</div>
+<!-- Objek 6: Meja Kasir & POS (Terkunci di dekat pintu keluar) -->
+<div class="absolute bottom-3 left-32 w-32 h-14 bg-emerald-50/90 rounded-xl border border-secondary/40 p-2 shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-secondary text-on-secondary flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">point_of_sale</span>
+</div>
+<div>
+<p class="font-title-card text-[11px] font-bold text-on-surface leading-none">Meja Kasir</p>
+<p class="font-body-sm text-[9px] text-secondary font-semibold mt-0.5">Mesin POS Ryan</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline text-[16px]" title="Posisi terkunci">lock</span>
+</div>
+</div>
+<!-- Bottom Entrance Indicator Indicator -->
+<div class="w-full flex justify-center z-10 pointer-events-none">
+<div class="bg-surface-container-lowest px-4 py-1 rounded-full border border-slate-300 shadow-sm flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-[16px]">door_front</span>
+<span class="font-label-caps text-[10px] uppercase font-bold text-on-surface tracking-wider">Akses Masuk Pelanggan (Pintu Utama)</span>
+</div>
+</div>
+</div>
+</section>
+<!-- 4. Selected Object Properties Card -->
+<section class="px-margin-mobile mt-3">
+<div class="bg-surface-container-lowest rounded-2xl p-space-md border border-border-subtle shadow-soft-card">
+<div class="flex items-start justify-between">
+<div>
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span>
+<h2 class="font-title-card text-title-card font-bold text-on-surface">Properti: Rak A (Sembako Utama)</h2>
+</div>
+<p class="font-body-sm text-body-sm text-outline mt-0.5">Kategori: Beras, Minyak, Gula, Terigu &amp; Telur</p>
+</div>
+<span class="px-2.5 py-1 rounded-full bg-lavender-tint text-violet-deep font-label-caps text-label-caps font-bold">
+            Aktif Dipilih
+          </span>
+</div>
+<!-- Numeric Parameters Grid -->
+<div class="grid grid-cols-4 gap-2 mt-3 text-center">
+<div class="bg-lavender-subtle p-2 rounded-xl border border-border-subtle">
+<p class="font-label-caps text-[10px] text-outline font-semibold">Koordinat X</p>
+<p class="font-label-numeric text-[13px] font-bold text-on-surface mt-0.5">2.4 m</p>
+</div>
+<div class="bg-lavender-subtle p-2 rounded-xl border border-border-subtle">
+<p class="font-label-caps text-[10px] text-outline font-semibold">Koordinat Y</p>
+<p class="font-label-numeric text-[13px] font-bold text-on-surface mt-0.5">1.8 m</p>
+</div>
+<div class="bg-lavender-subtle p-2 rounded-xl border border-border-subtle">
+<p class="font-label-caps text-[10px] text-outline font-semibold">Dimensi</p>
+<p class="font-label-numeric text-[13px] font-bold text-on-surface mt-0.5">2.0 × 0.8m</p>
+</div>
+<div class="bg-lavender-subtle p-2 rounded-xl border border-border-subtle">
+<p class="font-label-caps text-[10px] text-outline font-semibold">Kapasitas</p>
+<p class="font-label-numeric text-[13px] font-bold text-secondary mt-0.5">120 SKU</p>
+</div>
+</div>
+<!-- Quick Deep Action -->
+<div class="flex items-center gap-2 mt-3 pt-2.5 border-t border-border-subtle">
+<button class="flex-1 h-10 rounded-xl bg-lavender-subtle hover:bg-lavender-tint text-primary font-headline-sm text-[13px] font-bold flex items-center justify-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]">format_list_bulleted</span>
+<span class="">Atur Produk di Rak Ini (92 SKU)</span>
+</button>
+<button class="w-10 h-10 rounded-xl bg-lavender-subtle text-on-surface flex items-center justify-center hover:bg-lavender-tint transition-colors" title="Ubah Nama/Dimensi" type="button">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+</div>
+</div>
+</section>
+<!-- 5. Object Palette Drawer (Tambah Rak & Furnitur) -->
+<section class="px-margin-mobile mt-4">
+<div class="flex items-center justify-between mb-2 px-1">
+<div>
+<h2 class="font-headline-sm text-headline-sm font-bold text-on-surface">Tambah Objek Ruang</h2>
+<p class="font-body-sm text-[11.5px] text-outline">Sentuh atau seret modul rak ke kanvas denah</p>
+</div>
+<button class="text-primary font-body-sm text-[12px] font-bold flex items-center" type="button">
+          Kustom Ukuran <span class="material-symbols-outlined text-[16px]">add</span>
+</button>
+</div>
+<!-- Categories Filter Tabs -->
+<div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+<button class="px-3.5 py-1.5 rounded-full bg-primary text-on-primary font-label-caps text-label-caps font-bold shrink-0 shadow-sm" type="button">
+          Semua (12)
+        </button>
+<button class="px-3.5 py-1.5 rounded-full bg-surface-container-lowest text-on-surface-variant font-label-caps text-label-caps font-semibold shrink-0 shadow-xs border border-border-subtle" type="button">
+          Rak Barang
+        </button>
+<button class="px-3.5 py-1.5 rounded-full bg-surface-container-lowest text-on-surface-variant font-label-caps text-label-caps font-semibold shrink-0 shadow-xs border border-border-subtle" type="button">
+          Pendingin
+        </button>
+<button class="px-3.5 py-1.5 rounded-full bg-surface-container-lowest text-on-surface-variant font-label-caps text-label-caps font-semibold shrink-0 shadow-xs border border-border-subtle" type="button">
+          Area Kasir
+        </button>
+<button class="px-3.5 py-1.5 rounded-full bg-surface-container-lowest text-on-surface-variant font-label-caps text-label-caps font-semibold shrink-0 shadow-xs border border-border-subtle" type="button">
+          Partisi &amp; Pintu
+        </button>
+</div>
+<!-- Object Cards Horizontal Slider / Modular Grid -->
+<div class="grid grid-cols-3 gap-2.5 mt-3">
+<!-- Palette Item 1 -->
+<div class="bg-surface-container-lowest p-3 rounded-2xl border border-border-subtle flex flex-col items-center text-center shadow-soft-card cursor-pointer active:scale-95 transition-transform hover:border-primary">
+<div class="w-12 h-12 rounded-xl bg-lavender-subtle text-primary flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-[24px]">shelves</span>
+</div>
+<p class="font-title-card text-[12px] font-bold text-on-surface leading-tight">Gondola 3 Susun</p>
+<span class="font-body-sm text-[10px] text-outline mt-1">1.8m × 0.8m</span>
+<span class="mt-2 w-full py-1 rounded-lg bg-lavender-subtle text-primary font-label-caps text-[10px] font-bold flex items-center justify-center gap-0.5">
+<span class="material-symbols-outlined text-[13px]">add</span> Tambah
+          </span>
+</div>
+<!-- Palette Item 2 -->
+<div class="bg-surface-container-lowest p-3 rounded-2xl border border-border-subtle flex flex-col items-center text-center shadow-soft-card cursor-pointer active:scale-95 transition-transform hover:border-primary">
+<div class="w-12 h-12 rounded-xl bg-emerald-50 text-secondary flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-[24px]">kitchen</span>
+</div>
+<p class="font-title-card text-[12px] font-bold text-on-surface leading-tight">Showcase 1 Pintu</p>
+<span class="font-body-sm text-[10px] text-outline mt-1">0.8m × 0.7m</span>
+<span class="mt-2 w-full py-1 rounded-lg bg-lavender-subtle text-primary font-label-caps text-[10px] font-bold flex items-center justify-center gap-0.5">
+<span class="material-symbols-outlined text-[13px]">add</span> Tambah
+          </span>
+</div>
+<!-- Palette Item 3 -->
+<div class="bg-surface-container-lowest p-3 rounded-2xl border border-border-subtle flex flex-col items-center text-center shadow-soft-card cursor-pointer active:scale-95 transition-transform hover:border-primary">
+<div class="w-12 h-12 rounded-xl bg-orange-50 text-tertiary flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-[24px]">view_compact_alt</span>
+</div>
+<p class="font-title-card text-[12px] font-bold text-on-surface leading-tight">Etalase Rokok</p>
+<span class="font-body-sm text-[10px] text-outline mt-1">1.2m × 0.5m</span>
+<span class="mt-2 w-full py-1 rounded-lg bg-lavender-subtle text-primary font-label-caps text-[10px] font-bold flex items-center justify-center gap-0.5">
+<span class="material-symbols-outlined text-[13px]">add</span> Tambah
+          </span>
+</div>
+</div>
+</section>
+<!-- 6. Sticky Floating Bottom Action Command Deck -->
+<div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50 p-margin-mobile bg-surface-container-lowest/95 backdrop-blur-md rounded-t-3xl border-t border-border-subtle shadow-floating-bar">
+<div class="flex items-center gap-2.5">
+<button class="w-1/3 h-12 rounded-full bg-lavender-subtle text-on-surface-variant font-headline-sm text-body-md font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform" type="button">
+<span class="material-symbols-outlined text-[18px]">restart_alt</span>
+<span class="">Batal</span>
+</button>
+<button class="flex-1 h-12 rounded-full bg-[#7c3aed] hover:bg-[#6D28D9] text-white font-headline-sm text-[15px] font-bold flex items-center justify-center gap-2 shadow-md active:scale-95 transition-transform" type="button">
+<span class="material-symbols-outlined text-[20px]">sync</span>
+<span class="">Terapkan Denah ke Kasir</span>
+</button>
+</div>
+<!-- Visual Home Indicator Bar for iOS / Android Handhelds -->
+<div class="w-32 h-1 bg-slate-300 rounded-full mx-auto mt-3"></div>
+</div>
+<div class="fixed inset-0 z-50 flex flex-col justify-end bg-inverse-surface/60 backdrop-blur-sm max-w-md mx-auto" id="modal-kustom-dimensi"><div class="bg-surface-container-lowest rounded-t-3xl border-t border-slate-200/80 shadow-2xl p-margin-mobile flex flex-col max-h-[92vh] overflow-y-auto no-scrollbar"><div class="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mb-3 shrink-0"></div><div class="flex items-center justify-between pb-3 border-b border-border-subtle"><div class="flex items-center gap-2"><div class="w-9 h-9 rounded-xl bg-lavender-tint text-[#7c3aed] flex items-center justify-center"><span class="material-symbols-outlined text-[20px]">straighten</span></div><div><div class="flex items-center gap-2"><h3 class="font-headline-sm text-[16px] font-bold text-on-surface">Kustom Dimensi Rak</h3></div></div></div><button aria-label="Tutup" class="w-9 h-9 rounded-full bg-lavender-subtle text-on-surface-variant flex items-center justify-center hover:bg-lavender-tint active:scale-95 transition-transform" type="button"><span class="material-symbols-outlined text-[18px]">close</span></button></div><div class="mt-3.5"><p class="font-label-caps text-label-caps text-outline uppercase font-bold tracking-wider mb-2">Pilih Tipe Rak</p><div class="grid grid-cols-2 gap-2"><button class="p-2.5 rounded-xl border-2 border-[#7c3aed] bg-lavender-subtle text-left flex items-center gap-2.5 transition-all shadow-xs" type="button"><span class="material-symbols-outlined text-[#7c3aed] text-[20px]">shelves</span><div><p class="font-title-card text-[12px] font-bold text-[#7c3aed] leading-tight">Gondola 2 Sisi</p></div></button><button class="p-2.5 rounded-xl border border-border-subtle bg-surface-container-lowest text-left flex items-center gap-2.5 hover:border-primary transition-all" type="button"><span class="material-symbols-outlined text-outline text-[20px]">table_restaurant</span><div><p class="font-title-card text-[12px] font-semibold text-on-surface leading-tight">Rak Dinding</p></div></button><button class="p-2.5 rounded-xl border border-border-subtle bg-surface-container-lowest text-left flex items-center gap-2.5 hover:border-primary transition-all" type="button"><span class="material-symbols-outlined text-outline text-[20px]">kitchen</span><div><p class="font-title-card text-[12px] font-semibold text-on-surface leading-tight">Showcase Kulkas</p></div></button><button class="p-2.5 rounded-xl border border-border-subtle bg-surface-container-lowest text-left flex items-center gap-2.5 hover:border-primary transition-all" type="button"><span class="material-symbols-outlined text-outline text-[20px]">view_compact_alt</span><div><p class="font-title-card text-[12px] font-semibold text-on-surface leading-tight">Etalase Kaca</p></div></button></div></div><div class="mt-4 space-y-3.5 bg-lavender-subtle/80 p-3 rounded-2xl border border-border-subtle"><p class="font-label-caps text-label-caps text-outline uppercase font-bold tracking-wider">Parameter Ukuran Fisik</p><div><div class="flex justify-between items-center mb-1"><span class="font-body-sm text-[12px] font-semibold text-on-surface">Panjang&nbsp;</span><span class="px-2 py-0.5 rounded-lg bg-surface-container-lowest font-label-numeric text-[13px] font-bold text-[#7c3aed] border border-[#7c3aed]/30 shadow-xs">2.0 m</span></div><input class="w-full accent-[#7c3aed] h-2 bg-slate-200 rounded-lg cursor-pointer" max="4.0" min="0.5" step="0.1" type="range" value="2.0"><div class="flex justify-between text-[10px] font-body-sm text-outline mt-0.5"><span class="">Min: 0.5m</span><span class="">Bawaan: 2.0m</span><span class="">Max: 4.0m</span></div></div><div><div class="flex justify-between items-center mb-1"><span class="font-body-sm text-[12px] font-semibold text-on-surface">Lebar</span><span class="px-2 py-0.5 rounded-lg bg-surface-container-lowest font-label-numeric text-[13px] font-bold text-[#7c3aed] border border-[#7c3aed]/30 shadow-xs">0.8 m</span></div><input class="w-full accent-[#7c3aed] h-2 bg-slate-200 rounded-lg cursor-pointer" max="1.2" min="0.3" step="0.1" type="range" value="0.8"><div class="flex justify-between text-[10px] font-body-sm text-outline mt-0.5"><span class="">Min: 0.3m</span><span class="">Bawaan: 0.8m</span><span class="">Max: 1.2m</span></div></div><div><div class="flex justify-between items-center mb-1"><span class="font-body-sm text-[12px] font-semibold text-on-surface">Jumlah Susun&nbsp;</span></div><div class="grid grid-cols-4 gap-1.5 mt-1"><button class="py-1 rounded-lg bg-surface-container-lowest border border-border-subtle font-label-caps text-[11px] font-bold text-outline hover:border-primary" type="button">2 Susun</button><button class="py-1 rounded-lg bg-surface-container-lowest border border-border-subtle font-label-caps text-[11px] font-bold text-outline hover:border-primary" type="button">3 Susun</button><button class="py-1 rounded-lg bg-tertiary-container text-on-tertiary font-label-caps text-[11px] font-bold shadow-xs" type="button">4 Susun</button><button class="py-1 rounded-lg bg-surface-container-lowest border border-border-subtle font-label-caps text-[11px] font-bold text-outline hover:border-primary" type="button">5 Susun</button></div></div><div class="pt-2.5 border-t border-border-subtle"><div class="flex justify-between items-center mb-1"><div class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[#7c3aed] text-[17px]">rotate_90_degrees_cw</span><span class="font-body-sm text-[12px] font-semibold text-on-surface">Rotasi Sudut Rak (Orientasi)</span></div></div><div class="my-2 p-2.5 rounded-xl bg-surface-container-lowest border border-border-subtle flex items-center gap-3 shadow-xs"><div class="relative w-28 h-24 rounded-lg bg-slate-50 grid-matrix border border-slate-200 overflow-hidden flex items-center justify-center shrink-0"><span class="absolute top-1 text-[8px] font-bold text-outline uppercase tracking-wider">Utara (Depan)</span><span class="absolute bottom-0.5 text-[8px] font-medium text-outline/80">Pintu</span><div class="absolute inset-2 border border-dashed border-slate-300 rounded pointer-events-none"></div><div class="relative w-14 h-7 bg-[#7c3aed]/20 border-2 border-[#7c3aed] rounded-md flex items-center justify-center shadow-sm transition-transform duration-300" id="mini-rack-preview" style="transform: rotate(90deg);"><span class="material-symbols-outlined text-[#7c3aed] text-[13px]">shelves</span><span class="absolute -top-2 left-1/2 -translate-x-1/2 material-symbols-outlined text-[#7c3aed] text-[12px] leading-none font-bold">arrow_drop_up</span></div></div><div class="flex-1 flex flex-col justify-between h-24 py-0.5"><div><div class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[#7c3aed] text-[15px]">compass_calibration</span><span class="font-title-card text-[11.5px] font-bold text-on-surface">Hadap Rak</span></div><p class="font-body-sm text-[10px] text-outline leading-tight mt-1">Panah ungu menandai muka/depan rak yang menghadap ke lorong konsumen.</p></div><div class="flex items-center gap-1.5 mt-1"></div></div></div><div class="grid grid-cols-4 gap-1.5 my-2"><button class="py-1 rounded-lg bg-surface-container-lowest border border-border-subtle font-label-caps text-[11px] font-bold text-outline hover:border-primary transition-all flex items-center justify-center gap-1" type="button">0°</button><button class="py-1 rounded-lg bg-[#7c3aed] text-white font-label-caps text-[11px] font-bold shadow-xs flex items-center justify-center gap-1" type="button"><span class="material-symbols-outlined text-[13px]">check</span>90°</button><button class="py-1 rounded-lg bg-surface-container-lowest border border-border-subtle font-label-caps text-[11px] font-bold text-outline hover:border-primary transition-all flex items-center justify-center gap-1" type="button">180°</button><button class="py-1 rounded-lg bg-surface-container-lowest border border-border-subtle font-label-caps text-[11px] font-bold text-outline hover:border-primary transition-all flex items-center justify-center gap-1" type="button">270°</button></div><input class="w-full accent-[#7c3aed] h-2 bg-slate-200 rounded-lg cursor-pointer" id="input-rotasi-slider" max="360" min="0" step="15" type="range" value="90"><div class="flex justify-between text-[10px] font-body-sm text-outline mt-0.5"><span class="">Min: 0°</span><span class="">Max: 360°</span></div></div></div><div class="mt-3.5 p-3 rounded-2xl bg-emerald-50 border border-emerald-50 flex items-center justify-between"><div class="flex items-center gap-2.5"><div class="w-10 h-10 rounded-xl bg-tertiary-container text-on-tertiary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-[20px]">inventory</span></div><div><p class="font-body-sm text-[11px] text-tertiary font-medium">Estimasi Muatan</p><p class="font-headline-sm text-[14px] font-bold text-tertiary-container leading-tight mt-0.5">~120 - 150 SKU</p></div></div><div class="text-right"><span class="inline-block px-2 py-0.5 rounded bg-surface-container-lowest font-label-caps text-[10px] text-on-surface font-bold border border-slate-200">Luas: 1.6 m²</span></div></div><div class="mt-4 flex items-center gap-2.5"><button class="w-1/3 h-12 rounded-full bg-lavender-subtle text-on-surface-variant font-headline-sm text-body-md font-bold flex items-center justify-center hover:bg-lavender-tint active:scale-95 transition-transform" type="button">Batal</button><button class="flex-1 h-12 rounded-full bg-[#7c3aed] hover:bg-[#6D28D9] text-white font-headline-sm text-[14px] font-bold flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-transform" type="button"><span class="material-symbols-outlined text-[18px]">check_circle</span><span class="">Terapkan Dimensi ke Kanvas</span></button></div></div></div></main>
+<script>
+    // Lightweight tactile feedback simulation for owner drag/tap interactions
+    document.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (navigator.vibrate) {
+          navigator.vibrate(12);
+        }
+      });
+    });
+  </script>
+
+
+</body></html>

@@ -90,11 +90,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
       case ReportsStatus.ready:
         if (!_viewModel.hasRecords) {
           return _MessageState(
+            assetPath: 'assets/icon/03_riwayat_transaksi.png',
             icon: Icons.receipt_long_outlined,
             color: AppColors.muted,
             title: ReportsSample.emptyTitle,
             description: ReportsSample.emptyDescription,
-            actionLabel: 'Kembali ke denah',
+            actionLabel: 'Kembali ke beranda',
             onAction: () => Navigator.of(context).maybePop(),
           );
         }
@@ -142,6 +143,25 @@ class _SummaryCard extends StatelessWidget {
         children: [
           Row(
             children: [
+              Container(
+                width: 36,
+                height: 36,
+                margin: const EdgeInsets.only(right: AppSpacing.xs),
+                padding: const EdgeInsets.all(AppSpacing.xxs),
+                decoration: BoxDecoration(
+                  color: AppColors.surface.withValues(alpha: 0.16),
+                  borderRadius: AppRadius.controlCompactBorder,
+                ),
+                child: Image.asset(
+                  'assets/icon/03_riwayat_transaksi.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, _, _) => const Icon(
+                    Icons.receipt_long_outlined,
+                    color: AppColors.surface,
+                    size: 20,
+                  ),
+                ),
+              ),
               Expanded(
                 child: Text(
                   ReportsSample.summaryTitle,
@@ -291,6 +311,7 @@ class _MessageState extends StatelessWidget {
     required this.description,
     required this.actionLabel,
     required this.onAction,
+    this.assetPath,
   });
 
   final IconData icon;
@@ -299,6 +320,7 @@ class _MessageState extends StatelessWidget {
   final String description;
   final String actionLabel;
   final VoidCallback onAction;
+  final String? assetPath;
 
   @override
   Widget build(BuildContext context) {
@@ -307,7 +329,15 @@ class _MessageState extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         children: [
-          Icon(icon, size: 40, color: color),
+          assetPath != null
+              ? Image.asset(
+                  assetPath!,
+                  width: 56,
+                  height: 56,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, _, _) => Icon(icon, size: 40, color: color),
+                )
+              : Icon(icon, size: 40, color: color),
           const SizedBox(height: AppSpacing.sm),
           Text(
             title,
