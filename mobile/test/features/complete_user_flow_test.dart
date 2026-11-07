@@ -40,7 +40,7 @@ void main() {
       expect(find.text('42 Nota'), findsOneWidget);
       expect(find.text('Pindai Barcode'), findsOneWidget);
       expect(find.text('Buka Kasir'), findsOneWidget);
-      expect(find.text('Stok Menipis'), findsOneWidget);
+      expect(find.text('Stok'), findsOneWidget);
       expect(find.text('Riwayat Nota'), findsOneWidget);
 
       // 4. Buka alur Kasir via tombol Buka Kasir di Aksi Cepat

@@ -134,51 +134,14 @@ class _HeroOmzetCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(
-                child: Text(
-                  'Omzet Hari Ini',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: AppColors.surface.withValues(alpha: 0.9),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppColors.surface.withValues(alpha: 0.2),
-                  borderRadius: AppRadius.pillBorder,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: AppColors.success,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Shift Siang',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: AppColors.surface,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          Text(
+            'Omzet Hari Ini',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColors.surface.withValues(alpha: 0.9),
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: AppSpacing.xxs),
           FittedBox(
@@ -313,10 +276,17 @@ class _QuickPrintCard extends StatelessWidget {
               color: AppColors.primarySubtle,
               borderRadius: BorderRadius.circular(AppRadius.squircle),
             ),
-            child: const Icon(
-              Icons.print_outlined,
-              color: AppColors.primary,
-              size: 22,
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.xxs),
+              child: Image.asset(
+                'assets/icon/10_printer_bluetooth.png',
+                fit: BoxFit.contain,
+                errorBuilder: (_, _, _) => const Icon(
+                  Icons.print_outlined,
+                  color: AppColors.primary,
+                  size: 22,
+                ),
+              ),
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
@@ -366,6 +336,7 @@ class _QuickActionBento extends StatelessWidget {
       children: [
         Expanded(
           child: _QuickActionPod(
+            assetPath: 'assets/icon/08_pindai_barcode.png',
             icon: Icons.qr_code_scanner,
             label: 'Pindai Barcode',
             bgColor: const Color(0xFFF5F3FF),
@@ -376,6 +347,7 @@ class _QuickActionBento extends StatelessWidget {
         const SizedBox(width: AppSpacing.xs),
         Expanded(
           child: _QuickActionPod(
+            assetPath: 'assets/icon/02_keranjang.png',
             icon: Icons.point_of_sale,
             label: 'Buka Kasir',
             bgColor: const Color(0xFFECFDF5),
@@ -386,8 +358,9 @@ class _QuickActionBento extends StatelessWidget {
         const SizedBox(width: AppSpacing.xs),
         Expanded(
           child: _QuickActionPod(
-            icon: Icons.notification_important_outlined,
-            label: 'Stok Menipis',
+            assetPath: 'assets/icon/09_stok_produk.png',
+            icon: Icons.inventory_2_outlined,
+            label: 'Stok',
             badgeText: '3',
             bgColor: const Color(0xFFFFF7ED),
             iconColor: const Color(0xFFEA580C),
@@ -397,6 +370,7 @@ class _QuickActionBento extends StatelessWidget {
         const SizedBox(width: AppSpacing.xs),
         Expanded(
           child: _QuickActionPod(
+            assetPath: 'assets/icon/03_riwayat_transaksi.png',
             icon: Icons.receipt_long_outlined,
             label: 'Riwayat Nota',
             bgColor: const Color(0xFFF3E8FF),
@@ -416,6 +390,7 @@ class _QuickActionPod extends StatelessWidget {
     required this.bgColor,
     required this.iconColor,
     required this.onTap,
+    this.assetPath,
     this.badgeText,
   });
 
@@ -424,6 +399,7 @@ class _QuickActionPod extends StatelessWidget {
   final Color bgColor;
   final Color iconColor;
   final VoidCallback onTap;
+  final String? assetPath;
   final String? badgeText;
 
   @override
@@ -449,7 +425,17 @@ class _QuickActionPod extends StatelessWidget {
                   color: bgColor,
                   borderRadius: BorderRadius.circular(AppRadius.squircle),
                 ),
-                child: Icon(icon, color: iconColor, size: 22),
+                child: assetPath != null
+                    ? Padding(
+                        padding: const EdgeInsets.all(AppSpacing.xxs),
+                        child: Image.asset(
+                          assetPath!,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, _, _) =>
+                              Icon(icon, color: iconColor, size: 22),
+                        ),
+                      )
+                    : Icon(icon, color: iconColor, size: 22),
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
