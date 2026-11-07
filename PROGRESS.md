@@ -35,17 +35,19 @@ berkas checklist terpisah.
 | Fitur | Folder | Pemilik | Status |
 |---|---|---|---|
 | Kerangka aplikasi, tema, komponen dasar | `mobile/lib/app/`, `mobile/lib/core/` | Tariq | review |
-| Perkenalan | `mobile/lib/features/onboarding/` | Tariq | review |
-| Dashboard | `mobile/lib/features/dashboard/` | Tariq | review |
+| Perkenalan (Onboarding 3 Fitur Utama) | `mobile/lib/features/onboarding/` | Tariq | review |
+| Beranda (Dashboard POS & Aksi Cepat) | `mobile/lib/features/dashboard/` | Tariq | review |
 | Pengaturan dan peran pengguna | `mobile/lib/features/settings/`, `core/session/` | Tariq | review |
-| Riwayat dan laporan | `mobile/lib/features/reports/` | Tariq | review |
-| Denah dan objek ruang | `mobile/lib/features/floor_plan/` | Farel | review |
-| Panorama 360 | `mobile/lib/features/panorama/` | Farel | review |
-| Aset brand & launcher | `mobile/assets/branding/`, `mobile/tool/` | Farel | review |
-| Katalog produk | `mobile/lib/features/catalog/` | Blessly | review |
-| Formulir produk | `mobile/lib/features/catalog/` | Blessly | review |
-| Pemindai produk | `mobile/lib/features/scanner/` | Blessly | review |
-| Keranjang dan pembayaran | `mobile/lib/features/checkout/`, `.../payment/` | Blessly | review |
+| Riwayat dan laporan transaksi | `mobile/lib/features/reports/` | Tariq | review |
+| Aset brand, logo & ikon 3D (01–10) | `mobile/assets/branding/`, `mobile/assets/icon/` | Farel | review |
+| Denah dan objek ruang (dilepas dari UI utama) | `mobile/lib/features/floor_plan/` | Farel | diarsipkan |
+| Panorama 360 (dilepas dari UI utama) | `mobile/lib/features/panorama/` | Farel | diarsipkan |
+| Katalog produk & stok | `mobile/lib/features/catalog/` | Blessly | review |
+| Formulir produk mobile | `mobile/lib/features/catalog/` | Blessly | review |
+| Pemindai produk & barcode | `mobile/lib/features/scanner/` | Blessly | review |
+| Keranjang dan pembayaran (Kasir) | `mobile/lib/features/checkout/`, `.../payment/` | Blessly | review |
+| Chatbot asisten AI (IyanBoT) | `mobile/lib/features/chatbot/` | Tim | review |
+| Analitik & statistik penjualan | `mobile/lib/features/statistics/` | Tim | review |
 
 ## Catatan per tugas
 
@@ -72,6 +74,48 @@ statusnya `review`, bukan `selesai`.
   Dart 3.13.3, termasuk state kosong, memuat, error, dan offline, target sentuh, serta
   lebar 360 dp pada skala teks 1,3. Belum ada verifikasi emulator atau perangkat Android
   dan belum ada tinjauan PR, jadi status tetap `review`.
+
+**Pembaruan Redesain Beranda, Aset 3D, dan Alur Kasir (2026-11-07)**
+
+- **Redesain Beranda (Home POS Dashboard):**
+  - Halaman utama resmi dinamai **"Beranda"** (`ShellDestination.floorPlan` / `home`).
+  - Kartu Hero Omzet diperbarui: omzet harian dinamis dari sesi lokal, indikator nota dan rata-rata penjualan, tombol utama "Mulai pindai" responsif tanpa overflow di layar 360 dp / text scale 1.3, badge shift dinonaktifkan atas arahan pengguna.
+  - Modul Bento Aksi Cepat 4-up murni operasional kasir: `Pindai Barcode`, `Buka Kasir`, `Stok`, dan `Riwayat Nota`.
+  - Kartu "Aktivitas Transaksi Terbaru" menampilkan daftar transaksi terkini lengkap dengan jam transaksi, nominal rupiah, dan wadah placeholder gambar produk siap pakai untuk fitur penambahan foto mendatang.
+  - Tautan "Semua Nota" disederhanakan menjadi "Semua".
+
+- **Pelepasan Fitur Denah dari Antarmuka Utama:**
+  - Fitur kanvas denah 2D dan panorama 360 dilepas dari antarmuka utama (AppBar, Beranda, pemindai, formulir produk, dan rute fallback) untuk memprioritaskan efisiensi kasir dan pencatatan transaksi cepat.
+  - Kode pustaka `features/floor_plan/` dan `features/panorama/` tetap dipertahankan terisolasi dengan pengujian unit utuh.
+
+- **Pemasangan Aset Ikon 3D Lengkap (`assets/icon/` & `assets/branding/`):**
+  - Seluruh ikon fitur kini memakai aset 3D claymorphic violet seragam:
+    `01_katalog_produk.png`, `02_keranjang.png`, `03_riwayat_transaksi.png`, `04_pengaturan.png`,
+    `05_statistik.png`, `06_chatbot.png`, `07_denah_warung.png`, `08_pindai_barcode.png`,
+    `09_stok_produk.png`, `10_printer_bluetooth.png`, dan `beranda.png`.
+  - Logo 3D utama `ryangunshop_logo.png` terpasang di AppBar dan otomatis dibuatkan seluruh varian launcher icon Android & splash screen.
+
+- **Penyempurnaan Alur Kasir & Penyimpanan Transaksi:**
+  - `CartCheckoutScreen`: Hero order card violet, 3 pod kasir cepat, item belanja dengan penanda SKU, dan rincian biaya.
+  - `PaymentSheet`: Pilihan uang pas & pecahan cepat, perhitungan kembalian mint green instan.
+  - `AppSession`: Metode `recordTransaction()` otomatis mencatat nota transaksi baru, mengupdate omzet hari ini dan rata-rata, menambah riwayat nota, serta mengosongkan keranjang belanja.
+  - `PaymentSuccessScreen`: Struk ringkasan simulasi dilengkapi tombol `Cetak Struk (Bluetooth)`.
+
+- **Pembaruan Splash & Onboarding 3 Fitur Utama:**
+  - 3 Halaman perkenalan persuasif dan santai:
+    1. *Kasir Sat-Set, Anti Ribet* (`02_keranjang.png`)
+    2. *Bayar Bebas, Tunai Maupun QRIS* (`08_pindai_barcode.png`)
+    3. *Pantau Cuan & Stok Real-Time* (`05_statistik.png`)
+  - Tag pill dihapus untuk tampilan kartu ilustrasi 3D yang bersih dan elegan.
+
+- **Pemasangan Tipografi Plus Jakarta Sans Offline:**
+  - Font Plus Jakarta Sans resmi dibundel langsung ke dalam paket lokal offline (`assets/fonts/PlusJakartaSans-Regular.ttf`, `SemiBold.ttf`, `Bold.ttf`).
+  - Font terdaftar di `mobile/pubspec.yaml` dan dipasang global di `AppTheme.light()` serta `AppTypography.total`.
+  - Digit angka dan nominal kasir menggunakan `tabularFigures` agar sejajar presisi tanpa geser.
+
+- **Verifikasi Komprehensif:**
+  - `flutter analyze`: 0 issues / bersih.
+  - `flutter test`: 90/90 tests passed (termasuk pengujian alur lengkap pengguna di `complete_user_flow_test.dart` dan audit aksesibilitas 360 dp / text scale 1.3).
 
 ### Fase 0 — Fondasi UI dan aset
 
@@ -299,6 +343,51 @@ dan stok sebagai belum tercatat.
 - Verifikasi: Seluruh pengujian alur kasir lulus tanpa overflow pada skala teks 1.3.
 - Belum: Tinjauan PR dan pembuatan paket APK internal.
 
+## Rencana Pengembangan Menuju Produksi (Production-Ready Roadmap)
+
+Rencana kerja teknis terstruktur untuk membawa prototipe UI RyanGunshop menjadi aplikasi kasir warung yang siap dirilis dan digunakan di lapangan:
+
+### Fase 1: Persistensi Data Lokal (Offline-First Database) — *Prioritas Tertinggi*
+- **Tujuan:** Data produk, stok, dan riwayat nota penjualan tersimpan permanen di HP tanpa risiko hilang saat aplikasi ditutup atau HP mati.
+- **Implementasi:**
+  - Pasang SQLite via Drift / Isar untuk Flutter.
+  - Tabel `products`: id, barcode, nama, harga modal, harga jual, stok, kategori, threshold stok menipis, path foto lokal.
+  - Tabel `transactions`: id (format TRX-XXXX), waktu timestamp, total belanja, metode pembayaran, uang diterima, uang kembalian.
+  - Tabel `transaction_items`: id transaksi, id produk, kuantitas, harga satuan, subtotal.
+  - Mekanisme transaksi ACID (atomic): pengurangan stok dan penulisan nota penjualan dieksekusi bersamaan.
+  - Penggantian state `AppSession` dan `sample/` dengan repository lokal berbasis database ini.
+
+### Fase 2: Integrasi Perangkat Keras Kasir (Hardware POS)
+- **Tujuan:** Memfungsikan kamera HP sebagai pemindai barcode fisik dan printer struk Bluetooth kasir.
+- **Implementasi:**
+  - **Scanner Barcode Nyata:** Pasang `mobile_scanner` (Google ML Kit) untuk deteksi barcode kemasan produk fisik (EAN-13, UPC, QR) secara instan (< 200 ms).
+  - **Printer Thermal Bluetooth:** Pasang pustaka ESC/POS printer (`blue_thermal_printer` / `esc_pos_utils_plus`) untuk mendeteksi printer thermal 58mm/80mm di meja kasir dan mencetak nota fisik saat transaksi selesai.
+
+### Fase 3: Pengambilan & Kompresi Foto Produk Lokal
+- **Tujuan:** Mengisi wadah placeholder gambar produk di Beranda dan Katalog dengan foto barang nyata.
+- **Implementasi:**
+  - Integrasi kamera & galeri menggunakan `image_picker`.
+  - Kompresi gambar lokal (resolusi maks 512×512 piksel, WebP/JPEG kualitas 75%) agar hemat memori pada perangkat kelas bawah.
+  - Penyimpanan file foto di direktori privat aplikasi (`path_provider`).
+
+### Fase 4: Proteksi Hak Akses & Kunci PIN Keamanan
+- **Tujuan:** Mencegah kasir atau pihak lain melihat laba kotor toko atau mengubah harga barang.
+- **Implementasi:**
+  - Kunci PIN 4–6 digit untuk akses akun Pemilik, pengaturan harga modal, dan ekspor laporan keuangan.
+  - Pembatasan mode Kasir: hanya memindai, memasukkan keranjang, dan menerima pembayaran.
+
+### Fase 5: Sinkronisasi Cloud Berkala & Pembayaran QRIS Nyata
+- **Tujuan:** Cadangan data cloud dan integrasi pembayaran QRIS resmi Bank Indonesia.
+- **Implementasi:**
+  - Sinkronisasi latar belakang menggunakan *outbox pattern* ke Firebase Firestore / Supabase saat perangkat terhubung internet.
+  - Integrasi payment gateway (Xendit / Midtrans / DOKU) untuk menerbitkan QRIS dinamis berlisensi dan validasi webhook otomatis.
+
+### Fase 6: Optimasi Perangkat Kelas Bawah & Rilis Paket APK
+- **Tujuan:** Aplikasi berjalan ringan dan stabil di ponsel Android dengan RAM 2–3 GB (Android 8.0 - 14).
+- **Implementasi:**
+  - Build rilis APK terpisah per arsitektur CPU (`flutter build apk --split-per-abi`) dengan ukuran berkas hemat (~15–20 MB).
+  - Profiling performa: memori RAM stabil di bawah 150 MB dan animasi 60 FPS.
+
 ## Catatan untuk agen AI
 
 - Baca `AGENTS.md` lebih dahulu, lalu `TEAM.md`, lalu berkas ini untuk mengetahui posisi
@@ -310,15 +399,10 @@ dan stok sebagai belum tercatat.
   versi tandingan di dalam folder fitur.
 - `mobile/lib/app/**` dan `mobile/lib/core/**` milik Tariq. Jangan menyuntingnya tanpa
   pull request.
-- Belum ada pekerjaan backend, sesuai cakupan tahap ini. Semua layar memakai data contoh
-  lokal di folder `sample/` pada fitur masing-masing.
-- Peran pengguna ada di `core/session/`. Baca dengan `AppSessionScope.of(context)` dan
-  periksa `canEditFloorPlan` sebelum menampilkan mode edit denah; jangan menyalin peran
-  ke variabel lokal fitur.
+- Halaman utama aplikasi adalah **"Beranda"** (`ShellDestination.floorPlan` / `home`). Fitur denah telah dilepas dari antarmuka operasional harian.
+- Aset ikon 3D resmi tersedia lengkap di `mobile/assets/icon/` (`01` s/d `10` dan `beranda.png`). Selalu gunakan aset ini.
 - Nominal rupiah lewat `formatRupiah` di `core/format/rupiah.dart`, dan data contoh
   ditandai `SampleBadge` dari `core/widgets/widgets.dart`.
 - Alur pembuka aplikasi: splash menuju perkenalan (sekali per sesi), lalu kerangka utama.
   Rutenya terdaftar di `mobile/lib/app/routing/app_router.dart`.
-- Keempat tab sudah memakai fitur aslinya. Tab Kasir memakai `CartCheckoutScreen`,
-  pemindai dan keranjang tersambung lewat `mobile/lib/app/shell/app_shell.dart`, dan rute
-  `AppRoutes.scanner`, `AppRoutes.panorama`, serta `AppRoutes.productForm` sudah terdaftar.
+- Tab Kasir memakai `CartCheckoutScreen` dengan penyimpanan nota transaksi langsung ke `AppSession`.

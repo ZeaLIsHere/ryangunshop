@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/primary_action.dart';
+import '../../../core/widgets/ryan_app_logo.dart';
 import '../model/onboarding_page.dart';
 import '../sample/onboarding_sample.dart';
 import '../view_model/onboarding_view_model.dart';
@@ -78,16 +79,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(
-                        Icons.storefront_rounded,
-                        size: 20,
-                        color: AppColors.primary,
+                      const RyanAppLogo(
+                        size: 24,
+                        showWordmark: false,
+                        assetPath: RyanAppLogo.defaultAssetPath,
                       ),
                       const SizedBox(width: AppSpacing.xs),
                       Text(
                         'RyanGunshop',
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: AppColors.primaryDark,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                       const Spacer(),
@@ -150,31 +152,54 @@ class _OnboardingPageView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            height: 236,
+            height: 240,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [AppColors.primaryLight, AppColors.surface],
+                colors: [Color(0xFFF5F3FF), Color(0xFFFAF8FE)],
               ),
               borderRadius: AppRadius.panelBorder,
-              border: Border.all(color: AppColors.primaryLight),
+              border: Border.all(color: AppColors.primaryLight, width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
             child: Center(
               child: Container(
-                padding: const EdgeInsets.all(AppSpacing.lg),
+                width: 140,
+                height: 140,
+                padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primaryDark.withValues(alpha: 0.12),
-                      blurRadius: 24,
+                      color: AppColors.primaryDark.withValues(alpha: 0.14),
+                      blurRadius: 28,
                       offset: const Offset(0, 10),
                     ),
                   ],
                 ),
-                child: Icon(page.icon, size: 56, color: AppColors.primary),
+                child: Center(
+                  child: page.assetPath != null
+                      ? Image.asset(
+                          page.assetPath!,
+                          width: 96,
+                          height: 96,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, _, _) => Icon(
+                            page.icon,
+                            size: 56,
+                            color: AppColors.primary,
+                          ),
+                        )
+                      : Icon(page.icon, size: 56, color: AppColors.primary),
+                ),
               ),
             ),
           ),

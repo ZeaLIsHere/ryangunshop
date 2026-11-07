@@ -93,9 +93,9 @@ Selain tugas fasenya, Tariq memegang `mobile/lib/app/**`, jadi ia yang menyambun
 fitur anggota lain ke kerangka aplikasi begitu fiturnya di-merge. Tugas ini tidak muncul
 di tabel fase padahal nyata, dan itulah sebabnya jumlah tugas fase Tariq lebih sedikit.
 
-Yang sudah disambungkan: tab Denah memakai dashboard, tab Pengaturan memakai halaman
-pengaturan, dan tab Katalog memakai `ProductCatalog` milik Blessly. Tab Kasir masih
-memakai tampilan sementara sampai pemindai dan keranjang tersedia.
+Yang sudah disambungkan: tab Beranda memakai dashboard POS, tab Pengaturan memakai halaman
+pengaturan, tab Katalog memakai `ProductCatalog` milik Blessly, dan tab Kasir memakai
+`CartCheckoutScreen` dengan alur pembayaran tunai/QRIS lengkap.
 
 ### Fase 0 — Fondasi UI dan aset
 

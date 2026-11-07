@@ -6,6 +6,7 @@ import '../../../core/session/completed_transaction.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_card.dart';
 import '../model/dashboard_shortcut.dart';
 import '../sample/dashboard_sample.dart';
@@ -538,13 +539,21 @@ class _RecentTransactionsSection extends StatelessWidget {
               const SizedBox(width: 4),
               TextButton(
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  minimumSize: const Size(48, 30),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xs,
+                  ),
+                  minimumSize: const Size(
+                    AppSpacing.minTouchTarget,
+                    AppSpacing.minTouchTarget,
+                  ),
                 ),
                 onPressed: onViewAll,
-                child: const Text(
-                  'Semua Nota',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                child: Text(
+                  'Semua',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -587,23 +596,38 @@ class _TransactionItemRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isCash = transaction.paymentMethod.toLowerCase().contains('tunai');
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
           Container(
-            width: 38,
-            height: 38,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: isCash ? const Color(0xFFECFDF5) : const Color(0xFFF5F3FF),
-              borderRadius: BorderRadius.circular(10),
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
-            child: Icon(
-              isCash ? Icons.payments_outlined : Icons.qr_code_2,
-              color: isCash ? const Color(0xFF059669) : const Color(0xFF7C3AED),
-              size: 20,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(11),
+              child:
+                  transaction.imageUrl != null &&
+                      transaction.imageUrl!.isNotEmpty
+                  ? Image.network(
+                      transaction.imageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => const Icon(
+                        Icons.image_outlined,
+                        color: Color(0xFF94A3B8),
+                        size: 22,
+                      ),
+                    )
+                  : const Icon(
+                      Icons.image_outlined,
+                      color: Color(0xFF94A3B8),
+                      size: 22,
+                    ),
             ),
           ),
           const SizedBox(width: 10),
@@ -621,7 +645,7 @@ class _TransactionItemRow extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Nota #${transaction.id} • ${transaction.timeLabel}',
+                  transaction.timeLabel,
                   style: theme.textTheme.bodySmall?.copyWith(
                     fontSize: 11,
                     color: AppColors.muted,
@@ -631,37 +655,13 @@ class _TransactionItemRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                formatRupiah(transaction.amount),
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-              Container(
-                margin: const EdgeInsets.only(top: 2),
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                decoration: BoxDecoration(
-                  color: isCash
-                      ? const Color(0xFFECFDF5)
-                      : const Color(0xFFF5F3FF),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  transaction.paymentMethod,
-                  style: TextStyle(
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.w600,
-                    color: isCash
-                        ? const Color(0xFF059669)
-                        : const Color(0xFF7C3AED),
-                  ),
-                ),
-              ),
-            ],
+          Text(
+            formatRupiah(transaction.amount),
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              fontFeatures: AppTypography.tabularFigures,
+            ),
           ),
         ],
       ),

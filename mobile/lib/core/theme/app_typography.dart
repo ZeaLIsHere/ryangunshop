@@ -154,7 +154,7 @@ abstract final class AppTypography {
     );
   }
 
-  /// Gaya angka total pembayaran, memakai serif sebagai aksen editorial.
+  /// Gaya angka total pembayaran dan wordmark, memakai Plus Jakarta Sans tebal dan tabular.
   static TextStyle total({
     required Color color,
     double fontSize = pageTitleSize,
@@ -162,7 +162,8 @@ abstract final class AppTypography {
     return TextStyle(
       fontSize: fontSize,
       fontWeight: bold,
-      fontFamily: serifFamily,
+      fontFamily: primaryFontFamily,
+      fontFamilyFallback: fontFallbacks,
       color: color,
       height: 1.1,
       letterSpacing: -0.5,

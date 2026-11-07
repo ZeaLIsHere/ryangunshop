@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ryangunshop/core/session/app_session.dart';
 import 'package:ryangunshop/core/theme/app_theme.dart';
 import 'package:ryangunshop/features/dashboard/model/dashboard_shortcut.dart';
 import 'package:ryangunshop/features/dashboard/sample/dashboard_sample.dart';
@@ -37,6 +38,37 @@ void main() {
 
     expect(selected, DashboardShortcut.values);
   });
+
+  testWidgets(
+    'DashboardScreen bebas overflow pada viewport 360 dp dan skala teks 1.3',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      final session = AppSession();
+      addTearDown(session.dispose);
+
+      await tester.pumpWidget(
+        AppSessionScope(
+          session: session,
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: const TextScaler.linear(1.3)),
+              child: child!,
+            ),
+            home: Scaffold(body: DashboardScreen(onShortcutSelected: (_) {})),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(DashboardScreen), findsOneWidget);
+    },
+  );
 }
 
 Widget _host(Widget child) {

@@ -7,6 +7,7 @@ class CompletedTransaction {
     required this.amount,
     required this.itemCount,
     required this.paymentMethod,
+    this.imageUrl,
   });
 
   final String id;
@@ -15,4 +16,5 @@ class CompletedTransaction {
   final int amount;
   final int itemCount;
   final String paymentMethod;
+  final String? imageUrl;
 }

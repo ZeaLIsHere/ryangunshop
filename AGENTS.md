@@ -14,14 +14,15 @@ Berkas ini melengkapi, bukan menggantikan:
 ## 1. Ringkasan proyek
 
 RyanGunshop adalah aplikasi kasir dan pengelolaan warung untuk Android berbasis
-Flutter/Dart. Inti pengalamannya adalah denah warung: dashboard menampilkan tata letak
-ruang, dan setiap objek ruang seperti rak, lemari, kulkas, atau meja kasir dapat dipilih
-untuk melihat produk dan status stok di lokasi tersebut. Alur kasir berjalan dari
-pindai atau pilih produk, konfirmasi, keranjang, lalu pembayaran tunai atau QRIS.
+Flutter/Dart. Inti pengalamannya adalah efisiensi kasir dan pencatatan transaksi:
+halaman Beranda menampilkan Hero Omzet harian dinamis, cetak laporan harian, 4 modul
+bento Aksi Cepat (Pindai Barcode, Buka Kasir, Stok, Riwayat Nota), dan riwayat transaksi
+terkini. Alur kasir berjalan cepat dari pemindaian barcode atau pemilihan barang katalog,
+keranjang belanja responsif, lalu pembayaran tunai (uang pas & kembalian instan) atau QRIS.
 
-Karakter produk: praktis, tenang, jelas, dapat dipercaya. Slate blue menjadi identitas
-tindakan dan navigasi. Antarmuka harus dapat dipakai tanpa pelatihan teknis pada
-perangkat kelas bawah.
+Karakter produk: praktis, tenang, jelas, dapat dipercaya. Violet modern (`#7C3AED`)
+menjadi identitas tindakan dan navigasi. Antarmuka harus dapat dipakai tanpa pelatihan
+teknis pada perangkat kelas bawah.
 
 ## 2. Cakupan tahap ini: UI saja
 
@@ -94,13 +95,12 @@ mobile/lib/
 
 | Istilah | Arti |
 |---|---|
-| Denah | Kanvas 2D tata letak warung memakai koordinat relatif, bukan piksel tetap |
-| Fixture | Objek ruang pada denah: dinding, lorong, rak, lemari, kulkas, meja kasir |
-| Zona | Area denah yang dipetakan ke satu panorama 360 derajat |
-| Mode lihat | Mode normal; tap objek membuka daftar produk, gesture mengubah viewport |
-| Mode edit | Mode khusus pemilik; drag memindahkan objek, tombol khusus mengubah objek |
+| Beranda | Halaman utama POS: ringkasan omzet, cetak laporan, 4 bento aksi cepat, dan riwayat transaksi |
+| Kasir | Halaman transaksi belanja kasir: rincian barang, kuantitas, diskon, dan total bayar |
+| Aksi Cepat | 4 Modul bento cepat di Beranda: Pindai Barcode, Buka Kasir, Stok, dan Riwayat Nota |
 | SyncPill | Penanda status offline, antre sinkronisasi, atau tersinkron |
 | QRIS | Pembayaran QR; statusnya `creating`, `awaitingPayment`, `paid`, `expired`, `failed` |
+| Denah (arsip) | Pustaka tata letak 2D dan panorama 360 yang diarsipkan dari antarmuka utama |
 
 ## 6. Aturan UI yang wajib dipatuhi
 
@@ -108,10 +108,10 @@ Bersumber dari `DESIGN.md`. Detail lengkap ada di sana, ringkasan ini untuk peke
 harian.
 
 **Warna.** Selalu ambil dari token tema, jangan menulis nilai heksadesimal langsung di
-widget. Primary `#565C9D`, primary dark `#34385F`, primary light `#E9EAF6`, accent
-`#8B91D4`, canvas `#F7F7FB`, surface `#FFFFFF`, ink `#191A2E`, muted `#62657A`, success
-`#287A66`, warning `#A86616`, error `#B44252`. Slate blue hanya untuk aksi, pilihan, dan
-status; permukaan pasif tetap netral.
+widget. Primary `#7C3AED` (Violet), primary dark `#6D28D9`, primary light `#EDE9FE`,
+primary subtle `#F5F3FF`, accent `#A855F7`, canvas `#FAF8FE`, surface `#FFFFFF`,
+ink `#0F172A`, muted `#64748B`, success `#10B981`, warning `#F59E0B`, error `#EF4444`.
+Warna violet untuk aksi, pilihan, dan status aktif; permukaan pasif tetap netral bersih.
 
 **Tipografi dan jarak.** Ukuran 28 sp untuk judul halaman, 20 sp judul bagian, 16 sp label
 penting, 14 sp metadata. Jarak dasar 4 dp dengan kelipatan 8, 12, 16, 24, 32. Padding

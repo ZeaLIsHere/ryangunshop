@@ -20,60 +20,52 @@ teknis.
 
 ## Core Experience
 
-Pengalaman pengguna RyanGunshop dibangun di atas alur operasional warung yang efisien:
+Pengalaman pengguna RyanGunshop dibangun di atas alur operasional kasir warung yang cepat dan efisien:
 
 1. **Pembuka dan Orientasi:**
-   Splash screen menyajikan animasi logo berdurasi 1,45 detik menuju dashboard (atau onboarding
-   tiga langkah pengenalan visual bagi pengguna baru yang dapat dilewati dan mendukung reduced motion).
-2. **Denah dan Tata Letak Ruang:**
-   Dashboard merepresentasikan tata letak fisik warung melalui template kanvas 2D interaktif (dinding,
-   lorong, rak, lemari, kulkas, dan meja kasir). Denah berfungsi sebagai alat navigasi operasional:
-   memilih suatu objek akan menampilkan barang dan ketersediaan stok di lokasi tersebut. Hasil scan
-   produk dapat menyorot lokasi raknya secara instan.
-3. **Mode Edit Denah Khusus Pemilik:**
-   Pemilik warung dapat menambah, memindahkan (drag), memutar, mengubah ukuran, menduplikasi, memberi
-   nama, dan menghapus objek ruang pada denah, dengan batas kanvas yang aman dan proteksi terhadap
-   sentuhan kasir yang tidak sengaja.
-4. **Viewer Panorama 360 Derajat:**
-   Sebagai pendukung visualisasi spasial, denah terhubung ke foto panorama 360° per zona warung,
-   memberikan gambaran nyata kondisi rak tanpa membebani performa perangkat kelas bawah.
-5. **Katalog Produk dan Pencarian:**
-   Pencarian teks instan, filter kategori, pengurutan, peringatan stok menipis, serta formulir produk
-   mobile satu kolom dengan validasi kode batang dan penempatan rak warung.
-6. **Pemindai Produk & Pencarian Manual:**
-   Kamera layar penuh dengan bingkai bidik terarah dan konfirmasi eksplisit sebelum barang masuk
-   keranjang, dilengkapi jalan keluar pencarian manual jika kamera atau barcode bermasalah.
-7. **Transaksi dan Kasir:**
-   Alur pembayaran dimulai setelah barang dikonfirmasi dan masuk ke keranjang:
-   - aplikasi menghitung total belanja dari harga lokal yang tersimpan;
-   - kasir memilih metode tunai atau QRIS;
-   - tunai menyediakan opsi uang pas/cepat serta menghitung uang kembalian secara otomatis;
-   - QRIS dinamis dibuat oleh payment gateway untuk nominal transaksi dan merchant yang terdaftar;
-   - transaksi QRIS baru dianggap berhasil setelah webhook provider tervalidasi;
-   - penyimpanan transaksi dan pengurangan stok dilakukan secara atomik.
-8. **Pengaturan Peran dan Laporan:**
-   Pemisahan hak akses antara Pemilik dan Kasir, serta ringkasan riwayat transaksi harian/mingguan
-   untuk memantau perputaran omzet warung.
+   Splash screen menyajikan animasi logo 3D RyanGunshop berdurasi 1,45 detik menuju Beranda (atau onboarding
+   tiga langkah pengenalan visual dengan bahasa persuasif-santai: Kasir Sat-set, Bayar Bebas Tunai/QRIS, dan
+   Pantau Cuan & Stok Real-Time).
+2. **Beranda Operasional POS:**
+   Dashboard utama berpusat pada perputaran kasir harian: kartu Hero Omzet dinamis bergradien violet yang
+   menampilkan omzet hari ini, jumlah nota, dan rata-rata transaksi; kartu cetak laporan harian Bluetooth;
+   4 modul bento Aksi Cepat (`Pindai Barcode`, `Buka Kasir`, `Stok`, `Riwayat Nota`); serta daftar riwayat
+   aktivitas transaksi terkini dengan jam transaksi, nominal rupiah, dan wadah placeholder foto produk.
+3. **Transaksi dan Kasir:**
+   Alur kasir dirancang tanpa friksi:
+   - kasir melihat total belanja, kuantitas item, serta pod aksi cepat (Tambah Menu, Keranjang, Voucher/Diskon);
+   - daftar belanja menampilkan nama produk, harga satuan, penanda SKU, dan kontrol kuantitas (+ / -);
+   - panel ringkasan biaya menghitung subtotal, diskon toko, pajak PB1 (0% UMKM), dan total bayar;
+   - tombol utama memicu sheet pembayaran dan pencatatan transaksi langsung ke memori sesi lokal.
+4. **Metode Pembayaran (Tunai & QRIS):**
+   - Tunai menyediakan chip nominal cepat `Uang Pas` dan pecahan besar, serta menghitung uang kembalian
+     secara otomatis dengan indikator warna mint green;
+   - QRIS dinamis siap integrasi payment gateway dengan status simulasi terstruktur;
+   - transaksi tunai lunas otomatis tersimpan ke riwayat nota, mengupdate omzet Beranda, dan mengosongkan keranjang;
+   - layar ringkasan struk sukses menyediakan opsi cetak struk via printer thermal Bluetooth.
+5. **Katalog Produk dan Manajemen Stok:**
+   Pencarian teks instan, filter kategori, pengurutan cerdas, filter cepat stok menipis, serta formulir
+   tambah/edit produk mobile yang mudah tanpa ketergantungan denah.
+6. **Pemindai Barcode Produk:**
+   Antarmuka pemindaian barcode dengan bingkai bidik kamera simulasi/nyata, saklar lampu senter, serta jalan
+   keluar pencarian manual instan bila barcode rusak.
+7. **Laporan, Analitik & Asisten AI:**
+   Riwayat transaksi nota harian, statistik analitik penjualan dan margin laba kotor, serta asisten AI IyanBoT
+   untuk menjawab pertanyaan stok dan operasional warung.
 
 ## Personality
 
-Praktis, tenang, jelas, dan dapat dipercaya—seperti alat kerja warung yang
-rapi. Visual tidak boleh terasa seperti aplikasi finansial korporat atau gim 3D.
-Slate blue menjadi identitas utama untuk tindakan dan navigasi, didampingi
-netral dingin agar denah mudah dibaca dalam kondisi warung yang terang.
+Praktis, tenang, jelas, dan dapat dipercaya—seperti alat kerja warung modern yang
+rapi. Visual bergaya modern violet commerce (`#7C3AED` dan `#6D28D9`) dengan aksen
+pastel yang hangat dan aset ikon 3D claymorphic seragam.
 
 ## Design Principles
 
-1. Denah dahulu, transaksi tetap dekat: dashboard fokus pada ruang, tetapi aksi
-   pindai dan keranjang selalu mudah dijangkau.
-2. Data nyata atau status jujur: jangan menampilkan pembayaran berhasil,
-   ketersediaan stok, atau angka usaha yang belum dikonfirmasi sumber data.
-3. Edit dan operasi adalah mode berbeda: objek tidak boleh bergeser saat kasir
-   hanya ingin memilih rak.
-4. Offline terlihat jelas: status sinkronisasi dan tindakan yang memerlukan
-   internet harus mempunyai penjelasan dan retry.
-5. Aksesibel di perangkat kecil: target sentuh minimal 48 dp, teks inti minimal
-   14 sp, kontras memadai, dan makna tidak bergantung pada warna saja.
+1. Kasir cepat dan minim langkah: Beranda dan kasir memprioritaskan kecepatan input dan konfirmasi transaksi.
+2. Data nyata atau status jujur: jangan menampilkan pembayaran berhasil atau angka usaha palsu.
+3. Transaksi tersimpan instan: setiap pembayaran lunas langsung tercatat dan memperbarui statistik omzet lokal.
+4. Offline-first: aplikasi tetap dapat digunakan penuh saat sinyal internet terputus.
+5. Aksesibel di perangkat kecil: target sentuh minimal 48 dp, teks inti minimal 14 sp, dan aman pada text scale 1.3 dan lebar 360 dp.
 
 ## Technical Boundaries
 

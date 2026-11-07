@@ -15,7 +15,7 @@ Katalog/Pemindai ──> Konfirmasi Produk ──> Keranjang (CartCheckout) ─�
    menyaring kategori, melihat peringatan stok menipis, atau mengurutkan berdasarkan nama,
    harga, dan stok.
 2. **Tambah dan Edit Produk (`ProductFormScreen`):** Formulir satu kolom bertahap mencakup
-   pratinjau foto, nama & SKU/barcode, harga jual/beli, stok awal, serta penempatan rak.
+   pratinjau foto, nama & SKU/barcode, harga jual/modal, stok awal, serta kategori.
    Dilengkapi validasi inline untuk barcode ganda dan angka negatif.
 3. **Pemindaian (`ProductScannerScreen`):** Simulasi pemindai kamera dengan area bidik,
    kontrol senter/flash, tombol simulasi deteksi, serta opsi pencarian manual ketika
@@ -35,24 +35,25 @@ Katalog/Pemindai ──> Konfirmasi Produk ──> Keranjang (CartCheckout) ─�
   (aman, menipis, habis), serta `SampleBadge`.
 - Pemilih skenario di katalog: daftar contoh, memuat, kosong, gagal, dan offline.
 - `ProductFormScreen`: penambahan produk baru dan pengeditan produk yang sudah ada, dengan
-  validasi nomor, barcode, serta pemilih lokasi rak warung.
+  validasi nomor, barcode, dan kategori produk.
 - `ProductScannerScreen`: pemindai simulasi dengan state siap, mendeteksi, hasil terdeteksi,
-  izin kamera ditolak, serta integrasi tombol "Lihat di Denah".
+  izin kamera ditolak, dan konfirmasi produk langsung ke keranjang.
 - `ManualProductSearchScreen`: pencarian manual sebagai jalan keluar saat pemindai kamera
   tidak dapat digunakan.
 - `CartCheckoutScreen`: daftar belanja dinamis, penyesuaian kuantitas, dan penghitungan total.
 - `PaymentSheet` & `PaymentSuccessScreen`: simulasi tunai dan QRIS dinamis lengkap dengan
-  tampilan kembalian dan batas waktu QR.
+  tampilan kembalian, batas waktu QR, pencatatan otomatis transaksi ke sesi lokal,
+  dan opsi cetak struk via printer Bluetooth.
 
 ## Status alur bertahap
 
 | Fase | Alur | Status |
 |---|---|---|
-| 0 | Buka katalog → lihat harga, stok, dan lokasi contoh | Selesai (terintegrasi ke app shell) |
+| 0 | Buka katalog → lihat harga dan stok contoh | Selesai (terintegrasi ke app shell) |
 | 1 | Katalog → cari/filter stok menipis → urutkan → tambah produk | Selesai (fitur pencarian, filter, dan sorting) |
-| 2 | Formulir → foto contoh, identitas, harga/stok, lokasi → validasi inline | Selesai (`ProductFormScreen` & `ProductDetailSheet`) |
+| 2 | Formulir → foto contoh, identitas, harga/stok, kategori → validasi inline | Selesai (`ProductFormScreen` & `ProductDetailSheet`) |
 | 3 | Mulai pindai → hasil simulasi → konfirmasi eksplisit → pencarian manual | Selesai (`ProductScannerScreen` & `ManualProductSearchScreen`) |
-| 4 | Konfirmasi produk → `CartCheckout` → pembayaran tunai/QRIS → struk contoh | Selesai (`CartCheckout`, `PaymentSheet`, `PaymentSuccessScreen`) |
+| 4 | Konfirmasi produk → `CartCheckout` → pembayaran tunai/QRIS → simpan sesi & struk | Selesai (`CartCheckout`, `PaymentSheet`, `PaymentSuccessScreen`) |
 | 5 | Uji alur pada Android layar kecil (360 dp) & rilis internal | Selesai / Review (teruji pada pengujian widget & manual) |
 
 ## Makna state pembayaran

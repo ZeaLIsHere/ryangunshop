@@ -5,6 +5,7 @@ import '../../../core/session/app_session.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/brand_spinner.dart';
 import '../../../core/widgets/primary_action.dart';
@@ -182,6 +183,7 @@ class CartCheckoutScreen extends StatelessWidget {
                             formatRupiah(cart.subtotal),
                             style: theme.textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w600,
+                              fontFeatures: AppTypography.tabularFigures,
                             ),
                           ),
                         ],
@@ -204,6 +206,7 @@ class CartCheckoutScreen extends StatelessWidget {
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: AppColors.success,
                                 fontWeight: FontWeight.bold,
+                                fontFeatures: AppTypography.tabularFigures,
                               ),
                             ),
                           ],
@@ -228,6 +231,7 @@ class CartCheckoutScreen extends StatelessWidget {
                             style: theme.textTheme.titleLarge?.copyWith(
                               color: AppColors.primary,
                               fontWeight: FontWeight.bold,
+                              fontFeatures: AppTypography.tabularFigures,
                             ),
                           ),
                         ],
@@ -414,6 +418,7 @@ class CartCheckoutScreen extends StatelessWidget {
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                           letterSpacing: -0.5,
+                          fontFeatures: AppTypography.tabularFigures,
                         ),
                       ),
                     ),
@@ -725,6 +730,7 @@ class _CartItemTile extends StatelessWidget {
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColors.primary,
                     fontWeight: FontWeight.bold,
+                    fontFeatures: AppTypography.tabularFigures,
                   ),
                 ),
               ],

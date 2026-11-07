@@ -5,6 +5,7 @@ import '../../../core/format/rupiah.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/primary_action.dart';
 import '../../../core/widgets/sample_badge.dart';
 import '../../checkout/model/cart_item.dart';
@@ -137,6 +138,8 @@ class _PaymentSheetState extends State<PaymentSheet> {
                           formatRupiah(widget.totalAmount),
                           style: theme.textTheme.headlineSmall?.copyWith(
                             color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                            fontFeatures: AppTypography.tabularFigures,
                           ),
                         ),
                       ],

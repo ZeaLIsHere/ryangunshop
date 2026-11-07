@@ -60,6 +60,8 @@ abstract final class AppTheme {
 
     return ThemeData(
       useMaterial3: true,
+      fontFamily: AppTypography.primaryFontFamily,
+      fontFamilyFallback: AppTypography.fontFallbacks,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.canvas,
       canvasColor: AppColors.canvas,

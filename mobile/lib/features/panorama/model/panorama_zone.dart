@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_colors.dart';
+
 class PanoramaHotspot {
   const PanoramaHotspot({
     required this.id,
@@ -13,8 +15,10 @@ class PanoramaHotspot {
   final String id;
   final String title;
   final String fixtureId;
+
   /// Sudut horizontal (0 sampai 360 derajat)
   final double yaw;
+
   /// Sudut vertikal (-90 sampai 90 derajat)
   final double pitch;
   final IconData icon;
@@ -26,7 +30,7 @@ class PanoramaZone {
     required this.name,
     required this.description,
     required this.hotspots,
-    this.primaryColor = const Color(0xFF565C9D),
+    this.primaryColor = AppColors.primary,
   });
 
   final String id;

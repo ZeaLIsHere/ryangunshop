@@ -90,27 +90,19 @@ Hierarki utama:
 
 ## Components & Screen Blueprints
 
-- `StoreFloorPlan`: Kanvas tata letak 2D berbasis matriks titik (*grid-matrix*) dengan ukuran warung
-  (mis. 8.0m × 6.0m) dan skala snap 0.5m. Objek rak, kulkas, meja kasir, dan galon memiliki siluet jelas,
-  suhu/kategori micro-badge, dan status ketersediaan barang.
 - `HeroOrderCard` / `HeroMetricCard`: Panel gradien violet melengkung 24 dp menampilkan metrik utama
-  (Omzet Hari Ini, Total Pesanan Kasir, atau Total SKU) dengan teks putih bersih dan tombol pill aksi cepat.
-- `QuickActionPods`: Baris kartu aksi 3-up atau 4-up berisi squircle 48×48 dp berlatar warna pastel
-  fungsional (`#F5F3FF`, `#ECFDF5`, `#FFF7ED`, `#E0F2FE`) memuat ikon tindakan (Pindai Rak, Kasir, Voucher).
-- `ProductScanner`: Layar kamera gelap dengan sudut bidik ungu menyala (*purple glow*), garis laser scan
-  beranimasi `#A855F7`, status verifikasi barcode instan, kartu barang terdeteksi, serta **Pod Lokasi
-  Rak Spasial** yang menampilkan pratinjau matriks mini denah dengan indikator rak aktif berdenyut (*pulse*).
-- `CartCheckout`: Daftar rincian belanja bersih dengan badge lokasi rak per item (`Rak A1`), stepper
-  kuantitas membulat, kartu ringkasan total, dan tombol pill bayar penuh tinggi 52 dp.
-- `PaymentSheet`: Pemisahan tegas antara metode Tunai (dengan pilihan pecahan uang cepat dan kalkulator
+  (Omzet Hari Ini, Jumlah Nota, Rata-rata Penjualan, atau Total Pesanan Kasir) dengan teks putih bersih dan tombol pill aksi cepat.
+- `QuickActionPods`: Baris kartu aksi 4-up berisi squircle 48×48 dp berlatar warna pastel fungsional
+  (`08_pindai_barcode.png`, `02_keranjang.png`, `09_stok_produk.png`, `03_riwayat_transaksi.png`) memuat aksi operasional kasir harian.
+- `ProductScanner`: Layar kamera dengan sudut bidik ungu menyala (*purple glow*), garis laser scan
+  beranimasi `#A855F7`, status verifikasi barcode instan, kartu barang terdeteksi, serta tombol konfirmasi produk ke keranjang.
+- `CartCheckout`: Daftar rincian belanja bersih dengan penanda SKU per item, stepper kuantitas membulat, kartu ringkasan biaya (subtotal, diskon toko, pajak PB1), dan tombol pill bayar penuh tinggi 52 dp.
+- `PaymentSheet`: Pemisahan tegas antara metode Tunai (dengan pilihan pecahan uang cepat, uang pas, dan kalkulator
   kembalian instan) dan QRIS dinamis berstatus transparan (`creating`, `awaitingPayment`, `paid`, `expired`, `failed`).
-- `ProductCatalog`: Pencarian instan terintegrasi tombol scan, filter chips kategori mendatar (Semua,
-  Rak A, Rak B, Kulkas, Stok Menipis), kartu produk ringkas beraksen tombol tambah violet, serta widget
-  peta rak spasial toko.
-- `ReportsAnalytics`: Pilihan tab periode kapsul (Hari Ini, Minggu Ini, Bulan Ini, Kustom), kartu hero
-  omzet dengan pill laba bersih, kartu rekap shift, grafik analitik visual, dan tombol cetak struk Bluetooth.
-- `FloatingBottomNav`: Navigasi bawah melayang bersudut atas 24 dp dengan bayangan violet lembut, 5 slot
-  keseimbangan (Home, Katalog, Scan, Kasir, Laporan) dengan tombol Scan tengah melayang bergradien ungu.
+- `ProductCatalog`: Pencarian instan terintegrasi tombol scan, filter chips kategori mendatar, filter cepat stok menipis, dan kartu produk ringkas beraksen tombol tambah violet.
+- `ReportsAnalytics`: Pilihan tab periode, kartu hero omzet, kartu rekap transaksi harian, grafik analitik visual, dan tombol cetak struk Bluetooth.
+- `FloatingBottomNav`: Navigasi bawah melayang bersudut atas 24 dp dengan bayangan violet lembut, menampilkan tab Beranda (ikon `beranda.png`), Katalog, tombol Kasir tengah (`02_keranjang.png`), dan Pengaturan.
+- `StoreFloorPlan (Arsip)`: Komponen kanvas tata letak 2D berbasis matriks titik (*grid-matrix*) dan panorama 360 zona diarsipkan dari antarmuka utama demi kecepatan alur kasir.
 
 ## Interaction Rules
 

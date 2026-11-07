@@ -104,11 +104,12 @@ emulator atau perangkat Android.
 
 Seluruh fitur antarmuka kini telah tersambung di dalam kerangka aplikasi utama (`lib/main.dart`):
 
-1. **Dashboard & Denah:** Memilih rak membuka daftar produk di lokasi tersebut; pemilik dapat mengaktifkan mode edit denah untuk mengatur tata letak, mengubah ukuran, rotasi, duplikasi, dan hapus objek.
+1. **Beranda (Dashboard POS):** Menampilkan Hero Omzet harian dinamis, rata-rata transaksi, cetak laporan harian, 4 modul bento Aksi Cepat (`Pindai Barcode`, `Buka Kasir`, `Stok`, `Riwayat Nota`), dan riwayat aktivitas transaksi terkini dengan placeholder gambar produk.
 2. **Katalog & Formulir:** Cari dan filter stok menipis pada tab Produk, serta tambah/edit produk dengan validasi barcode dan nomor.
-3. **Pemindai Produk:** Akses tombol "Mulai pindai" dari dashboard atau tab Kasir; mendukung simulasi deteksi kamera dan pencarian manual.
-4. **Kasir & Pembayaran:** Tab Kasir menyediakan stepper keranjang belanja dan sheet pembayaran tunai (dengan kembalian instan) atau QRIS simulasi lengkap.
-5. **Pengaturan & Laporan:** Ganti peran pengguna (Pemilik / Kasir) dan lihat ringkasan laporan transaksi contoh.
+3. **Pemindai Barcode:** Akses cepat pemindai dari Beranda atau tab Kasir; mendukung simulasi deteksi kamera dan pencarian manual.
+4. **Kasir & Pembayaran:** Tab Kasir menyediakan rincian pesanan dengan penanda SKU, stepper kuantitas, opsi diskon/voucher, dan sheet pembayaran tunai (dengan nominal cepat uang pas & kembalian instan) atau QRIS simulasi lengkap. Transaksi lunas otomatis tersimpan ke sesi lokal.
+5. **Pengaturan & Laporan:** Ganti peran pengguna (Pemilik / Kasir) dan lihat ringkasan laporan transaksi serta analitik penjualan.
+6. **Asisten AI (IyanBoT):** Obrolan asisten toko pintar untuk tanya stok dan operasional warung.
 
 ### Panduan Pengujian Layar Kecil (360 dp)
 
@@ -122,11 +123,12 @@ Sesuai `DESIGN.md` dan `docs/a11y.md`, seluruh antarmuka diuji pada perangkat la
    - Tombol tindakan utama (`PrimaryAction`, tombol bayar, stepper keranjang) tetap mudah ditekan dengan target sentuh ≥ 48 dp.
    - Form produk dan sheet pembayaran dapat digulir penuh saat keyboard virtual muncul.
 
-### Catatan Rilis Internal (v0.5.0-ui)
+### Catatan Rilis Internal (v0.6.0-ui)
 
-- **Cakupan:** 100% implementasi antarmuka dan interaksi UI (Fase 0 hingga Fase 5).
-- **Integritas Pengujian:** Seluruh 84+ automated widget tests lulus (`flutter test`), bebas error analyzer (`flutter analyze`).
+- **Cakupan:** 100% implementasi antarmuka dan interaksi UI (Fase 0 hingga Fase 5), redesain Beranda POS kasir, aset ikon 3D seragam (`01` s/d `10` dan logo resmi), serta alur kasir hingga simpan nota ke sesi lokal.
+- **Integritas Pengujian:** Seluruh 90 automated widget & flow tests lulus (`flutter test`), bebas error analyzer (`flutter analyze`).
 - **Prinsip Kejujuran Data:** Seluruh status stok, pembayaran QRIS, dan transaksi ditandai dengan badge contoh/simulasi (`SampleBadge`) dan belum mencatat mutasi data riil ke backend.
+- **Roadmap Produksi:** Rencana teknis pengembangan menuju produksi (Drift/SQLite, scanner kamera, thermal printer, PIN) tercatat di `PROGRESS.md`.
 
 ## Tahap berikutnya
 
