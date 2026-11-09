@@ -24,28 +24,34 @@ Karakter produk: praktis, tenang, jelas, dapat dipercaya. Violet modern (`#7C3AE
 menjadi identitas tindakan dan navigasi. Antarmuka harus dapat dipakai tanpa pelatihan
 teknis pada perangkat kelas bawah.
 
-## 2. Cakupan tahap ini: UI saja
+## 2. Cakupan tahap ini: UI dan fondasi backend lokal
 
-Tahap ini hanya mengerjakan **tampilan dan interaksi (frontend)**. Rancang seluruh layar
-dengan data contoh lokal, bukan layanan nyata.
+Tahap ini mengerjakan **tampilan/interaksi (frontend)** dan fondasi backend lokal
+offline-first. Layanan cloud dan integrasi perangkat nyata tetap ditunda.
 
-Dilarang dikerjakan sekarang:
+Diperbolehkan pada branch backend:
 
-- Drift/SQLite, Firestore, outbox, dan sinkronisasi.
+- Persistensi lokal SQLite melalui Drift/Isar.
+- Repository lokal untuk produk, stok, keranjang, dan transaksi.
+- Migrasi skema, seed data contoh, dan pengujian repository.
+
+Tetap dilarang dikerjakan sekarang:
+
+- Firestore, outbox cloud, dan sinkronisasi jaringan.
 - `backend-agent` (WhatsApp, Ollama, tool registry) dan webhook QRIS.
 - Firebase Authentication, rules, index, Storage, dan App Check.
 - Foto koreksi privat, dataset AI, dan model TFLite nyata.
 - Perhitungan rencana restok dan laporan berbasis data nyata.
 
-Komponen yang nantinya bergantung pada pekerjaan di atas tetap dibangun sekarang, tetapi
-hanya sebatas tampilan dan state UI. Jika sebuah tugas terasa menuntut backend, hentikan
-dan tanyakan, jangan diam-diam membuat lapisan data.
+Komponen backend yang dibuat harus memiliki batas lokal yang jelas dan tidak boleh
+memerlukan kredensial atau layanan eksternal. Integrasi UI dilakukan bertahap setelah
+repository lokal memiliki test.
 
-Panduan bagi agen AI: jangan menambahkan dependensi database, HTTP client, Firebase, atau
-model machine learning. Jangan menulis kode inisialisasi layanan eksternal. Jangan
+Panduan bagi agen AI: pada branch UI jangan menambahkan dependensi database. Pada branch
+backend, dependensi database lokal boleh ditambahkan lewat PR dan harus disertai test.
+Jangan menambahkan Firebase, kredensial, kunci API, atau model machine learning. Jangan
 menambahkan kredensial, kunci API, atau berkas `.env`. Bila dokumen lain seperti
-`README.md` menyebut komponen backend, perlakukan itu sebagai rencana tahap berikutnya,
-bukan instruksi untuk sekarang.
+`README.md` menyebut layanan cloud, perlakukan itu sebagai rencana tahap berikutnya.
 
 ## 3. Konteks peran
 
@@ -55,8 +61,8 @@ bukan instruksi untuk sekarang.
 - Periksa `PROGRESS.md` sebelum mulai bekerja untuk mengetahui tugas yang sudah selesai,
   lalu perbarui baris Anda pada pull request yang sama saat tugas selesai.
 - Tentukan Anda membantu siapa dari nama branch yang aktif: `feat/ui-shell-*`
-  (Tariq), `feat/ui-spatial-*` (Farel), `feat/ui-commerce-*` (Blessly). Bila tidak
-  jelas, tanyakan sebelum menulis kode.
+  (Tariq), `feat/ui-spatial-*` (Farel), `feat/ui-commerce-*` (Blessly), atau
+  `feat/backend-*` (fondasi backend). Bila tidak jelas, tanyakan sebelum menulis kode.
 
 ## 4. Struktur berkas yang disepakati
 
