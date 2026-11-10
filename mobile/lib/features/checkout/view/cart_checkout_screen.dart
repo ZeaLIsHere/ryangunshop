@@ -247,16 +247,7 @@ class CartCheckoutScreen extends StatelessWidget {
                                   context,
                                   totalAmount: cart.total,
                                   cartItems: cart.items,
-                                  onPaymentCompleted: () {
-                                    session.recordTransaction(
-                                      totalAmount: cart.total,
-                                      items: cart.items,
-                                      paymentMethod: 'Tunai',
-                                      cashReceived: null,
-                                      changeAmount: null,
-                                    );
-                                    cart.clearCart();
-                                  },
+                                  onPaymentCompleted: cart.clearCart,
                                 );
                               },
                       ),

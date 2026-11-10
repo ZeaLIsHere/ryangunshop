@@ -13,7 +13,7 @@ void main() {
   setUp(AppStartupState.resetForTesting);
 
   testWidgets(
-    'Alur lengkap pengguna: Onboarding -> Dashboard -> Denah -> Kasir -> Pembayaran Sukses -> Data Tersimpan',
+    'Alur lengkap pengguna: onboarding hingga simulasi kasir tanpa nota tersimpan',
     (tester) async {
       // 1. Viewport ponsel standar
       tester.view.physicalSize = const Size(1080, 2400);
@@ -102,16 +102,12 @@ void main() {
       await tester.tap(newTrxBtn);
       await tester.pumpAndSettle();
 
-      // 7. Kembali ke tab Beranda & verifikasi data tersimpan
+      // 7. Simulasi tidak boleh menambah omzet atau nota contoh.
       await tester.tap(find.text(ShellDestination.home.label));
       await tester.pumpAndSettle();
 
-      // Data omzet bertambah dan nota menjadi 43
-      expect(find.text('43 Nota'), findsOneWidget);
-      expect(
-        find.text('Rp 1.473.000'),
-        findsOneWidget,
-      ); // 1.450.000 + 23.000 = 1.473.000
+      expect(find.text('42 Nota'), findsOneWidget);
+      expect(find.text('Rp 1.450.000'), findsOneWidget);
       expect(find.text('Aktivitas Transaksi Terbaru'), findsOneWidget);
     },
   );

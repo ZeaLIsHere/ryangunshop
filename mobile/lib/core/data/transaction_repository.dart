@@ -7,6 +7,7 @@ class TransactionRecord {
     required this.id,
     required this.createdAt,
     required this.totalAmount,
+    required this.discountAmount,
     required this.paymentMethod,
     this.cashReceived,
     this.changeAmount,
@@ -15,6 +16,7 @@ class TransactionRecord {
   final String id;
   final DateTime createdAt;
   final int totalAmount;
+  final int discountAmount;
   final String paymentMethod;
   final int? cashReceived;
   final int? changeAmount;
@@ -30,6 +32,7 @@ class TransactionRepository {
     required String paymentMethod,
     required int totalAmount,
     required List<CheckoutLine> lines,
+    int discountAmount = 0,
     int? cashReceived,
     int? changeAmount,
   }) {
@@ -37,6 +40,7 @@ class TransactionRepository {
       transactionId: transactionId,
       paymentMethod: paymentMethod,
       totalAmount: totalAmount,
+      discountAmount: discountAmount,
       lines: lines,
       cashReceived: cashReceived,
       changeAmount: changeAmount,
@@ -54,6 +58,7 @@ class TransactionRepository {
             id: row.id,
             createdAt: row.createdAt,
             totalAmount: row.totalAmount,
+            discountAmount: row.discountAmount,
             paymentMethod: row.paymentMethod,
             cashReceived: row.cashReceived,
             changeAmount: row.changeAmount,

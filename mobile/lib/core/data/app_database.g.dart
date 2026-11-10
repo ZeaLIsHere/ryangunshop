@@ -446,6 +446,18 @@ class $TransactionsTable extends Transactions
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _discountAmountMeta = const VerificationMeta(
+    'discountAmount',
+  );
+  @override
+  late final GeneratedColumn<int> discountAmount = GeneratedColumn<int>(
+    'discount_amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _paymentMethodMeta = const VerificationMeta(
     'paymentMethod',
   );
@@ -484,6 +496,7 @@ class $TransactionsTable extends Transactions
     id,
     createdAt,
     totalAmount,
+    discountAmount,
     paymentMethod,
     cashReceived,
     changeAmount,
@@ -523,6 +536,15 @@ class $TransactionsTable extends Transactions
       );
     } else if (isInserting) {
       context.missing(_totalAmountMeta);
+    }
+    if (data.containsKey('discount_amount')) {
+      context.handle(
+        _discountAmountMeta,
+        discountAmount.isAcceptableOrUnknown(
+          data['discount_amount']!,
+          _discountAmountMeta,
+        ),
+      );
     }
     if (data.containsKey('payment_method')) {
       context.handle(
@@ -574,6 +596,10 @@ class $TransactionsTable extends Transactions
         DriftSqlType.int,
         data['${effectivePrefix}total_amount'],
       )!,
+      discountAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}discount_amount'],
+      )!,
       paymentMethod: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}payment_method'],
@@ -599,6 +625,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   final String id;
   final DateTime createdAt;
   final int totalAmount;
+  final int discountAmount;
   final String paymentMethod;
   final int? cashReceived;
   final int? changeAmount;
@@ -606,6 +633,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     required this.id,
     required this.createdAt,
     required this.totalAmount,
+    required this.discountAmount,
     required this.paymentMethod,
     this.cashReceived,
     this.changeAmount,
@@ -616,6 +644,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     map['id'] = Variable<String>(id);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['total_amount'] = Variable<int>(totalAmount);
+    map['discount_amount'] = Variable<int>(discountAmount);
     map['payment_method'] = Variable<String>(paymentMethod);
     if (!nullToAbsent || cashReceived != null) {
       map['cash_received'] = Variable<int>(cashReceived);
@@ -631,6 +660,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       id: Value(id),
       createdAt: Value(createdAt),
       totalAmount: Value(totalAmount),
+      discountAmount: Value(discountAmount),
       paymentMethod: Value(paymentMethod),
       cashReceived: cashReceived == null && nullToAbsent
           ? const Value.absent()
@@ -650,6 +680,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       id: serializer.fromJson<String>(json['id']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       totalAmount: serializer.fromJson<int>(json['totalAmount']),
+      discountAmount: serializer.fromJson<int>(json['discountAmount']),
       paymentMethod: serializer.fromJson<String>(json['paymentMethod']),
       cashReceived: serializer.fromJson<int?>(json['cashReceived']),
       changeAmount: serializer.fromJson<int?>(json['changeAmount']),
@@ -662,6 +693,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       'id': serializer.toJson<String>(id),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'totalAmount': serializer.toJson<int>(totalAmount),
+      'discountAmount': serializer.toJson<int>(discountAmount),
       'paymentMethod': serializer.toJson<String>(paymentMethod),
       'cashReceived': serializer.toJson<int?>(cashReceived),
       'changeAmount': serializer.toJson<int?>(changeAmount),
@@ -672,6 +704,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     String? id,
     DateTime? createdAt,
     int? totalAmount,
+    int? discountAmount,
     String? paymentMethod,
     Value<int?> cashReceived = const Value.absent(),
     Value<int?> changeAmount = const Value.absent(),
@@ -679,6 +712,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     id: id ?? this.id,
     createdAt: createdAt ?? this.createdAt,
     totalAmount: totalAmount ?? this.totalAmount,
+    discountAmount: discountAmount ?? this.discountAmount,
     paymentMethod: paymentMethod ?? this.paymentMethod,
     cashReceived: cashReceived.present ? cashReceived.value : this.cashReceived,
     changeAmount: changeAmount.present ? changeAmount.value : this.changeAmount,
@@ -690,6 +724,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       totalAmount: data.totalAmount.present
           ? data.totalAmount.value
           : this.totalAmount,
+      discountAmount: data.discountAmount.present
+          ? data.discountAmount.value
+          : this.discountAmount,
       paymentMethod: data.paymentMethod.present
           ? data.paymentMethod.value
           : this.paymentMethod,
@@ -708,6 +745,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('id: $id, ')
           ..write('createdAt: $createdAt, ')
           ..write('totalAmount: $totalAmount, ')
+          ..write('discountAmount: $discountAmount, ')
           ..write('paymentMethod: $paymentMethod, ')
           ..write('cashReceived: $cashReceived, ')
           ..write('changeAmount: $changeAmount')
@@ -720,6 +758,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     id,
     createdAt,
     totalAmount,
+    discountAmount,
     paymentMethod,
     cashReceived,
     changeAmount,
@@ -731,6 +770,7 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.id == this.id &&
           other.createdAt == this.createdAt &&
           other.totalAmount == this.totalAmount &&
+          other.discountAmount == this.discountAmount &&
           other.paymentMethod == this.paymentMethod &&
           other.cashReceived == this.cashReceived &&
           other.changeAmount == this.changeAmount);
@@ -740,6 +780,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<String> id;
   final Value<DateTime> createdAt;
   final Value<int> totalAmount;
+  final Value<int> discountAmount;
   final Value<String> paymentMethod;
   final Value<int?> cashReceived;
   final Value<int?> changeAmount;
@@ -748,6 +789,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.id = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.totalAmount = const Value.absent(),
+    this.discountAmount = const Value.absent(),
     this.paymentMethod = const Value.absent(),
     this.cashReceived = const Value.absent(),
     this.changeAmount = const Value.absent(),
@@ -757,6 +799,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     required String id,
     required DateTime createdAt,
     required int totalAmount,
+    this.discountAmount = const Value.absent(),
     required String paymentMethod,
     this.cashReceived = const Value.absent(),
     this.changeAmount = const Value.absent(),
@@ -769,6 +812,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<String>? id,
     Expression<DateTime>? createdAt,
     Expression<int>? totalAmount,
+    Expression<int>? discountAmount,
     Expression<String>? paymentMethod,
     Expression<int>? cashReceived,
     Expression<int>? changeAmount,
@@ -778,6 +822,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (id != null) 'id': id,
       if (createdAt != null) 'created_at': createdAt,
       if (totalAmount != null) 'total_amount': totalAmount,
+      if (discountAmount != null) 'discount_amount': discountAmount,
       if (paymentMethod != null) 'payment_method': paymentMethod,
       if (cashReceived != null) 'cash_received': cashReceived,
       if (changeAmount != null) 'change_amount': changeAmount,
@@ -789,6 +834,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Value<String>? id,
     Value<DateTime>? createdAt,
     Value<int>? totalAmount,
+    Value<int>? discountAmount,
     Value<String>? paymentMethod,
     Value<int?>? cashReceived,
     Value<int?>? changeAmount,
@@ -798,6 +844,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
       totalAmount: totalAmount ?? this.totalAmount,
+      discountAmount: discountAmount ?? this.discountAmount,
       paymentMethod: paymentMethod ?? this.paymentMethod,
       cashReceived: cashReceived ?? this.cashReceived,
       changeAmount: changeAmount ?? this.changeAmount,
@@ -816,6 +863,9 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     }
     if (totalAmount.present) {
       map['total_amount'] = Variable<int>(totalAmount.value);
+    }
+    if (discountAmount.present) {
+      map['discount_amount'] = Variable<int>(discountAmount.value);
     }
     if (paymentMethod.present) {
       map['payment_method'] = Variable<String>(paymentMethod.value);
@@ -838,6 +888,7 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
           ..write('id: $id, ')
           ..write('createdAt: $createdAt, ')
           ..write('totalAmount: $totalAmount, ')
+          ..write('discountAmount: $discountAmount, ')
           ..write('paymentMethod: $paymentMethod, ')
           ..write('cashReceived: $cashReceived, ')
           ..write('changeAmount: $changeAmount, ')
@@ -1555,6 +1606,7 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       required String id,
       required DateTime createdAt,
       required int totalAmount,
+      Value<int> discountAmount,
       required String paymentMethod,
       Value<int?> cashReceived,
       Value<int?> changeAmount,
@@ -1565,6 +1617,7 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<String> id,
       Value<DateTime> createdAt,
       Value<int> totalAmount,
+      Value<int> discountAmount,
       Value<String> paymentMethod,
       Value<int?> cashReceived,
       Value<int?> changeAmount,
@@ -1592,6 +1645,11 @@ class $$TransactionsTableFilterComposer
 
   ColumnFilters<int> get totalAmount => $composableBuilder(
     column: $table.totalAmount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get discountAmount => $composableBuilder(
+    column: $table.discountAmount,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1635,6 +1693,11 @@ class $$TransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get discountAmount => $composableBuilder(
+    column: $table.discountAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get paymentMethod => $composableBuilder(
     column: $table.paymentMethod,
     builder: (column) => ColumnOrderings(column),
@@ -1668,6 +1731,11 @@ class $$TransactionsTableAnnotationComposer
 
   GeneratedColumn<int> get totalAmount => $composableBuilder(
     column: $table.totalAmount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get discountAmount => $composableBuilder(
+    column: $table.discountAmount,
     builder: (column) => column,
   );
 
@@ -1721,6 +1789,7 @@ class $$TransactionsTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> totalAmount = const Value.absent(),
+                Value<int> discountAmount = const Value.absent(),
                 Value<String> paymentMethod = const Value.absent(),
                 Value<int?> cashReceived = const Value.absent(),
                 Value<int?> changeAmount = const Value.absent(),
@@ -1729,6 +1798,7 @@ class $$TransactionsTableTableManager
                 id: id,
                 createdAt: createdAt,
                 totalAmount: totalAmount,
+                discountAmount: discountAmount,
                 paymentMethod: paymentMethod,
                 cashReceived: cashReceived,
                 changeAmount: changeAmount,
@@ -1739,6 +1809,7 @@ class $$TransactionsTableTableManager
                 required String id,
                 required DateTime createdAt,
                 required int totalAmount,
+                Value<int> discountAmount = const Value.absent(),
                 required String paymentMethod,
                 Value<int?> cashReceived = const Value.absent(),
                 Value<int?> changeAmount = const Value.absent(),
@@ -1747,6 +1818,7 @@ class $$TransactionsTableTableManager
                 id: id,
                 createdAt: createdAt,
                 totalAmount: totalAmount,
+                discountAmount: discountAmount,
                 paymentMethod: paymentMethod,
                 cashReceived: cashReceived,
                 changeAmount: changeAmount,
