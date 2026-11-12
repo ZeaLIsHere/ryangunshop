@@ -905,11 +905,11 @@ class _CartItemTile extends StatelessWidget {
   }
 
   String _rackTagFor(String productId) {
-    if (productId.contains('1')) return 'SKU-01';
-    if (productId.contains('2')) return 'SKU-02';
-    if (productId.contains('3')) return 'SKU-03';
-    if (productId.contains('4')) return 'SKU-04';
-    return 'PRODUK';
+    final clean = productId.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
+    if (clean.length >= 4) {
+      return 'SKU-${clean.substring(clean.length - 4).toUpperCase()}';
+    }
+    return clean.isNotEmpty ? 'SKU-${clean.toUpperCase()}' : 'ITEM';
   }
 }
 
