@@ -123,6 +123,62 @@ void main() {
     expect((await database.listProducts()).single.stock, 9);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'katalog lokal mendukung pengisian produk awal dan penghapusan produk',
+    (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+      final session = AppSession(database: database);
+      addTearDown(session.dispose);
+
+      await tester.pumpWidget(
+        AppSessionScope(
+          session: session,
+          child: MaterialApp(
+            home: Scaffold(
+              body: ProductCatalog(repository: session.productRepository),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Pastikan tombol isi data produk awal tampil di empty state
+      expect(find.text('Belum ada produk'), findsOneWidget);
+      expect(find.text('Isi Data Produk Warung'), findsOneWidget);
+
+      await tester.tap(find.text('Isi Data Produk Warung'));
+      await tester.pumpAndSettle();
+
+      final allDbProducts = await database.listProducts();
+      expect(allDbProducts.length, greaterThan(0));
+      expect(find.text('Belum ada produk'), findsNothing);
+
+      // Buka detail produk pertama dan hapus
+      final firstProductName = allDbProducts.first.name;
+      await tester.ensureVisible(find.text(firstProductName));
+      await tester.tap(find.text(firstProductName));
+      await tester.pumpAndSettle();
+
+      // Tombol hapus ada untuk owner
+      expect(find.byTooltip('Hapus Produk'), findsOneWidget);
+      await tester.tap(find.byTooltip('Hapus Produk'));
+      await tester.pumpAndSettle();
+
+      // Dialog konfirmasi
+      expect(find.text('Hapus Produk?'), findsOneWidget);
+      await tester.tap(find.text('Hapus'));
+      await tester.pumpAndSettle();
+
+      final afterDeleteDb = await database.listProducts();
+      expect(afterDeleteDb.length, allDbProducts.length - 1);
+      expect(afterDeleteDb.any((p) => p.name == firstProductName), isFalse);
+    },
+  );
 }
 
 Future<void> _enterField(

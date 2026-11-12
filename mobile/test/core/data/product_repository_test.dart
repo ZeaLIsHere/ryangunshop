@@ -100,4 +100,43 @@ void main() {
     expect(product.locationLabel, 'Rak mi');
     expect(product.lowStockThreshold, 2);
   });
+
+  test('repository dapat menghapus produk dan melakukan seed awal', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = DriftProductRepository(database);
+
+    const p1 = ProductRecord(
+      id: 'p-seed-1',
+      name: 'Beras',
+      salePrice: 15000,
+      stock: 10,
+    );
+    const p2 = ProductRecord(
+      id: 'p-seed-2',
+      name: 'Minyak',
+      salePrice: 18000,
+      stock: 5,
+    );
+
+    await repository.seedIfEmpty([p1, p2]);
+    expect((await repository.listProducts()), hasLength(2));
+
+    // Seed ulang tidak menimpa data yang sudah ada
+    await repository.seedIfEmpty([
+      const ProductRecord(
+        id: 'p-seed-3',
+        name: 'Gula',
+        salePrice: 12000,
+        stock: 4,
+      ),
+    ]);
+    expect((await repository.listProducts()), hasLength(2));
+
+    // Hapus satu produk
+    await repository.delete('p-seed-1');
+    final afterDelete = await repository.listProducts();
+    expect(afterDelete, hasLength(1));
+    expect(afterDelete.single.name, 'Minyak');
+  });
 }

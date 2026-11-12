@@ -53,6 +53,21 @@ class DriftProductRepository implements ProductRepository {
     );
   }
 
+  @override
+  Future<void> delete(String id) async {
+    await database.deleteProduct(id);
+  }
+
+  @override
+  Future<void> seedIfEmpty(List<ProductRecord> starterRecords) async {
+    final current = await listProducts();
+    if (current.isEmpty) {
+      for (final record in starterRecords) {
+        await save(record);
+      }
+    }
+  }
+
   ProductRecord _toRecord(Product product) => ProductRecord(
     id: product.id,
     barcode: product.barcode,

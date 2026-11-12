@@ -64,6 +64,20 @@ class CatalogProduct {
     if (stock <= lowStockThreshold) return ProductStockStatus.low;
     return ProductStockStatus.available;
   }
+
+  ProductRecord toRecord() => ProductRecord(
+    id: id,
+    barcode: barcode,
+    name: name,
+    salePrice: price,
+    costPrice: costPrice,
+    stock: stock,
+    category: category,
+    unit: unit,
+    fixtureId: fixtureId,
+    locationLabel: locationLabel,
+    lowStockThreshold: lowStockThreshold,
+  );
 }
 
 enum ProductStockStatus { available, low, empty }

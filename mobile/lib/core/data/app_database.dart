@@ -1,9 +1,6 @@
-import 'dart:io';
-
 import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+
+export 'connection/database_connection.dart' show openAppDatabase;
 
 part 'app_database.g.dart';
 
@@ -147,6 +144,9 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  Future<int> deleteProduct(String id) =>
+      (delete(products)..where((row) => row.id.equals(id))).go();
+
   Future<void> completeCheckout({
     required String transactionId,
     required String paymentMethod,
@@ -256,12 +256,4 @@ class CheckoutLine {
   final int quantity;
   final int unitPrice;
   final int subtotal;
-}
-
-LazyDatabase openAppDatabase() {
-  return LazyDatabase(() async {
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File(p.join(directory.path, 'ryangunshop.sqlite'));
-    return NativeDatabase.createInBackground(file);
-  });
 }
