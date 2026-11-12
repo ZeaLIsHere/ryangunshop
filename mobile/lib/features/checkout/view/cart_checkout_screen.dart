@@ -537,13 +537,7 @@ class CartCheckoutScreen extends StatelessWidget {
                     : 'Voucher/Diskon',
                 bgColor: const Color(0xFFECFDF5),
                 iconColor: const Color(0xFF059669),
-                onTap: () {
-                  if (cart.discount > 0) {
-                    cart.setDiscount(0);
-                  } else {
-                    cart.setDiscount(5000);
-                  }
-                },
+                onTap: () => _openDiscountDialog(context, cart),
               ),
             ),
           ],
@@ -694,6 +688,68 @@ class CartCheckoutScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _openDiscountDialog(BuildContext context, CartViewModel cart) {
+    final controller = TextEditingController(
+      text: cart.discount > 0 ? cart.discount.toString() : '',
+    );
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Atur Diskon Transaksi'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Nominal Diskon (Rp)',
+                prefixText: 'Rp ',
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Wrap(
+              spacing: 6,
+              children: [
+                ActionChip(
+                  label: const Text('Rp 2.000'),
+                  onPressed: () => controller.text = '2000',
+                ),
+                ActionChip(
+                  label: const Text('Rp 5.000'),
+                  onPressed: () => controller.text = '5000',
+                ),
+                ActionChip(
+                  label: const Text('Rp 10.000'),
+                  onPressed: () => controller.text = '10000',
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              cart.setDiscount(0);
+              Navigator.of(dialogContext).pop();
+            },
+            child: const Text('Hapus Diskon'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final val = int.tryParse(controller.text) ?? 0;
+              cart.setDiscount(val);
+              Navigator.of(dialogContext).pop();
+            },
+            child: const Text('Terapkan'),
+          ),
+        ],
       ),
     );
   }

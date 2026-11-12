@@ -11,6 +11,8 @@ class TransactionRecord {
     required this.paymentMethod,
     this.cashReceived,
     this.changeAmount,
+    this.itemCount = 0,
+    this.summaryTitle = 'Nota tunai',
   });
 
   final String id;
@@ -20,6 +22,8 @@ class TransactionRecord {
   final String paymentMethod;
   final int? cashReceived;
   final int? changeAmount;
+  final int itemCount;
+  final String summaryTitle;
 }
 
 class DailySalesSummary {
@@ -59,19 +63,39 @@ class TransactionRepository {
       ..orderBy([(row) => OrderingTerm.desc(row.createdAt)])
       ..limit(limit);
     final rows = await query.get();
-    return rows
-        .map(
-          (row) => TransactionRecord(
-            id: row.id,
-            createdAt: row.createdAt,
-            totalAmount: row.totalAmount,
-            discountAmount: row.discountAmount,
-            paymentMethod: row.paymentMethod,
-            cashReceived: row.cashReceived,
-            changeAmount: row.changeAmount,
-          ),
-        )
-        .toList();
+    if (rows.isEmpty) return const [];
+
+    final transactionIds = rows.map((r) => r.id).toList();
+    final itemsQuery = database.select(database.transactionItems)
+      ..where((row) => row.transactionId.isIn(transactionIds));
+    final allItems = await itemsQuery.get();
+
+    final itemsByTrx = <String, List<TransactionItem>>{};
+    for (final item in allItems) {
+      itemsByTrx.putIfAbsent(item.transactionId, () => []).add(item);
+    }
+
+    return rows.map((row) {
+      final items = itemsByTrx[row.id] ?? const [];
+      final totalQty = items.fold<int>(0, (sum, it) => sum + it.quantity);
+      final title = items.isEmpty
+          ? 'Nota tunai'
+          : (items.length == 1
+                ? items.first.productName
+                : '${items.first.productName} (+${items.length - 1} item)');
+
+      return TransactionRecord(
+        id: row.id,
+        createdAt: row.createdAt,
+        totalAmount: row.totalAmount,
+        discountAmount: row.discountAmount,
+        paymentMethod: row.paymentMethod,
+        cashReceived: row.cashReceived,
+        changeAmount: row.changeAmount,
+        itemCount: totalQty,
+        summaryTitle: title,
+      );
+    }).toList();
   }
 
   Future<DailySalesSummary> summaryForDay(DateTime day) async {

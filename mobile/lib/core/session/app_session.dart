@@ -201,9 +201,9 @@ class AppSession extends ChangeNotifier {
               id: row.id,
               timeLabel:
                   '${row.createdAt.hour.toString().padLeft(2, '0')}:${row.createdAt.minute.toString().padLeft(2, '0')} WIB',
-              title: 'Nota tunai',
+              title: row.summaryTitle,
               amount: row.totalAmount,
-              itemCount: 0,
+              itemCount: row.itemCount,
               paymentMethod: 'Tunai',
             ),
           ),
