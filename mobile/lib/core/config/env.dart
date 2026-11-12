@@ -1,17 +1,25 @@
 /// Konfigurasi lingkungan aplikasi RyanGunshop.
 ///
-/// Menyimpan kunci API DeepSeek dari:
-/// 1. `--dart-define=DEEPSEEK_API_KEY=sk-...` atau `--dart-define-from-file=.env`
-/// 2. Input manual di dialog layar Chatbot saat aplikasi berjalan
+/// Menyimpan kunci API Groq dari:
+/// 1. `--dart-define=GROQ_API_KEY=gsk_...` atau `--dart-define-from-file=.env`
+/// 2. Input manual saat runtime lewat [setRuntimeApiKey]
 /// 3. Variabel [hardcodedApiKey] di bawah ini untuk pengujian lokal langsung
 abstract final class AppEnv {
-  /// Kunci API DeepSeek yang di-hardcode langsung untuk uji lokal.
-  /// Anda dapat menempelkan kunci `sk-...` Anda di sini jika ingin cepat.
+  /// Model Groq bawaan bila `GROQ_MODEL` tidak diatur.
+  static const String defaultGroqModel = 'openai/gpt-oss-120b';
+
+  /// Kunci API yang di-hardcode langsung untuk uji lokal.
   static String hardcodedApiKey = '';
 
   /// Kunci yang dibaca saat kompilasi lewat `String.fromEnvironment`.
   static const String _compileTimeKey = String.fromEnvironment(
-    'DEEPSEEK_API_KEY',
+    'GROQ_API_KEY',
+    defaultValue: '',
+  );
+
+  /// Model yang dibaca saat kompilasi lewat `String.fromEnvironment`.
+  static const String _compileTimeModel = String.fromEnvironment(
+    'GROQ_MODEL',
     defaultValue: '',
   );
 
@@ -22,7 +30,7 @@ abstract final class AppEnv {
   /// 1. Kunci runtime (yang diinput via dialog Chatbot)
   /// 2. Kunci hardcoded lokal
   /// 3. Kunci dari `--dart-define` / `.env`
-  static String get deepseekApiKey {
+  static String get groqApiKey {
     if (_runtimeApiKey != null && _runtimeApiKey!.trim().isNotEmpty) {
       return _runtimeApiKey!.trim();
     }
@@ -32,8 +40,14 @@ abstract final class AppEnv {
     return _compileTimeKey.trim();
   }
 
-  /// Menentukan apakah integrasi DeepSeek siap dipakai.
-  static bool get hasDeepseekKey => deepseekApiKey.isNotEmpty;
+  /// Menentukan apakah integrasi Groq siap dipakai.
+  static bool get hasGroqKey => groqApiKey.isNotEmpty;
+
+  /// Model Groq aktif; dapat diganti lewat `--dart-define=GROQ_MODEL=...`.
+  static String get groqModel {
+    final model = _compileTimeModel.trim();
+    return model.isEmpty ? defaultGroqModel : model;
+  }
 
   /// Memperbarui kunci API sesi berjalan dari dialog UI.
   static void setRuntimeApiKey(String key) {

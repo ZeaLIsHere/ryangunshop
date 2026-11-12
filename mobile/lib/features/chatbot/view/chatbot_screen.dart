@@ -10,8 +10,8 @@ import '../view_model/chatbot_view_model.dart';
 
 /// Layar chatbot asisten toko RyanGunshop.
 ///
-/// Mendukung mode AI nyata (DeepSeek `deepseek-chat`) dengan injeksi data toko,
-/// serta mode simulasi lokal otomatis saat kunci API belum diisi atau offline.
+/// Mendukung mode AI nyata (Groq) dengan injeksi data toko, serta mode simulasi
+/// lokal otomatis saat kunci API belum diisi atau offline.
 class ChatbotScreen extends StatefulWidget {
   const ChatbotScreen({super.key});
 
@@ -40,10 +40,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     _inputController.clear();
 
     final session = AppSessionScope.maybeOf(context);
-    List<CatalogProduct>? products;
-    if (session?.productRepository != null) {
+    var products = const <CatalogProduct>[];
+    if (session != null) {
       try {
-        final records = await session!.productRepository.listProducts();
+        final records = await session.productRepository.listProducts();
         products = records.map(CatalogProduct.fromRecord).toList();
       } catch (_) {}
     }
