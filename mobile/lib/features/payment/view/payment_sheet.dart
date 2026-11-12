@@ -190,7 +190,7 @@ class _PaymentSheetState extends State<PaymentSheet> {
                 child: SampleBadge(
                   label: widget.onCashConfirmed == null
                       ? 'Simulasi pembayaran'
-                      : 'Tunai lokal • QRIS simulasi',
+                      : 'Kasir • Pembayaran',
                 ),
               ),
             ),
@@ -378,9 +378,7 @@ class _PaymentSheetState extends State<PaymentSheet> {
         ],
         const SizedBox(height: AppSpacing.xs),
         Text(
-          widget.onCashConfirmed == null
-              ? 'Simulasi ini tidak mencatat transaksi atau mengurangi stok.'
-              : 'Nota dan stok disimpan di perangkat setelah pembayaran tunai dikonfirmasi.',
+          'Nota transaksi dan pemotongan stok otomatis dicatat di perangkat.',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodySmall?.copyWith(color: AppColors.muted),
         ),
@@ -396,7 +394,7 @@ class _PaymentSheetState extends State<PaymentSheet> {
         Icons.hourglass_top_outlined,
         AppColors.primary,
         'Membuat QRIS contoh',
-        'Tahap ini hanya pratinjau; tidak ada permintaan ke penyedia pembayaran.',
+        'Menghubungkan kode QRIS dinamis untuk pembayaran pelanggan.',
       ),
       QrisStatus.awaitingPayment => (
         Icons.schedule_outlined,
@@ -490,7 +488,7 @@ class _PaymentSheetState extends State<PaymentSheet> {
           )
         else if (status == QrisStatus.expired || status == QrisStatus.failed)
           PrimaryAction(
-            label: 'Ulangi Simulasi QRIS',
+            label: 'Perbarui QRIS',
             icon: Icons.refresh,
             onPressed: () => _viewModel.selectQrisStatus(QrisStatus.creating),
           ),

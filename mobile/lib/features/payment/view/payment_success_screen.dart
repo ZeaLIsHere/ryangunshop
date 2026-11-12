@@ -164,7 +164,7 @@ class PaymentSuccessScreen extends StatelessWidget {
                       content: Text(
                         transactionId != null
                             ? 'Mencetak nota $transactionId ke printer Bluetooth...'
-                            : 'Mencetak struk ke printer Bluetooth siap...',
+                            : 'Mencetak nota transaksi ke printer Bluetooth siap...',
                       ),
                       duration: const Duration(seconds: 2),
                     ),

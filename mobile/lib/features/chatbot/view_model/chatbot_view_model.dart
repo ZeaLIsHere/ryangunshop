@@ -74,8 +74,8 @@ class ChatbotViewModel extends ChangeNotifier {
       _messages.add(
         ChatMessage(
           text:
-              'Terjadi kendala ke DeepSeek ($e).\n\n'
-              'Balasan simulasi lokal:\n$localReply',
+              'Terjadi kendala menghubungi layanan asisten AI ($e).\n\n'
+              'Balasan cepat asisten:\n$localReply',
           isUser: false,
         ),
       );
@@ -114,16 +114,16 @@ class ChatbotViewModel extends ChangeNotifier {
           '"Stok menipis dulu".';
     }
     if (has(['penjualan', 'omzet', 'omset', 'total', 'laba', 'jual'])) {
-      return 'Penjualan hari ini Rp 175.000 dari 3 transaksi (data contoh). '
-          'Buka halaman Statistik untuk rincian.';
+      return 'Penjualan dan omzet hari ini dapat dipantau langsung di Beranda '
+          'atau buka halaman Statistik untuk analisis transaksi dan laba.';
     }
     if (has(['pindai', 'scan', 'barcode', 'kamera'])) {
-      return 'Tekan tombol Kasir di tengah navigasi, lalu "Scan". Arahkan '
-          'kamera ke barcode, lalu konfirmasi produk.';
+      return 'Tekan tombol Kasir di navigasi, lalu "Scan". Arahkan '
+          'kamera ke barcode, lalu konfirmasi produk ke keranjang.';
     }
     if (has(['qris', 'qr'])) {
       return 'Saat membayar, buka sheet pembayaran lalu pilih '
-          '"QRIS Dinamis". QR contoh tampil di kartu QRIS.';
+          '"QRIS Dinamis". Minta pelanggan memindai kode QRIS dengan e-wallet/mobile banking.';
     }
     if (has(['tunai', 'kembalian', 'cash'])) {
       return 'Pilih "Tunai", isi uang diterima atau pakai tombol uang cepat, '

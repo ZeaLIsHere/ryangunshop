@@ -43,9 +43,8 @@ class ScannerStatusPanel extends StatelessWidget {
             context,
             icon: Icons.center_focus_strong_outlined,
             color: AppColors.primary,
-            title: 'Siap mencoba pemindaian',
-            description:
-                'Ketuk tombol untuk menampilkan hasil produk contoh. Kamera belum digunakan.',
+            title: 'Siap memindai barcode',
+            description: 'Arahkan barcode produk ke dalam bingkai kamera untuk memindai.',
             actions: [
               PrimaryAction(
                 label: 'Coba Pindai Contoh',
@@ -64,7 +63,7 @@ class ScannerStatusPanel extends StatelessWidget {
             icon: Icons.hourglass_top_outlined,
             color: AppColors.primary,
             title: 'Mencari produk contoh',
-            description: 'Simulasi sedang mencocokkan satu produk katalog.',
+            description: 'Mencocokkan barcode dengan data produk warung.',
             actions: [
               if (!MediaQuery.disableAnimationsOf(context))
                 const BrandSpinner(label: 'Memuat hasil contoh'),
@@ -81,8 +80,7 @@ class ScannerStatusPanel extends StatelessWidget {
             icon: Icons.check_circle_outline,
             color: AppColors.success,
             title: 'Produk contoh masuk keranjang',
-            description:
-                'Pratinjau pemindai dijeda. Pilih pindai lagi jika ingin mencoba produk lain.',
+            description: 'Produk ditambahkan ke kasir. Lanjutkan pemindaian untuk produk lainnya.',
             actions: [
               PrimaryAction(
                 label: 'Pindai Lagi',
@@ -101,8 +99,7 @@ class ScannerStatusPanel extends StatelessWidget {
             icon: Icons.search_off_outlined,
             color: AppColors.muted,
             title: 'Produk tidak ditemukan',
-            description:
-                'Tidak ada produk contoh yang cocok dengan simulasi pemindaian ini.',
+            description: 'Barcode tidak cocok dengan produk di katalog. Coba cari manual.',
             actions: [
               PrimaryAction(
                 label: 'Coba Pindai Lagi',
@@ -141,8 +138,7 @@ class ScannerStatusPanel extends StatelessWidget {
             icon: Icons.error_outline,
             color: AppColors.error,
             title: 'Pratinjau kamera gagal',
-            description:
-                'Ini skenario contoh. Coba lagi atau pilih produk secara manual.',
+            description: 'Ini skenario contoh. Coba lagi atau pilih produk secara manual.',
             actions: [
               PrimaryAction(
                 label: 'Coba Lagi',
@@ -278,7 +274,7 @@ class ScannerStatusPanel extends StatelessWidget {
             Expanded(
               child: Text(
                 confidence == null
-                    ? 'Produk dipilih dari pencarian data contoh.'
+                    ? 'Produk dipilih dari daftar katalog warung.'
                     : 'Keyakinan simulasi: ${(confidence * 100).round()}%',
                 style: theme.textTheme.bodySmall,
               ),
@@ -291,7 +287,7 @@ class ScannerStatusPanel extends StatelessWidget {
             children: [
               Icon(Icons.warning_amber_rounded, color: AppColors.warning),
               SizedBox(width: AppSpacing.xs),
-              Expanded(child: Text('Stok contoh kosong; pilih produk lain.')),
+              Expanded(child: Text('Stok produk habis; pilih produk lain.')),
             ],
           ),
         ],

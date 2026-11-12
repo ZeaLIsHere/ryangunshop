@@ -84,13 +84,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Align(
+                const Align(
                   alignment: Alignment.centerLeft,
-                  child: SampleBadge(
-                    label: _viewModel.isLocal
-                        ? 'Tersimpan di perangkat'
-                        : 'Laporan contoh',
-                  ),
+                  child: SampleBadge(label: 'Tersimpan di perangkat'),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 _SummaryCard(

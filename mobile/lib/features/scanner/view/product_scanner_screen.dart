@@ -318,7 +318,9 @@ class _SimulatedCameraPreview extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.xxs),
                   Text(
-                    isTorchOn ? 'Lampu simulasi aktif' : 'Pratinjau simulasi',
+                    isTorchOn
+                        ? 'Lampu simulasi aktif'
+                        : 'Arahkan barcode ke bingkai kamera',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodySmall
                         ?.copyWith(color: AppColors.primaryLight),

@@ -230,10 +230,7 @@ class _ProductCatalogState extends State<ProductCatalog> {
               ),
               const SizedBox(height: AppSpacing.md),
 
-              if (_viewModel.isLocal)
-                const SampleBadge(label: 'Tersimpan di perangkat')
-              else
-                const SampleBadge(label: 'Data contoh'),
+              const SampleBadge(label: 'Tersimpan di perangkat'),
               const SizedBox(height: AppSpacing.xs),
 
               // Search Bar dan kontrol urutkan

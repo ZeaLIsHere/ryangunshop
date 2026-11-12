@@ -812,7 +812,7 @@ class _MarginList extends StatelessWidget {
           ],
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'Estimasi dari harga jual dan modal (data contoh).',
+            'Dihitung dari selisih harga jual dan harga modal produk.',
             style: theme.textTheme.bodySmall?.copyWith(color: AppColors.muted),
           ),
         ],

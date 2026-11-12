@@ -153,7 +153,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                       _SectionHeader(
                         number: '1',
                         title: 'Foto Produk',
-                        subtitle: 'Pratinjau pilihan foto untuk katalog',
+                        subtitle: 'Foto untuk kartu katalog dan kasir',
                       ),
                       const SizedBox(height: AppSpacing.sm),
                       Container(

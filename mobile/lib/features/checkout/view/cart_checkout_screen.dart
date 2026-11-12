@@ -618,7 +618,7 @@ class CartCheckoutScreen extends StatelessWidget {
             ),
             if (showSpinner && !MediaQuery.disableAnimationsOf(context)) ...[
               const SizedBox(height: AppSpacing.md),
-              const BrandSpinner(label: 'Memuat keranjang contoh'),
+              const BrandSpinner(label: 'Memuat keranjang'),
             ],
             const SizedBox(height: AppSpacing.lg),
             PrimaryAction(
