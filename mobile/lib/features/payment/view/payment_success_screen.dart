@@ -17,6 +17,7 @@ class PaymentSuccessScreen extends StatelessWidget {
     required this.items,
     this.cashReceived,
     this.changeAmount,
+    this.transactionId,
     this.onNewTransaction,
     super.key,
   });
@@ -26,6 +27,7 @@ class PaymentSuccessScreen extends StatelessWidget {
   final List<CartItem> items;
   final int? cashReceived;
   final int? changeAmount;
+  final String? transactionId;
   final VoidCallback? onNewTransaction;
 
   @override
@@ -35,7 +37,11 @@ class PaymentSuccessScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
-      appBar: AppBar(title: const Text('Ringkasan Simulasi')),
+      appBar: AppBar(
+        title: Text(
+          transactionId == null ? 'Ringkasan Simulasi' : 'Nota Tunai Lokal',
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.screen),
@@ -52,13 +58,19 @@ class PaymentSuccessScreen extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(
-                isCash ? 'Simulasi Tunai Selesai' : 'Status QRIS Contoh',
+                transactionId != null
+                    ? 'Transaksi Tunai Tersimpan'
+                    : isCash
+                    ? 'Simulasi Tunai Selesai'
+                    : 'Status QRIS Contoh',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.headlineSmall,
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                'Pratinjau ini tidak mencatat transaksi, mengubah stok, atau mengirim pembayaran.',
+                transactionId != null
+                    ? 'Nota dan perubahan stok tersimpan di perangkat ini.'
+                    : 'Pratinjau ini tidak mencatat transaksi, mengubah stok, atau mengirim pembayaran.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: AppColors.muted,
@@ -74,10 +86,13 @@ class PaymentSuccessScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: SampleBadge(label: 'Ringkasan contoh'),
-                    ),
+                    if (transactionId == null)
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: SampleBadge(label: 'Ringkasan contoh'),
+                      )
+                    else
+                      _SummaryRow(label: 'Nomor nota', value: transactionId!),
                     const SizedBox(height: AppSpacing.md),
                     Text('Daftar Barang', style: theme.textTheme.titleMedium),
                     const SizedBox(height: AppSpacing.xs),
@@ -113,7 +128,11 @@ class PaymentSuccessScreen extends StatelessWidget {
                     const SizedBox(height: AppSpacing.xs),
                     _SummaryRow(
                       label: 'Metode',
-                      value: isCash ? 'Tunai (contoh)' : 'QRIS (contoh)',
+                      value: transactionId != null
+                          ? 'Tunai (lokal)'
+                          : isCash
+                          ? 'Tunai (contoh)'
+                          : 'QRIS (contoh)',
                     ),
                     if (isCash && cashReceived != null) ...[
                       const SizedBox(height: AppSpacing.xs),
@@ -132,24 +151,25 @@ class PaymentSuccessScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
-              OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(48, 48),
-                  shape: const StadiumBorder(),
-                ),
-                icon: const Icon(Icons.print_outlined),
-                label: const Text('Cetak Struk (Bluetooth)'),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Mencetak struk ke printer Bluetooth siap...',
+              if (transactionId == null)
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(48, 48),
+                    shape: const StadiumBorder(),
+                  ),
+                  icon: const Icon(Icons.print_outlined),
+                  label: const Text('Cetak Struk (Bluetooth)'),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Mencetak struk ke printer Bluetooth siap...',
+                        ),
+                        duration: Duration(seconds: 2),
                       ),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                },
-              ),
+                    );
+                  },
+                ),
               const SizedBox(height: AppSpacing.sm),
               PrimaryAction(
                 label: 'Transaksi Baru',

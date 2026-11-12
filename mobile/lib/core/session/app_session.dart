@@ -1,5 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 
+import '../data/app_database.dart';
+import '../data/cart_draft_repository.dart';
+import '../data/drift_product_repository.dart';
+import '../data/transaction_repository.dart';
 import '../../features/checkout/model/cart_item.dart';
 import '../../features/checkout/view_model/cart_view_model.dart';
 import 'completed_transaction.dart';
@@ -10,15 +16,33 @@ import 'user_role.dart';
 /// Dipisahkan dari fitur agar denah, pengaturan, dan kasir membaca peran dari satu
 /// sumber yang sama.
 class AppSession extends ChangeNotifier {
-  final CartViewModel cart = CartViewModel();
+  AppSession({this.database})
+    : cart = CartViewModel(withSampleItems: database == null),
+      _todayRevenue = database == null ? 1450000 : 0,
+      _todayTransactionCount = database == null ? 42 : 0,
+      _recentTransactions = database == null
+          ? List.of(_sampleTransactions)
+          : [] {
+    if (database != null) {
+      cart.addListener(_onCartChanged);
+      unawaited(loadLocalCart());
+    }
+  }
+
+  final AppDatabase? database;
+  final CartViewModel cart;
+  DriftProductRepository? get productRepository =>
+      database == null ? null : DriftProductRepository(database!);
+  TransactionRepository? get transactionRepository =>
+      database == null ? null : TransactionRepository(database!);
 
   UserRole _role = UserRole.owner;
 
-  int _todayRevenue = 1450000;
-  int _todayTransactionCount = 42;
+  int _todayRevenue;
+  int _todayTransactionCount;
 
-  final List<CompletedTransaction> _recentTransactions = [
-    const CompletedTransaction(
+  static const _sampleTransactions = <CompletedTransaction>[
+    CompletedTransaction(
       id: 'TRX-9481',
       timeLabel: '13:42 WIB',
       title: 'Minyak Goreng Bimoli 2L',
@@ -26,7 +50,7 @@ class AppSession extends ChangeNotifier {
       itemCount: 1,
       paymentMethod: 'Tunai',
     ),
-    const CompletedTransaction(
+    CompletedTransaction(
       id: 'TRX-9480',
       timeLabel: '13:30 WIB',
       title: 'Indomie Goreng Spesial (5 Pcs)',
@@ -34,7 +58,7 @@ class AppSession extends ChangeNotifier {
       itemCount: 5,
       paymentMethod: 'QRIS',
     ),
-    const CompletedTransaction(
+    CompletedTransaction(
       id: 'TRX-9479',
       timeLabel: '13:18 WIB',
       title: 'Teh Pucuk Harum Dingin 350ml (2)',
@@ -43,6 +67,152 @@ class AppSession extends ChangeNotifier {
       paymentMethod: 'Tunai',
     ),
   ];
+  final List<CompletedTransaction> _recentTransactions;
+  bool _disposed = false;
+  int _localLoadVersion = 0;
+  bool _cartReady = false;
+  bool _cartLoadFailed = false;
+  bool _cartSaveFailed = false;
+  bool _restoringCart = false;
+  int _cartRevision = 0;
+  Future<void>? _cartLoadFuture;
+  Future<void> _cartWriteQueue = Future<void>.value();
+
+  bool get isLocalCartReady => database == null || _cartReady;
+  bool get isLocalCartLoadFailed => _cartLoadFailed;
+  bool get isLocalCartSaveFailed => _cartSaveFailed;
+
+  Future<void> loadLocalCart() {
+    if (database == null || _disposed || _cartReady) {
+      return Future<void>.value();
+    }
+    return _cartLoadFuture ??= _readLocalCart().whenComplete(() {
+      _cartLoadFuture = null;
+    });
+  }
+
+  Future<void> _readLocalCart() async {
+    final revision = _cartRevision;
+    try {
+      final draft = await CartDraftRepository(database!).load();
+      if (_disposed) return;
+      if (_cartRevision == revision) {
+        _restoringCart = true;
+        try {
+          cart.restoreDraft(
+            [
+              for (final item in draft.items)
+                CartItem(
+                  productId: item.productId,
+                  productName: item.productName,
+                  unitPrice: item.unitPrice,
+                  quantity: item.quantity,
+                  unit: item.unit,
+                ),
+            ],
+            discount: draft.discount,
+            note: draft.note,
+          );
+        } finally {
+          _restoringCart = false;
+        }
+      }
+      _cartReady = true;
+      _cartLoadFailed = false;
+      notifyListeners();
+      if (_cartRevision != revision) _queueCartSave();
+    } catch (_) {
+      if (_disposed) return;
+      _cartLoadFailed = true;
+      notifyListeners();
+    }
+  }
+
+  void _onCartChanged() {
+    if (_restoringCart || _disposed) return;
+    _cartRevision++;
+    if (_cartReady) _queueCartSave();
+  }
+
+  void _queueCartSave() {
+    final draft = CartDraftSnapshot(
+      items: [
+        for (final item in cart.items)
+          CartDraftLine(
+            productId: item.productId,
+            productName: item.productName,
+            unitPrice: item.unitPrice,
+            quantity: item.quantity,
+            unit: item.unit,
+          ),
+      ],
+      discount: cart.discount,
+      note: cart.note,
+    );
+    final source = CartDraftRepository(database!);
+    _cartWriteQueue = _cartWriteQueue
+        .catchError((Object _) {})
+        .then((_) => source.save(draft));
+    unawaited(
+      _cartWriteQueue.then(
+        (_) {
+          if (_disposed || !_cartSaveFailed) return;
+          _cartSaveFailed = false;
+          notifyListeners();
+        },
+        onError: (Object _, StackTrace _) {
+          if (_disposed) return;
+          _cartSaveFailed = true;
+          notifyListeners();
+        },
+      ),
+    );
+  }
+
+  Future<void> flushCartDraft() async {
+    await loadLocalCart();
+    if (database == null) return;
+    if (!_cartReady) throw StateError('Draft keranjang gagal dimuat');
+    await _cartWriteQueue;
+  }
+
+  Future<void> finishLocalWrites() async {
+    final loading = _cartLoadFuture;
+    if (loading != null) await loading;
+    await _cartWriteQueue;
+  }
+
+  Future<void> loadLocalSummary() async {
+    if (_disposed) return;
+    final source = transactionRepository;
+    if (source == null) return;
+    final version = ++_localLoadVersion;
+    try {
+      final today = await source.summaryForDay(DateTime.now());
+      final recent = await source.listRecent(limit: 20);
+      if (_disposed || version != _localLoadVersion) return;
+      _todayRevenue = today.total;
+      _todayTransactionCount = today.count;
+      _recentTransactions
+        ..clear()
+        ..addAll(
+          recent.map(
+            (row) => CompletedTransaction(
+              id: row.id,
+              timeLabel:
+                  '${row.createdAt.hour.toString().padLeft(2, '0')}:${row.createdAt.minute.toString().padLeft(2, '0')} WIB',
+              title: 'Nota tunai',
+              amount: row.totalAmount,
+              itemCount: 0,
+              paymentMethod: 'Tunai',
+            ),
+          ),
+        );
+      notifyListeners();
+    } catch (_) {
+      // Data contoh tidak boleh ditampilkan sebagai pengganti data lokal.
+    }
+  }
 
   UserRole get role => _role;
   int get todayRevenue => _todayRevenue;
@@ -99,6 +269,8 @@ class AppSession extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
+    cart.removeListener(_onCartChanged);
     cart.dispose();
     super.dispose();
   }

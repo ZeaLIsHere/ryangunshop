@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/data/product_repository.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/brand_spinner.dart';
 import '../../../core/widgets/primary_action.dart';
+import '../../../core/widgets/sample_badge.dart';
 import '../model/catalog_product.dart';
 import '../model/catalog_scenario.dart';
 import '../model/catalog_sort.dart';
-import '../sample/catalog_sample.dart';
 import '../view_model/catalog_view_model.dart';
 import 'catalog_product_card.dart';
 import 'product_detail_sheet.dart';
@@ -16,9 +17,10 @@ import 'product_form_screen.dart';
 
 /// Isi tab katalog produk RyanGunshop.
 class ProductCatalog extends StatefulWidget {
-  const ProductCatalog({this.viewModel, super.key});
+  const ProductCatalog({this.viewModel, this.repository, super.key});
 
   final CatalogViewModel? viewModel;
+  final ProductRepository? repository;
 
   @override
   State<ProductCatalog> createState() => _ProductCatalogState();
@@ -31,7 +33,9 @@ class _ProductCatalogState extends State<ProductCatalog> {
   @override
   void initState() {
     super.initState();
-    _viewModel = widget.viewModel ?? CatalogViewModel();
+    _viewModel =
+        widget.viewModel ?? CatalogViewModel(repository: widget.repository);
+    if (_viewModel.isLocal) _viewModel.loadProducts();
   }
 
   @override
@@ -49,16 +53,28 @@ class _ProductCatalogState extends State<ProductCatalog> {
         builder: (_) => ProductFormScreen(
           initialProduct: product,
           existingProducts: _viewModel.allProducts,
+          isLocal: _viewModel.isLocal,
         ),
       ),
     );
 
     if (result != null) {
-      if (product != null) {
-        _viewModel.updateProduct(result);
-      } else {
-        _viewModel.addProduct(result);
-      }
+      await _persistProduct(result);
+    }
+  }
+
+  Future<void> _persistProduct(CatalogProduct product) async {
+    try {
+      await _viewModel.persistProduct(product);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Produk gagal disimpan. Periksa barcode dan coba lagi.',
+          ),
+        ),
+      );
     }
   }
 
@@ -67,8 +83,9 @@ class _ProductCatalogState extends State<ProductCatalog> {
       context,
       product: product,
       existingProducts: _viewModel.allProducts,
+      isLocal: _viewModel.isLocal,
       onProductUpdated: (updated) {
-        _viewModel.updateProduct(updated);
+        _persistProduct(updated);
       },
     );
   }
@@ -184,6 +201,12 @@ class _ProductCatalogState extends State<ProductCatalog> {
               ),
               const SizedBox(height: AppSpacing.md),
 
+              if (_viewModel.isLocal)
+                const SampleBadge(label: 'Tersimpan di perangkat')
+              else
+                const SampleBadge(label: 'Data contoh'),
+              const SizedBox(height: AppSpacing.xs),
+
               // Search Bar dan kontrol urutkan
               Row(
                 children: [
@@ -229,7 +252,7 @@ class _ProductCatalogState extends State<ProductCatalog> {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    for (final cat in CatalogSample.categories)
+                    for (final cat in _viewModel.categories)
                       Padding(
                         padding: const EdgeInsets.only(right: 6),
                         child: FilterChip(

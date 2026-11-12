@@ -1,5 +1,9 @@
+import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ryangunshop/core/data/app_database.dart';
+import 'package:ryangunshop/core/data/drift_product_repository.dart';
+import 'package:ryangunshop/core/data/product_record.dart';
 import 'package:ryangunshop/core/session/app_session.dart';
 import 'package:ryangunshop/core/theme/app_theme.dart';
 import 'package:ryangunshop/features/scanner/model/scanner_scenario.dart';
@@ -7,6 +11,41 @@ import 'package:ryangunshop/features/scanner/view/product_scanner_screen.dart';
 import 'package:ryangunshop/features/scanner/view_model/scanner_view_model.dart';
 
 void main() {
+  testWidgets('pencarian manual lokal hanya memasukkan produk tersimpan', (
+    tester,
+  ) async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    await DriftProductRepository(database).save(
+      const ProductRecord(
+        id: 'produk-lokal',
+        name: 'Kopi lokal',
+        salePrice: 7000,
+        stock: 4,
+        category: 'Minuman',
+      ),
+    );
+    final session = AppSession(database: database);
+    final viewModel = ScannerViewModel();
+    addTearDown(session.dispose);
+    addTearDown(viewModel.dispose);
+    await _showScanner(tester, session: session, viewModel: viewModel);
+
+    await tester.tap(find.byTooltip('Cari Produk Manual'));
+    await tester.pumpAndSettle();
+    expect(find.text('Pencarian produk lokal'), findsOneWidget);
+    expect(find.text('Kopi lokal'), findsOneWidget);
+    expect(find.text('Minyak goreng 1 liter'), findsNothing);
+
+    await tester.tap(find.text('Kopi lokal'));
+    await tester.pumpAndSettle();
+    expect(viewModel.detectedProduct?.id, 'produk-lokal');
+    await tester.tap(find.text('Konfirmasi ke Keranjang'));
+    await tester.pumpAndSettle();
+    expect(session.cart.totalItems, 1);
+    expect(session.cart.items.single.productName, 'Kopi lokal');
+  });
+
   testWidgets(
     'simulasi perlu tindakan dan konfirmasi sebelum masuk keranjang',
     (tester) async {
@@ -132,9 +171,8 @@ Future<void> _showScanner(
       child: MaterialApp(
         theme: AppTheme.light(),
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: const TextScaler.linear(1.3)),
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: const TextScaler.linear(1.3)),
           child: child!,
         ),
         home: ProductScannerScreen(viewModel: viewModel),

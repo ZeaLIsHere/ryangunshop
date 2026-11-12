@@ -14,12 +14,13 @@ instruksi langsung.
 
 Peran dan porsi kerja masing-masing ada di [TEAM.md](TEAM.md).
 
-## Cakupan tahap ini: UI
+## Cakupan tahap ini: UI dan data lokal
 
-Tahap ini hanya mengerjakan **tampilan dan interaksi (frontend)**. Seluruh layar memakai
-data contoh lokal, dan belum ada basis data, sinkronisasi, autentikasi, maupun integrasi
-pembayaran nyata. Rencana pekerjaan selanjutnya dipisahkan pada bagian
-[Tahap berikutnya](#tahap-berikutnya) agar tidak terbaca sebagai instruksi sekarang.
+Pada branch `feat/backend-persistence`, aplikasi Android memakai SQLite/Drift untuk
+produk, stok, draft keranjang, nota tunai, dan ringkasan Beranda. Basis data baru
+dimulai kosong; tambahkan produk lewat Katalog. QRIS, laporan, dan sebagian
+pratinjau pemindai masih berupa contoh.
+Pratinjau Chrome tetap memakai data contoh agar susunan layar mudah diperiksa.
 
 Mulai membaca dari berkas berikut:
 
@@ -82,7 +83,8 @@ flutter test
 flutter run
 ```
 
-Belum ada langkah code generation pada tahap ini karena belum ada basis data.
+Jika mengubah tabel Drift, jalankan `dart run build_runner build`, lalu commit berkas
+`app_database.g.dart` bersama perubahan tabel.
 
 ### Pratinjau cepat di Chrome
 
@@ -123,7 +125,7 @@ Sesuai `DESIGN.md` dan `docs/a11y.md`, seluruh antarmuka diuji pada perangkat la
    - Tombol tindakan utama (`PrimaryAction`, tombol bayar, stepper keranjang) tetap mudah ditekan dengan target sentuh ≥ 48 dp.
    - Form produk dan sheet pembayaran dapat digulir penuh saat keyboard virtual muncul.
 
-### Catatan Rilis Internal (v0.6.0-ui)
+### Catatan Rilis Internal (v0.6.0-ui, sebelum fondasi backend)
 
 - **Cakupan:** 100% implementasi antarmuka dan interaksi UI (Fase 0 hingga Fase 5), redesain Beranda POS kasir, aset ikon 3D seragam (`01` s/d `10` dan logo resmi), serta alur kasir hingga simpan nota ke sesi lokal.
 - **Integritas Pengujian:** Seluruh 90 automated widget & flow tests lulus (`flutter test`), bebas error analyzer (`flutter analyze`).
@@ -132,12 +134,13 @@ Sesuai `DESIGN.md` dan `docs/a11y.md`, seluruh antarmuka diuji pada perangkat la
 
 ## Tahap berikutnya
 
-Bagian ini adalah rencana, bukan instruksi untuk sekarang. Berkas dan dependensinya
-belum ada di dalam repository.
+Bagian ini mencatat pekerjaan yang belum selesai setelah fondasi lokal. Status terkini
+ada di `PROGRESS.md`.
 
 ### Lapisan data dan sinkronisasi
 
-- Drift/SQLite sebagai sumber kebenaran UI saat offline, Firestore untuk sinkronisasi.
+- SQLite/Drift sudah dipakai untuk produk dan transaksi tunai lokal; sinkronisasi
+  Firestore masih tahap berikutnya.
 - Outbox untuk perubahan produk dan tata letak, beserta penanganan konflik.
 - Rencana restok dihitung lokal dari rata-rata penjualan 28 hari, lead time pemasok,
   stok pengaman, dan target persediaan tujuh hari setelah barang tiba.

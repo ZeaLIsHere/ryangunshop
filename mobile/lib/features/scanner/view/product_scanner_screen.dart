@@ -41,19 +41,70 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
   }
 
   Future<void> _openManualSearch() async {
+    final repository = AppSessionScope.of(context).productRepository;
+    ScannerViewModel? localViewModel;
+    if (repository != null) {
+      try {
+        final records = await repository.listProducts();
+        if (!mounted) return;
+        localViewModel = ScannerViewModel(
+          products: records.map(CatalogProduct.fromRecord).toList(),
+        );
+      } catch (_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Produk lokal gagal dimuat. Coba lagi.'),
+          ),
+        );
+        return;
+      }
+    }
+    final searchViewModel = localViewModel ?? _viewModel;
     final product = await Navigator.of(context).push<CatalogProduct>(
       MaterialPageRoute(
-        builder: (_) => ManualProductSearchScreen(viewModel: _viewModel),
+        builder: (_) => ManualProductSearchScreen(
+          viewModel: searchViewModel,
+          isLocal: repository != null,
+        ),
       ),
     );
+    localViewModel?.dispose();
     if (!mounted || product == null) return;
     _viewModel.selectManualProduct(product);
   }
 
-  void _confirmProduct() {
+  Future<void> _confirmProduct() async {
     final product = _viewModel.detectedProduct;
     if (product == null || product.stock == 0) return;
-    AppSessionScope.of(context).cart.addProduct(product);
+    final session = AppSessionScope.of(context);
+    final repository = session.productRepository;
+    var selected = product;
+    if (repository != null) {
+      try {
+        final products = await repository.listProducts();
+        if (!mounted) return;
+        final matches = products.where((record) => record.id == product.id);
+        if (matches.isEmpty || matches.first.stock == 0) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Produk ini belum tersimpan atau stoknya habis.'),
+            ),
+          );
+          return;
+        }
+        selected = CatalogProduct.fromRecord(matches.first);
+      } catch (_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Produk lokal gagal diperiksa. Coba lagi.'),
+          ),
+        );
+        return;
+      }
+    }
+    session.cart.addProduct(selected);
     _viewModel.markAdded();
   }
 
@@ -239,17 +290,15 @@ class _SimulatedCameraPreview extends StatelessWidget {
                   Text(
                     'Kamera tidak aktif',
                     textAlign: TextAlign.center,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: AppColors.surface),
+                    style: Theme.of(context).textTheme.bodyMedium
+                        ?.copyWith(color: AppColors.surface),
                   ),
                   const SizedBox(height: AppSpacing.xxs),
                   Text(
                     isTorchOn ? 'Lampu simulasi aktif' : 'Pratinjau simulasi',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.primaryLight,
-                    ),
+                    style: Theme.of(context).textTheme.bodySmall
+                        ?.copyWith(color: AppColors.primaryLight),
                   ),
                 ],
               ),

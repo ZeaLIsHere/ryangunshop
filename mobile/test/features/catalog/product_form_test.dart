@@ -64,12 +64,34 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('kategori dan satuan lama tetap bisa diedit', (tester) async {
+    CatalogProduct? saved;
+    const original = CatalogProduct(
+      id: 'produk-lama',
+      name: 'Kopi dus',
+      price: 15000,
+      stock: 2,
+      unit: 'dus',
+      fixtureId: '',
+      locationLabel: 'Etalase',
+      category: 'Lainnya',
+    );
+    await _showForm(
+      tester,
+      initialProduct: original,
+      onSaved: (product) => saved = product,
+    );
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.text('Simpan Perubahan'));
+    await tester.pumpAndSettle();
+    expect(saved?.category, 'Lainnya');
+    expect(saved?.unit, 'dus');
+  });
 }
 
-Finder _field(String label) => find.ancestor(
-  of: find.text(label),
-  matching: find.byType(TextFormField),
-);
+Finder _field(String label) =>
+    find.ancestor(of: find.text(label), matching: find.byType(TextFormField));
 
 Future<void> _enter(WidgetTester tester, String label, String value) async {
   final field = _field(label);
@@ -93,9 +115,8 @@ Future<void> _showForm(
     MaterialApp(
       theme: AppTheme.light(),
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(
-          context,
-        ).copyWith(textScaler: const TextScaler.linear(1.3)),
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: const TextScaler.linear(1.3)),
         child: child!,
       ),
       home: Builder(

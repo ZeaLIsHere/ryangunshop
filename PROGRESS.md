@@ -348,6 +348,23 @@ dan stok sebagai belum tercatat.
 Rencana kerja teknis terstruktur untuk membawa prototipe UI RyanGunshop menjadi aplikasi kasir warung yang siap dirilis dan digunakan di lapangan:
 
 ### Fase 1: Persistensi Data Lokal (Offline-First Database) — *Prioritas Tertinggi*
+- **Status 2026-11-12 — berjalan di `feat/backend-persistence`:** Drift sudah memiliki
+  tabel produk, nota, item nota, draft keranjang, repository lokal, migrasi versi 1–5,
+  dan checkout tunai atomik dengan validasi stok, harga, total, diskon, serta
+  kembalian. Produk tanpa barcode serta metadata katalog tersimpan di SQLite.
+  Pada Android, katalog, draft keranjang (barang, diskon, catatan), pembayaran tunai,
+  dan ringkasan omzet membaca data lokal; katalog awalnya kosong sampai pengguna
+  menambah produk. Checkout menghapus draft di transaksi SQLite yang sama dengan nota.
+  Preview web tetap memakai data contoh. QRIS belum mencatat pembayaran.
+- **Verifikasi otomatis:** Migrasi dari skema v1–v3, pembukaan ulang file database,
+  kategori katalog lokal, pencarian manual pemindai, dan checkout tunai diuji.
+  Alur tambah/edit produk dari formulir sampai SQLite serta pemuatan ulang nota,
+  omzet, dan stok pada sesi baru juga lulus uji. Formulir lokal menandai foto sebagai
+  contoh dan tetap dapat mengedit kategori/satuan produk lama.
+  Migrasi v4–v5, pemulihan draft setelah file SQLite dibuka ulang, penulisan perubahan
+  cepat, dan draft yang tetap ada saat checkout gagal juga diuji.
+- **Berikutnya:** Verifikasi alur tersebut di perangkat Android. Laporan masih memakai
+  contoh; kamera barcode dan printer Bluetooth tetap ditunda.
 - **Tujuan:** Data produk, stok, dan riwayat nota penjualan tersimpan permanen di HP tanpa risiko hilang saat aplikasi ditutup atau HP mati.
 - **Implementasi:**
   - Pasang SQLite via Drift / Isar untuk Flutter.
@@ -405,4 +422,5 @@ Rencana kerja teknis terstruktur untuk membawa prototipe UI RyanGunshop menjadi 
   ditandai `SampleBadge` dari `core/widgets/widgets.dart`.
 - Alur pembuka aplikasi: splash menuju perkenalan (sekali per sesi), lalu kerangka utama.
   Rutenya terdaftar di `mobile/lib/app/routing/app_router.dart`.
-- Tab Kasir memakai `CartCheckoutScreen` dengan penyimpanan nota transaksi langsung ke `AppSession`.
+- Tab Kasir memakai `CartCheckoutScreen`; pada Android, nota tunai dan stok disimpan
+  lewat repository SQLite, lalu ringkasan Beranda dibaca ulang dari database.
