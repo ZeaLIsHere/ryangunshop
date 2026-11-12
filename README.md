@@ -22,6 +22,13 @@ dimulai kosong; tambahkan produk lewat Katalog. QRIS, laporan, dan sebagian
 pratinjau pemindai masih berupa contoh.
 Pratinjau Chrome tetap memakai data contoh agar susunan layar mudah diperiksa.
 
+Persiapan migrasi database ke Firebase Firestore — termasuk pembuatan proyek,
+API key, aturan keamanan, dan skema dokumen — dijelaskan di
+[`docs/firebase-setup.md`](docs/firebase-setup.md) dan
+[`docs/firestore-schema.md`](docs/firestore-schema.md). Integrasi cloud masih
+nonaktif secara bawaan (`FIREBASE_ENABLED`); aplikasi tetap berjalan penuh
+dengan SQLite.
+
 Mulai membaca dari berkas berikut:
 
 | Berkas | Isi |

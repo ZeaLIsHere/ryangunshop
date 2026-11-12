@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Seluruh data satu warung berada di bawah stores/{storeId}.
+    match /stores/{storeId} {
+      // Profil toko diubah lewat Firebase Console atau Admin SDK saja.
+      allow read: if isMember(storeId);
+      allow write: if false;
+
+      match /products/{productId} {
+        allow read, write: if isMember(storeId);
+      }
+
+      match /transactions/{transactionId} {
+        allow read, write: if isMember(storeId);
+      }
+
+      match /meta/{metaId} {
+        allow read, write: if isMember(storeId);
+      }
+
+      // Daftar anggota hanya ditulis lewat Firebase Console atau Admin SDK.
+      match /members/{uid} {
+        allow read: if isMember(storeId);
+        allow write: if false;
+      }
+    }
+
+    // Pengguna dianggap anggota bila klaim token atau dokumen keanggotaan
+    // menyebut toko tersebut.
+    function isMember(storeId) {
+      return request.auth != null &&
+        (
+          request.auth.token.storeId == storeId ||
+          exists(
+            /databases/$(database)/documents/stores/$(storeId)/members/$(request.auth.uid)
+          )
+        );
+    }
+  }
+}

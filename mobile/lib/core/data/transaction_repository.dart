@@ -1,6 +1,9 @@
 import 'package:drift/drift.dart';
 
 import 'app_database.dart';
+import 'sync/firestore_schema.dart';
+import 'sync/outbox.dart';
+import 'sync/sync_queue.dart';
 
 class TransactionRecord {
   const TransactionRecord({
@@ -34,8 +37,10 @@ class DailySalesSummary {
 }
 
 abstract interface class TransactionRepository {
-  factory TransactionRepository(AppDatabase database) =
-      DriftTransactionRepository;
+  factory TransactionRepository(
+    AppDatabase database, {
+    SyncQueue? queue,
+  }) = DriftTransactionRepository;
 
   Future<void> checkout({
     required String transactionId,
@@ -53,9 +58,10 @@ abstract interface class TransactionRepository {
 }
 
 class DriftTransactionRepository implements TransactionRepository {
-  const DriftTransactionRepository(this.database);
+  const DriftTransactionRepository(this.database, {this.queue});
 
   final AppDatabase database;
+  final SyncQueue? queue;
 
   @override
   Future<void> checkout({
@@ -67,6 +73,7 @@ class DriftTransactionRepository implements TransactionRepository {
     int? cashReceived,
     int? changeAmount,
   }) {
+    final syncQueue = queue;
     return database.completeCheckout(
       transactionId: transactionId,
       paymentMethod: paymentMethod,
@@ -75,7 +82,62 @@ class DriftTransactionRepository implements TransactionRepository {
       lines: lines,
       cashReceived: cashReceived,
       changeAmount: changeAmount,
+      afterWrite: syncQueue == null
+          ? null
+          : () => _enqueueTransaction(syncQueue, transactionId),
     );
+  }
+
+  /// Menitipkan nota ke antrean Firestore di dalam transaksi SQLite yang sama.
+  Future<void> _enqueueTransaction(
+    SyncQueue syncQueue,
+    String transactionId,
+  ) async {
+    final row =
+        await (database.select(database.transactions)
+              ..where((item) => item.id.equals(transactionId)))
+            .getSingle();
+    final itemRows =
+        await (database.select(database.transactionItems)
+              ..where((item) => item.transactionId.equals(transactionId)))
+            .get();
+    final items = [
+      for (final item in itemRows)
+        SoldItem(
+          productId: item.productId,
+          productName: item.productName,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          subtotal: item.subtotal,
+        ),
+    ];
+    final record = TransactionRecord(
+      id: row.id,
+      createdAt: row.createdAt,
+      totalAmount: row.totalAmount,
+      discountAmount: row.discountAmount,
+      paymentMethod: row.paymentMethod,
+      cashReceived: row.cashReceived,
+      changeAmount: row.changeAmount,
+      itemCount: items.fold<int>(0, (sum, item) => sum + item.quantity),
+      summaryTitle: _summaryTitle(items),
+    );
+    await syncQueue.enqueue(
+      OutboxEntry(
+        entity: SyncEntityType.transaction,
+        entityId: row.id,
+        operation: SyncOperation.upsert,
+        payload: FirestoreSchema.transactionDocument(record, items),
+        createdAt: row.createdAt,
+      ),
+    );
+  }
+
+  String _summaryTitle(List<SoldItem> items) {
+    if (items.isEmpty) return 'Nota tunai';
+    return items.length == 1
+        ? items.first.productName
+        : '${items.first.productName} (+${items.length - 1} item)';
   }
 
   @override

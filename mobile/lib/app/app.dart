@@ -2,7 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../core/config/firebase_bootstrap.dart';
 import '../core/data/app_database.dart';
+import '../core/data/sync/drift_sync_queue.dart';
+import '../core/data/sync/sync_queue.dart';
 import '../core/session/app_session.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_spacing.dart';
@@ -27,8 +30,12 @@ class _RyanGunshopAppState extends State<RyanGunshopApp> {
       widget.session == null && widget.useLocalStorage
       ? AppDatabase(openAppDatabase())
       : null;
+  late final SyncQueue? _syncQueue =
+      _database == null || !FirebaseBootstrap.enabled
+      ? null
+      : DriftSyncQueue(_database);
   late final AppSession _session =
-      widget.session ?? AppSession(database: _database);
+      widget.session ?? AppSession(database: _database, syncQueue: _syncQueue);
   late final bool _ownsSession = widget.session == null;
 
   @override

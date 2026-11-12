@@ -4,12 +4,20 @@ import 'package:drift/drift.dart' show Value;
 
 import 'product_record.dart';
 import 'product_repository.dart';
+import 'sync/firestore_schema.dart';
+import 'sync/outbox.dart';
+import 'sync/sync_queue.dart';
 
 /// Sumber produk lokal untuk fitur yang sudah siap memakai data tersimpan.
+///
+/// Bila [queue] diisi, setiap perubahan produk ikut dicatat ke antrean
+/// Firestore pada saat yang sama. Tanpa [queue], aplikasi tetap bekerja penuh
+/// secara lokal.
 class DriftProductRepository implements ProductRepository {
-  const DriftProductRepository(this.database);
+  const DriftProductRepository(this.database, {this.queue});
 
   final AppDatabase database;
+  final SyncQueue? queue;
 
   @override
   Future<List<ProductRecord>> listProducts() async =>
@@ -35,6 +43,7 @@ class DriftProductRepository implements ProductRepository {
         product.locationLabel.trim().isEmpty) {
       throw ArgumentError('Data produk tidak valid');
     }
+    final updatedAt = DateTime.now();
     await database.saveProduct(
       ProductsCompanion.insert(
         id: product.id,
@@ -48,14 +57,38 @@ class DriftProductRepository implements ProductRepository {
         fixtureId: Value(product.fixtureId),
         locationLabel: Value(product.locationLabel),
         lowStockThreshold: Value(product.lowStockThreshold),
-        updatedAt: DateTime.now(),
+        updatedAt: updatedAt,
+      ),
+    );
+    await queue?.enqueue(
+      OutboxEntry(
+        entity: SyncEntityType.product,
+        entityId: product.id,
+        operation: SyncOperation.upsert,
+        payload: FirestoreSchema.productDocument(
+          product,
+          updatedAt: updatedAt,
+        ),
+        createdAt: updatedAt,
       ),
     );
   }
 
   @override
   Future<void> delete(String id) async {
+    final deletedAt = DateTime.now();
     await database.deleteProduct(id);
+    await queue?.enqueue(
+      OutboxEntry(
+        entity: SyncEntityType.product,
+        entityId: id,
+        operation: SyncOperation.delete,
+        payload: FirestoreSchema.productDeletionDocument(
+          deletedAt: deletedAt,
+        ),
+        createdAt: deletedAt,
+      ),
+    );
   }
 
   @override

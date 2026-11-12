@@ -67,6 +67,21 @@ class CartDraftItems extends Table {
   Set<Column<Object>> get primaryKey => {productId};
 }
 
+/// Antrean tulis yang menunggu dikirim ke Firestore.
+///
+/// Disimpan di SQLite agar tidak hilang saat aplikasi ditutup atau perangkat
+/// kehabisan baterai. Isi [payload] adalah JSON dokumen tujuan.
+class SyncOutboxEntries extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get entity => text()();
+  TextColumn get entityId => text()();
+  TextColumn get operation => text()();
+  TextColumn get payload => text()();
+  DateTimeColumn get createdAt => dateTime()();
+  IntColumn get attempts => integer().withDefault(const Constant(0))();
+  TextColumn get lastError => text().nullable()();
+}
+
 @DriftDatabase(
   tables: [
     Products,
@@ -74,13 +89,14 @@ class CartDraftItems extends Table {
     TransactionItems,
     CartDrafts,
     CartDraftItems,
+    SyncOutboxEntries,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   // Versi 1 di branch ini memiliki dua bentuk: hanya products, atau seluruh
   // tabel transaksi. Periksa tabel sebelum membuatnya agar kedua bentuk aman.
@@ -125,6 +141,9 @@ class AppDatabase extends _$AppDatabase {
           await m.createTable(cartDrafts);
           await m.createTable(cartDraftItems);
         }
+        if (from < 6) {
+          await m.createTable(syncOutboxEntries);
+        }
       });
     },
   );
@@ -155,6 +174,7 @@ class AppDatabase extends _$AppDatabase {
     int discountAmount = 0,
     int? cashReceived,
     int? changeAmount,
+    Future<void> Function()? afterWrite,
   }) {
     if (transactionId.trim().isEmpty || lines.isEmpty) {
       throw ArgumentError('Nomor nota dan barang wajib diisi');
@@ -238,6 +258,9 @@ class AppDatabase extends _$AppDatabase {
             );
         if (changed != 1) throw StateError('Gagal memperbarui stok');
       }
+      // Antrean sinkronisasi ditulis di dalam transaksi yang sama supaya nota
+      // tidak pernah tercatat lokal tanpa rencana pengiriman ke Firestore.
+      await afterWrite?.call();
       await delete(cartDraftItems).go();
       await delete(cartDrafts).go();
     });

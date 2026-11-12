@@ -399,6 +399,32 @@ Rencana kerja teknis terstruktur untuk membawa prototipe UI RyanGunshop menjadi 
   - Sinkronisasi latar belakang menggunakan *outbox pattern* ke Firebase Firestore / Supabase saat perangkat terhubung internet.
   - Integrasi payment gateway (Xendit / Midtrans / DOKU) untuk menerbitkan QRIS dinamis berlisensi dan validasi webhook otomatis.
 
+**Persiapan migrasi Firestore (2026-11-13) — belum tersambung ke alur kasir.**
+
+- Lapisan cloud ditambahkan tanpa mengubah perilaku bawaan:
+  `core/data/sync/firestore_schema.dart` (kontrak dokumen produk dan nota,
+  nominal bulat rupiah, *soft delete*), `outbox.dart`, `sync_queue.dart`
+  (antrean memori dan SQLite), `sync_engine.dart`, `drift_sync_queue.dart`, dan
+  `firestore_sync_target.dart`.
+- Tabel `sync_outbox_entries` ditambahkan pada skema SQLite v6. Bila
+  `AppSession` menerima `SyncQueue`, penyimpanan produk dan checkout tunai
+  menulis entri antrean di transaksi SQLite yang sama; kegagalan penulisan
+  antrean membatalkan checkout sehingga nota tidak pernah tercatat tanpa
+  rencana pengiriman.
+- `core/config/firebase_bootstrap.dart` menyalakan Firebase hanya bila
+  `--dart-define=FIREBASE_ENABLED=true`, dengan opsi dari `dart-define` atau
+  `google-services.json`. Tanpa sakelar itu aplikasi tetap 100% lokal.
+- Aturan keamanan `firebase/firestore.rules`, indeks
+  `firebase/firestore.indexes.json`, dan `firebase.json` disiapkan untuk
+  `firebase deploy --only firestore`.
+- Panduan lengkap: `docs/firebase-setup.md`; skema dan rencana bertahap:
+  `docs/firestore-schema.md`.
+- Verifikasi: `flutter analyze` bersih dan `flutter test` 141/141 lulus,
+  termasuk 15 pengujian baru untuk pemetaan dokumen, antrean, mesin
+  sinkronisasi, dan pembatalan checkout saat antrean gagal.
+- Belum: layanan autentikasi dan layar masuk, penjadwalan `flush()`, pemulihan
+  data di perangkat baru, serta verifikasi pada proyek Firebase nyata.
+
 ### Fase 6: Optimasi Perangkat Kelas Bawah & Rilis Paket APK
 - **Tujuan:** Aplikasi berjalan ringan dan stabil di ponsel Android dengan RAM 2–3 GB (Android 8.0 - 14).
 - **Implementasi:**
