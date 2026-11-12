@@ -43,7 +43,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     List<CatalogProduct>? products;
     if (session?.productRepository != null) {
       try {
-        final records = await session!.productRepository!.listProducts();
+        final records = await session!.productRepository.listProducts();
         products = records.map(CatalogProduct.fromRecord).toList();
       } catch (_) {}
     }

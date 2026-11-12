@@ -36,7 +36,8 @@ class CartCheckoutScreen extends StatelessWidget {
     final session = AppSessionScope.of(context);
     final cart = session.cart;
     final localTransactions =
-        transactionRepository ?? session.transactionRepository;
+        transactionRepository ??
+        (session.database != null ? session.transactionRepository : null);
 
     if (!session.isLocalCartReady) {
       return Scaffold(
@@ -304,9 +305,7 @@ class CartCheckoutScreen extends StatelessWidget {
                                   cartItems: cart.items,
                                   onPaymentCompleted: () {
                                     cart.clearCart();
-                                    if (session.database != null) {
-                                      session.loadLocalSummary();
-                                    }
+                                    session.loadLocalSummary();
                                   },
                                   onCashConfirmed: localTransactions == null
                                       ? null

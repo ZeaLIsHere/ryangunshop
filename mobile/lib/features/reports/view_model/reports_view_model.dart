@@ -13,10 +13,12 @@ enum ReportsStatus { loading, ready, failure }
 class ReportsViewModel extends ChangeNotifier {
   ReportsViewModel({
     this.repository,
+    this.initialRecords,
     this.loadDelay = const Duration(milliseconds: 350),
   });
 
   db.TransactionRepository? repository;
+  final List<TransactionRecord>? initialRecords;
 
   /// Jeda tiruan agar state memuat terlihat dan dapat dicoba saat data contoh.
   final Duration loadDelay;
@@ -90,7 +92,7 @@ class ReportsViewModel extends ChangeNotifier {
 
     switch (_scenario) {
       case ReportScenario.withData:
-        _records = ReportsSample.records;
+        _records = initialRecords ?? ReportsSample.records;
         _status = ReportsStatus.ready;
       case ReportScenario.empty:
         _records = const <TransactionRecord>[];

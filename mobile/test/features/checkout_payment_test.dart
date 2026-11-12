@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ryangunshop/core/format/rupiah.dart';
 import 'package:ryangunshop/core/session/app_session.dart';
 import 'package:ryangunshop/core/theme/app_theme.dart';
+import 'package:ryangunshop/features/catalog/model/catalog_product.dart';
 import 'package:ryangunshop/features/checkout/view/cart_checkout_screen.dart';
 import 'package:ryangunshop/features/checkout/model/cart_scenario.dart';
 import 'package:ryangunshop/features/payment/model/payment_preview.dart';
@@ -17,6 +18,18 @@ void main() {
     _usePhoneViewport(tester);
     final session = AppSession();
     addTearDown(session.dispose);
+    session.cart.addProduct(
+      const CatalogProduct(
+        id: 'p-1',
+        name: 'Beras pandan wangi 1 kg',
+        price: 16000,
+        stock: 5,
+        unit: 'bungkus',
+        fixtureId: '',
+        locationLabel: '',
+        category: 'Sembako',
+      ),
+    );
 
     await tester.pumpWidget(
       AppSessionScope(
@@ -47,9 +60,8 @@ void main() {
         child: MaterialApp(
           theme: AppTheme.light(),
           builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(
-              context,
-            ).copyWith(textScaler: const TextScaler.linear(1.3)),
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(1.3)),
             child: child!,
           ),
           home: Scaffold(
@@ -129,6 +141,18 @@ void main() {
     addTearDown(tester.view.reset);
     final session = AppSession();
     addTearDown(session.dispose);
+    session.cart.addProduct(
+      const CatalogProduct(
+        id: 'p-1',
+        name: 'Beras pandan wangi 1 kg',
+        price: 16000,
+        stock: 5,
+        unit: 'bungkus',
+        fixtureId: '',
+        locationLabel: '',
+        category: 'Sembako',
+      ),
+    );
 
     await tester.pumpWidget(
       AppSessionScope(
@@ -136,9 +160,8 @@ void main() {
         child: MaterialApp(
           theme: AppTheme.light(),
           builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(
-              context,
-            ).copyWith(textScaler: const TextScaler.linear(1.3)),
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(1.3)),
             child: child!,
           ),
           home: const CartCheckoutScreen(),
@@ -179,9 +202,8 @@ void main() {
           child: MaterialApp(
             theme: AppTheme.light(),
             builder: (context, child) => MediaQuery(
-              data: MediaQuery.of(
-                context,
-              ).copyWith(textScaler: const TextScaler.linear(1.3)),
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: const TextScaler.linear(1.3)),
               child: child!,
             ),
             home: Scaffold(
@@ -234,9 +256,8 @@ void main() {
         child: MaterialApp(
           theme: AppTheme.light(),
           builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(
-              context,
-            ).copyWith(textScaler: const TextScaler.linear(1.3)),
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(1.3)),
             child: child!,
           ),
           home: const CartCheckoutScreen(),
@@ -267,9 +288,8 @@ void main() {
         child: MaterialApp(
           theme: AppTheme.light(),
           builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(
-              context,
-            ).copyWith(textScaler: const TextScaler.linear(1.3)),
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(1.3)),
             child: child!,
           ),
           home: const CartCheckoutScreen(),

@@ -8,12 +8,18 @@ import '../sample/catalog_sample.dart';
 
 /// State UI dan interaksi untuk mengelola katalog produk warung.
 class CatalogViewModel extends ChangeNotifier {
-  CatalogViewModel({ProductRepository? repository})
-    : _repository = repository,
-      _products = repository == null ? List.of(CatalogSample.products) : [],
-      _scenario = repository == null
-          ? CatalogScenario.withData
-          : CatalogScenario.loading;
+  CatalogViewModel({
+    ProductRepository? repository,
+    List<CatalogProduct>? initialProducts,
+  }) : _repository = repository,
+       _products = initialProducts != null
+           ? List.of(initialProducts)
+           : (repository == null ? List.of(CatalogSample.products) : []),
+       _scenario = initialProducts != null && initialProducts.isNotEmpty
+           ? CatalogScenario.withData
+           : (repository == null
+                 ? CatalogScenario.withData
+                 : CatalogScenario.loading);
 
   ProductRepository? _repository;
   ProductRepository? get repository => _repository;
@@ -222,6 +228,9 @@ class CatalogViewModel extends ChangeNotifier {
     if (isLocal) {
       loadProducts();
     } else {
+      if (_products.isEmpty) {
+        _products.addAll(CatalogSample.products);
+      }
       selectScenario(CatalogScenario.withData);
     }
   }

@@ -363,22 +363,6 @@ class _ProductCatalogState extends State<ProductCatalog> {
             icon: Icons.add,
             onPressed: () => _openProductForm(),
           ),
-          if (_viewModel.isLocal) ...[
-            const SizedBox(height: AppSpacing.sm),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.download_outlined),
-              label: const Text('Isi Data Produk Warung'),
-              onPressed: () async {
-                await _viewModel.seedStarterProducts();
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Data produk awal warung berhasil dimuat.'),
-                  ),
-                );
-              },
-            ),
-          ],
         ];
       case CatalogScenario.failure:
         return [

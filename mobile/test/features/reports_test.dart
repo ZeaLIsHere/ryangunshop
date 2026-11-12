@@ -25,6 +25,11 @@ void main() {
     await tester.pump();
 
     expect(find.byType(BrandSpinner), findsNothing);
+
+    await tester.tap(find.text(ReportScenario.withData.label));
+    await tester.pump(_pastLoadDelay);
+    await tester.pump();
+
     expect(find.text('Rp 175.000'), findsOneWidget);
     expect(
       find.text('${ReportsSample.records.length} transaksi'),

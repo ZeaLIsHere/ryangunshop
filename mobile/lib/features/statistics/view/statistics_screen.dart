@@ -48,19 +48,47 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     final session = AppSessionScope.maybeOf(context);
     final isLocal = session?.productRepository != null;
 
-    var data = StatisticsSample.forPeriod(_period);
-    if (isLocal && _period == StatisticsPeriod.today && session != null) {
-      data = data.copyWith(
-        total: session.todayRevenue,
-        transactions: session.todayTransactionCount,
+    final StatisticsDataSet data;
+    if (session != null) {
+      final todayTotal = session.todayRevenue;
+      final todayCount = session.todayTransactionCount;
+      data = StatisticsDataSet(
+        total: todayTotal,
+        previousTotal: 0,
+        transactions: todayCount,
+        itemsSold: session.recentTransactions.fold<int>(
+          0,
+          (sum, tx) => sum + tx.itemCount,
+        ),
+        grossProfit: (todayTotal * 0.2).round(),
+        payments: [PaymentSlice(label: 'Tunai', total: todayTotal)],
+        peakTitle: 'Waktu transaksi terbanyak',
+        peakHours: const [
+          HourBucket(label: 'Pagi', transactions: 0),
+          HourBucket(label: 'Siang', transactions: 0),
+          HourBucket(label: 'Sore', transactions: 0),
+          HourBucket(label: 'Malam', transactions: 0),
+        ],
+        trendTitle: 'Tren penjualan',
+        trend: [
+          const SalesPoint(label: 'Sen', total: 0),
+          const SalesPoint(label: 'Sel', total: 0),
+          const SalesPoint(label: 'Rab', total: 0),
+          const SalesPoint(label: 'Kam', total: 0),
+          const SalesPoint(label: 'Jum', total: 0),
+          const SalesPoint(label: 'Sab', total: 0),
+          SalesPoint(label: 'Hari ini', total: todayTotal),
+        ],
+        topProducts: const [],
+        slowMoving: const [],
       );
+    } else {
+      data = StatisticsSample.forPeriod(_period);
     }
 
-    final products = (_localProducts != null && _localProducts!.isNotEmpty)
-        ? _localProducts!
-        : (isLocal && _localProducts != null
-              ? <CatalogProduct>[]
-              : CatalogSample.products);
+    final products = session != null
+        ? (_localProducts ?? const <CatalogProduct>[])
+        : CatalogSample.products;
 
     final lowStock = products
         .where((p) => p.stockStatus == ProductStockStatus.low)
@@ -156,23 +184,60 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               AppCard(
                 child: Column(
                   children: [
-                    for (var i = 0; i < data.topProducts.length; i++)
-                      _ProductRow(
-                        rank: i + 1,
-                        product: data.topProducts[i],
-                        isLast: i == data.topProducts.length - 1,
-                      ),
+                    if (data.topProducts.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.all(AppSpacing.md),
+                        child: Center(
+                          child: Text(
+                            'Belum ada data transaksi produk',
+                            style: TextStyle(color: AppColors.muted),
+                          ),
+                        ),
+                      )
+                    else
+                      for (var i = 0; i < data.topProducts.length; i++)
+                        _ProductRow(
+                          rank: i + 1,
+                          product: data.topProducts[i],
+                          isLast: i == data.topProducts.length - 1,
+                        ),
                   ],
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
               _SectionTitle(text: 'Produk lambat laku'),
               const SizedBox(height: AppSpacing.sm),
-              _SlowMoving(products: data.slowMoving),
+              if (data.slowMoving.isEmpty)
+                const AppCard(
+                  child: Padding(
+                    padding: EdgeInsets.all(AppSpacing.md),
+                    child: Center(
+                      child: Text(
+                        'Belum ada data produk lambat laku',
+                        style: TextStyle(color: AppColors.muted),
+                      ),
+                    ),
+                  ),
+                )
+              else
+                _SlowMoving(products: data.slowMoving),
               const SizedBox(height: AppSpacing.lg),
               _SectionTitle(text: 'Margin produk'),
               const SizedBox(height: AppSpacing.sm),
-              _MarginList(products: marginProducts.take(4).toList()),
+              if (marginProducts.isEmpty)
+                const AppCard(
+                  child: Padding(
+                    padding: EdgeInsets.all(AppSpacing.md),
+                    child: Center(
+                      child: Text(
+                        'Belum ada produk dengan harga modal',
+                        style: TextStyle(color: AppColors.muted),
+                      ),
+                    ),
+                  ),
+                )
+              else
+                _MarginList(products: marginProducts.take(4).toList()),
               const SizedBox(height: AppSpacing.lg),
               _SectionTitle(text: 'Stok'),
               const SizedBox(height: AppSpacing.sm),
@@ -466,15 +531,20 @@ class _PaymentSplit extends StatelessWidget {
             borderRadius: AppRadius.fixtureBorder,
             child: SizedBox(
               height: 12,
-              child: Row(
-                children: [
-                  for (var i = 0; i < slices.length; i++)
-                    Expanded(
-                      flex: slices[i].total,
-                      child: ColoredBox(color: colors[i % colors.length]),
+              child: total == 0
+                  ? Container(color: AppColors.primaryLight)
+                  : Row(
+                      children: [
+                        for (var i = 0; i < slices.length; i++)
+                          if (slices[i].total > 0)
+                            Expanded(
+                              flex: slices[i].total,
+                              child: ColoredBox(
+                                color: colors[i % colors.length],
+                              ),
+                            ),
+                      ],
                     ),
-                ],
-              ),
             ),
           ),
           const SizedBox(height: AppSpacing.sm),

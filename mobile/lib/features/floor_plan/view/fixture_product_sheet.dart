@@ -41,7 +41,6 @@ class _FixtureProductSheetState extends State<FixtureProductSheet> {
 
   Future<void> _loadProducts() async {
     final repo = AppSessionScope.of(context).productRepository;
-    if (repo == null) return;
     try {
       final records = await repo.listProducts();
       if (!mounted) return;

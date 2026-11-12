@@ -33,11 +33,31 @@ class DailySalesSummary {
   final int count;
 }
 
-class TransactionRepository {
-  const TransactionRepository(this.database);
+abstract interface class TransactionRepository {
+  factory TransactionRepository(AppDatabase database) =
+      DriftTransactionRepository;
+
+  Future<void> checkout({
+    required String transactionId,
+    required String paymentMethod,
+    required int totalAmount,
+    required List<CheckoutLine> lines,
+    int discountAmount = 0,
+    int? cashReceived,
+    int? changeAmount,
+  });
+
+  Future<List<TransactionRecord>> listRecent({int limit = 20});
+
+  Future<DailySalesSummary> summaryForDay(DateTime day);
+}
+
+class DriftTransactionRepository implements TransactionRepository {
+  const DriftTransactionRepository(this.database);
 
   final AppDatabase database;
 
+  @override
   Future<void> checkout({
     required String transactionId,
     required String paymentMethod,
@@ -58,6 +78,7 @@ class TransactionRepository {
     );
   }
 
+  @override
   Future<List<TransactionRecord>> listRecent({int limit = 20}) async {
     final query = database.select(database.transactions)
       ..orderBy([(row) => OrderingTerm.desc(row.createdAt)])
@@ -98,6 +119,7 @@ class TransactionRepository {
     }).toList();
   }
 
+  @override
   Future<DailySalesSummary> summaryForDay(DateTime day) async {
     final start = DateTime(day.year, day.month, day.day);
     final end = start.add(const Duration(days: 1));

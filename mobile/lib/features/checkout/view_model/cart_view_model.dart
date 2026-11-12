@@ -6,7 +6,7 @@ import '../model/cart_scenario.dart';
 
 /// ViewModel untuk mengelola keranjang transaksi kasir.
 class CartViewModel extends ChangeNotifier {
-  CartViewModel({bool withSampleItems = true})
+  CartViewModel({bool withSampleItems = false})
     : _items = withSampleItems ? List.of(_sampleItems) : <CartItem>[];
 
   static const _sampleItems = <CartItem>[

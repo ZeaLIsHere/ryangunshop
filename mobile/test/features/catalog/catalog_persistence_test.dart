@@ -125,7 +125,7 @@ void main() {
   });
 
   testWidgets(
-    'katalog lokal mendukung pengisian produk awal dan penghapusan produk',
+    'katalog lokal mendukung penambahan produk dari nol dan penghapusan produk',
     (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 3;
@@ -147,21 +147,26 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Pastikan tombol isi data produk awal tampil di empty state
       expect(find.text('Belum ada produk'), findsOneWidget);
-      expect(find.text('Isi Data Produk Warung'), findsOneWidget);
+      expect(find.text('Tambah Produk'), findsWidgets);
 
-      await tester.tap(find.text('Isi Data Produk Warung'));
+      // Buka form tambah produk dari empty state
+      await tester.tap(find.text('Tambah Produk').first);
+      await tester.pumpAndSettle();
+
+      await _enterField(tester, 'Nama Produk *', 'Kopi Lokal');
+      await _enterField(tester, 'Harga Jual *', '5000');
+      await _enterField(tester, 'Stok Saat Ini *', '10');
+      await tester.tap(find.text('Simpan Produk'));
       await tester.pumpAndSettle();
 
       final allDbProducts = await database.listProducts();
-      expect(allDbProducts.length, greaterThan(0));
+      expect(allDbProducts, hasLength(1));
       expect(find.text('Belum ada produk'), findsNothing);
+      expect(find.text('Kopi Lokal'), findsOneWidget);
 
-      // Buka detail produk pertama dan hapus
-      final firstProductName = allDbProducts.first.name;
-      await tester.ensureVisible(find.text(firstProductName));
-      await tester.tap(find.text(firstProductName));
+      // Buka detail produk dan hapus
+      await tester.tap(find.text('Kopi Lokal'));
       await tester.pumpAndSettle();
 
       // Tombol hapus ada untuk owner
@@ -175,8 +180,8 @@ void main() {
       await tester.pumpAndSettle();
 
       final afterDeleteDb = await database.listProducts();
-      expect(afterDeleteDb.length, allDbProducts.length - 1);
-      expect(afterDeleteDb.any((p) => p.name == firstProductName), isFalse);
+      expect(afterDeleteDb, isEmpty);
+      expect(find.text('Belum ada produk'), findsOneWidget);
     },
   );
 }

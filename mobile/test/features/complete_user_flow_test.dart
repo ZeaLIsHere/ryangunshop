@@ -3,9 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ryangunshop/app/app.dart';
 import 'package:ryangunshop/app/shell/app_shell.dart';
 import 'package:ryangunshop/app/shell/shell_destination.dart';
-import 'package:ryangunshop/app/startup/app_startup_state.dart';
+import 'package:ryangunshop/core/data/product_record.dart';
 import 'package:ryangunshop/core/session/app_session.dart';
+import 'package:ryangunshop/app/startup/app_startup_state.dart';
 import 'package:ryangunshop/core/session/user_role.dart';
+import 'package:ryangunshop/features/catalog/model/catalog_product.dart';
 import 'package:ryangunshop/features/payment/view/payment_sheet.dart';
 import 'package:ryangunshop/features/payment/view/payment_success_screen.dart';
 
@@ -20,8 +22,9 @@ void main() {
       tester.view.devicePixelRatio = 3;
       addTearDown(tester.view.reset);
 
-      // 2. Jalankan aplikasi dari titik masuk utama (Splash -> Onboarding)
-      await tester.pumpWidget(const RyanGunshopApp());
+      final session = AppSession();
+      addTearDown(session.dispose);
+      await tester.pumpWidget(RyanGunshopApp(session: session));
       expect(find.text('RyanGunshop'), findsOneWidget);
 
       await tester.pumpAndSettle();
@@ -36,12 +39,25 @@ void main() {
       // 3. Verifikasi Beranda: Hero Omzet awal & Aksi Cepat
       expect(find.text('Beranda'), findsWidgets);
       expect(find.text('Omzet Hari Ini'), findsOneWidget);
-      expect(find.text('Rp 1.450.000'), findsOneWidget);
-      expect(find.text('42 Nota'), findsOneWidget);
+      expect(find.text('Rp 0'), findsNWidgets(2));
+      expect(find.text('0 Nota'), findsOneWidget);
       expect(find.text('Pindai Barcode'), findsOneWidget);
       expect(find.text('Buka Kasir'), findsOneWidget);
       expect(find.text('Stok'), findsOneWidget);
       expect(find.text('Riwayat Nota'), findsOneWidget);
+
+      session.cart.addProduct(
+        const CatalogProduct(
+          id: 'contoh-produk-1',
+          name: 'Beras pandan wangi 1 kg',
+          price: 16000,
+          stock: 12,
+          unit: 'bungkus',
+          fixtureId: '',
+          locationLabel: '',
+          category: 'Sembako',
+        ),
+      );
 
       // 4. Buka alur Kasir via tombol Buka Kasir di Aksi Cepat
       final bukaKasirBtn = find.text('Buka Kasir');
@@ -72,12 +88,12 @@ void main() {
       expect(find.text('Kembalian: Rp 0'), findsOneWidget);
 
       // Selesaikan pembayaran tunai
-      await tester.tap(find.text('Selesaikan Simulasi Tunai'));
+      await tester.tap(find.text('Simpan Transaksi Tunai'));
       await tester.pumpAndSettle();
 
       // 6. Layar Ringkasan Pembayaran Sukses & Struk
       expect(find.byType(PaymentSuccessScreen), findsOneWidget);
-      expect(find.text('Simulasi Tunai Selesai'), findsOneWidget);
+      expect(find.text('Transaksi Tunai Tersimpan'), findsOneWidget);
       expect(find.text('Cetak Struk (Bluetooth)'), findsOneWidget);
 
       // Cetak struk bluetooth
@@ -86,10 +102,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(printBtn);
       await tester.pump();
-      expect(
-        find.text('Mencetak struk ke printer Bluetooth siap...'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('Mencetak nota'), findsOneWidget);
       // Bersihkan snackbar seketika agar tidak menghalangi tombol di bawahnya
       ScaffoldMessenger.of(tester.element(find.byType(PaymentSuccessScreen)))
           .clearSnackBars();
@@ -102,12 +115,12 @@ void main() {
       await tester.tap(newTrxBtn);
       await tester.pumpAndSettle();
 
-      // 7. Simulasi tidak boleh menambah omzet atau nota contoh.
+      // 7. Transaksi riil tercatat di Beranda!
       await tester.tap(find.text(ShellDestination.home.label));
       await tester.pumpAndSettle();
 
-      expect(find.text('42 Nota'), findsOneWidget);
-      expect(find.text('Rp 1.450.000'), findsOneWidget);
+      expect(find.text('1 Nota'), findsOneWidget);
+      expect(find.text('Rp 16.000'), findsWidgets);
       expect(find.text('Aktivitas Transaksi Terbaru'), findsOneWidget);
     },
   );
@@ -121,7 +134,20 @@ void main() {
 
       AppStartupState.markOnboardingSeen();
 
-      await tester.pumpWidget(const RyanGunshopApp());
+      final session = AppSession();
+      addTearDown(session.dispose);
+      await session.productRepository.save(
+        const ProductRecord(
+          id: 'contoh-produk-1',
+          name: 'Beras pandan wangi 1 kg',
+          salePrice: 16000,
+          stock: 12,
+          unit: 'bungkus',
+          category: 'Sembako',
+        ),
+      );
+
+      await tester.pumpWidget(RyanGunshopApp(session: session));
       await tester.pumpAndSettle();
 
       // 1. Pindah ke tab Katalog

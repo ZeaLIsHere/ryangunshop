@@ -42,11 +42,13 @@ class ScannerViewModel extends ChangeNotifier {
 
     _scanTimer = Timer(const Duration(milliseconds: 900), () {
       if (_disposed) return;
-      for (final product in _products) {
-        if (product.id == ScannerSample.detectedProductId) {
-          _detectedProduct = product;
-          break;
-        }
+      if (_products.isNotEmpty) {
+        _detectedProduct = _products.firstWhere(
+          (p) => p.stock > 0,
+          orElse: () => _products.first,
+        );
+      } else {
+        _detectedProduct = null;
       }
       _confidence = _detectedProduct == null ? null : ScannerSample.confidence;
       _scenario = _detectedProduct == null
