@@ -343,7 +343,7 @@ class _ProductCatalogState extends State<ProductCatalog> {
             label: 'Muat Ulang',
             onPressed: _viewModel.isLocal
                 ? _viewModel.loadProducts
-                : _viewModel.showSampleProducts,
+                : _viewModel.showCachedProducts,
           ),
         ];
       case CatalogScenario.empty:
@@ -374,7 +374,7 @@ class _ProductCatalogState extends State<ProductCatalog> {
             label: 'Coba lagi',
             onPressed: _viewModel.isLocal
                 ? _viewModel.loadProducts
-                : _viewModel.showSampleProducts,
+                : _viewModel.showCachedProducts,
           ),
         ];
       case CatalogScenario.withData:

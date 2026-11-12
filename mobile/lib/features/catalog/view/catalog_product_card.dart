@@ -5,6 +5,7 @@ import '../../../core/session/app_session.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/category_icon.dart';
 import '../model/catalog_product.dart';
 
 class CatalogProductCard extends StatelessWidget {
@@ -55,11 +56,19 @@ class CatalogProductCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xxs),
-                    Text(
-                      product.locationLabel,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: AppColors.muted,
-                      ),
+                    Row(
+                      children: [
+                        CategoryIcon(category: product.category, size: 14),
+                        const SizedBox(width: AppSpacing.xxs),
+                        Expanded(
+                          child: Text(
+                            '${product.category} · ${product.locationLabel}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppColors.muted,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

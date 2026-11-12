@@ -224,7 +224,7 @@ class ScannerStatusPanel extends StatelessWidget {
     }
 
     final theme = Theme.of(context);
-    final confidence = viewModel.confidence;
+    final isSimulated = viewModel.isSimulated;
     final outOfStock = product.stock == 0;
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -236,7 +236,7 @@ class ScannerStatusPanel extends StatelessWidget {
             const SizedBox(width: AppSpacing.xs),
             Expanded(
               child: Text(
-                confidence == null ? 'Dipilih manual' : 'Hasil simulasi',
+                isSimulated ? 'Hasil simulasi' : 'Dipilih manual',
                 style: theme.textTheme.titleMedium,
               ),
             ),
@@ -265,17 +265,17 @@ class ScannerStatusPanel extends StatelessWidget {
         Row(
           children: [
             Icon(
-              confidence == null
-                  ? Icons.touch_app_outlined
-                  : Icons.query_stats_outlined,
+              isSimulated
+                  ? Icons.query_stats_outlined
+                  : Icons.touch_app_outlined,
               color: AppColors.muted,
             ),
             const SizedBox(width: AppSpacing.xs),
             Expanded(
               child: Text(
-                confidence == null
-                    ? 'Produk dipilih dari daftar katalog warung.'
-                    : 'Keyakinan simulasi: ${(confidence * 100).round()}%',
+                isSimulated
+                    ? 'Produk simulasi dari katalog warung.'
+                    : 'Produk dipilih dari daftar katalog.',
                 style: theme.textTheme.bodySmall,
               ),
             ),

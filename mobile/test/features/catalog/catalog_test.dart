@@ -11,7 +11,10 @@ import 'package:ryangunshop/features/catalog/view_model/catalog_view_model.dart'
 
 void main() {
   testWidgets('katalog terbaca pada 360 dp dan skala teks 1,3', (tester) async {
-    await _showCatalog(tester);
+    await _showCatalog(
+      tester,
+      viewModel: CatalogViewModel(initialProducts: CatalogSample.products),
+    );
 
     expect(
       find.text('${CatalogSample.products.length} produk'),
@@ -30,7 +33,7 @@ void main() {
   });
 
   testWidgets('katalog kosong menyediakan tindakan pemulihan', (tester) async {
-    final vm = CatalogViewModel();
+    final vm = CatalogViewModel(initialProducts: CatalogSample.products);
     await _showCatalog(tester, viewModel: vm);
     vm.selectScenario(CatalogScenario.empty);
     await tester.pumpAndSettle();
@@ -44,7 +47,7 @@ void main() {
   });
 
   testWidgets('coba lagi memulihkan skenario gagal', (tester) async {
-    final vm = CatalogViewModel();
+    final vm = CatalogViewModel(initialProducts: CatalogSample.products);
     await _showCatalog(tester, viewModel: vm);
     vm.selectScenario(CatalogScenario.failure);
     await tester.pumpAndSettle();
@@ -61,7 +64,7 @@ void main() {
   });
 
   testWidgets('offline tetap menampilkan produk', (tester) async {
-    final vm = CatalogViewModel();
+    final vm = CatalogViewModel(initialProducts: CatalogSample.products);
     await _showCatalog(tester, viewModel: vm);
     vm.selectScenario(CatalogScenario.offline);
     await tester.pumpAndSettle();
@@ -83,7 +86,7 @@ void main() {
   testWidgets('memuat bisa dicoba dan dihentikan tanpa menunggu layanan', (
     tester,
   ) async {
-    final vm = CatalogViewModel();
+    final vm = CatalogViewModel(initialProducts: CatalogSample.products);
     await _showCatalog(tester, viewModel: vm);
     vm.selectScenario(CatalogScenario.loading);
     await tester.pump();
@@ -99,7 +102,7 @@ void main() {
   });
 
   testWidgets('reduced motion tidak memutar spinner', (tester) async {
-    final vm = CatalogViewModel();
+    final vm = CatalogViewModel(initialProducts: CatalogSample.products);
     await _showCatalog(tester, disableAnimations: true, viewModel: vm);
     vm.selectScenario(CatalogScenario.loading);
     await tester.pump();
@@ -110,7 +113,7 @@ void main() {
   });
 
   testWidgets('kontrol katalog memenuhi target sentuh Android', (tester) async {
-    final vm = CatalogViewModel();
+    final vm = CatalogViewModel(initialProducts: CatalogSample.products);
     await _showCatalog(tester, viewModel: vm);
     vm.selectScenario(CatalogScenario.empty);
     await tester.pumpAndSettle();
@@ -125,7 +128,7 @@ void main() {
   });
 
   test('urutkan harga dan stok mengikuti pilihan', () {
-    final vm = CatalogViewModel();
+    final vm = CatalogViewModel(initialProducts: CatalogSample.products);
     addTearDown(vm.dispose);
 
     vm.setSort(CatalogSort.priceAsc);
@@ -138,7 +141,7 @@ void main() {
   });
 
   testWidgets('mengurutkan katalog lewat menu urutkan', (tester) async {
-    final vm = CatalogViewModel();
+    final vm = CatalogViewModel(initialProducts: CatalogSample.products);
     await _showCatalog(tester, viewModel: vm);
     await tester.pumpAndSettle();
 
@@ -155,7 +158,7 @@ void main() {
   });
 
   testWidgets('filter kategori menyaring daftar produk', (tester) async {
-    final vm = CatalogViewModel();
+    final vm = CatalogViewModel(initialProducts: CatalogSample.products);
     await _showCatalog(tester, viewModel: vm);
     await tester.pumpAndSettle();
 

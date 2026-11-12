@@ -155,38 +155,10 @@ class CartCheckoutScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: AppSpacing.xs),
-                    Row(
-                      children: [
-                        SampleBadge(
-                          label: localTransactions == null
-                              ? 'Keranjang contoh'
-                              : 'Keranjang lokal',
-                        ),
-                        const Spacer(),
-                        PopupMenuButton<CartScenario>(
-                          tooltip: 'Pilih Skenario Keranjang',
-                          icon: const Icon(Icons.more_horiz),
-                          onSelected: cart.selectScenario,
-                          itemBuilder: (context) => const [
-                            PopupMenuItem(
-                              value: CartScenario.ready,
-                              child: Text('Tampilkan keranjang'),
-                            ),
-                            PopupMenuItem(
-                              value: CartScenario.loading,
-                              child: Text('Memuat'),
-                            ),
-                            PopupMenuItem(
-                              value: CartScenario.failure,
-                              child: Text('Gagal'),
-                            ),
-                            PopupMenuItem(
-                              value: CartScenario.offline,
-                              child: Text('Offline'),
-                            ),
-                          ],
-                        ),
-                      ],
+                    SampleBadge(
+                      label: localTransactions == null
+                          ? 'Keranjang contoh'
+                          : 'Keranjang lokal',
                     ),
                     if (session.isLocalCartSaveFailed)
                       Text(

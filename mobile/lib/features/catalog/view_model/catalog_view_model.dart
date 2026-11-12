@@ -12,13 +12,11 @@ class CatalogViewModel extends ChangeNotifier {
     ProductRepository? repository,
     List<CatalogProduct>? initialProducts,
   }) : _repository = repository,
-       _products = initialProducts != null
-           ? List.of(initialProducts)
-           : (repository == null ? List.of(CatalogSample.products) : []),
+       _products = List.of(initialProducts ?? const <CatalogProduct>[]),
        _scenario = initialProducts != null && initialProducts.isNotEmpty
            ? CatalogScenario.withData
            : (repository == null
-                 ? CatalogScenario.withData
+                 ? CatalogScenario.empty
                  : CatalogScenario.loading);
 
   ProductRepository? _repository;
@@ -36,7 +34,7 @@ class CatalogViewModel extends ChangeNotifier {
     if (isLocal) {
       loadProducts();
     } else {
-      showSampleProducts();
+      showCachedProducts();
     }
   }
 
@@ -44,7 +42,7 @@ class CatalogViewModel extends ChangeNotifier {
     if (_disposed) return;
     final source = _repository;
     if (source == null) {
-      showSampleProducts();
+      showCachedProducts();
       return;
     }
     final version = ++_loadVersion;
@@ -93,17 +91,6 @@ class CatalogViewModel extends ChangeNotifier {
       return;
     }
     await source.delete(id);
-    if (_disposed) return;
-    await loadProducts();
-  }
-
-  Future<void> seedStarterProducts() async {
-    final source = _repository;
-    if (source == null) return;
-    final starterRecords = CatalogSample.products
-        .map((p) => p.toRecord())
-        .toList();
-    await source.seedIfEmpty(starterRecords);
     if (_disposed) return;
     await loadProducts();
   }
@@ -224,14 +211,13 @@ class CatalogViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void showSampleProducts() {
+  void showCachedProducts() {
     if (isLocal) {
       loadProducts();
     } else {
-      if (_products.isEmpty) {
-        _products.addAll(CatalogSample.products);
-      }
-      selectScenario(CatalogScenario.withData);
+      selectScenario(
+        _products.isEmpty ? CatalogScenario.empty : CatalogScenario.withData,
+      );
     }
   }
 

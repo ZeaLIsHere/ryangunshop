@@ -6,6 +6,7 @@ import '../../../core/session/user_role.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/category_icon.dart';
 import '../../../core/widgets/primary_action.dart';
 import '../model/catalog_product.dart';
 import 'product_form_screen.dart';
@@ -112,6 +113,22 @@ class ProductDetailSheet extends StatelessWidget {
                         ],
                       ),
                     ],
+                    Row(
+                      children: [
+                        CategoryIcon(category: product.category, size: 14),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            '${product.category} \u00b7 ${product.locationLabel}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppColors.muted,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
