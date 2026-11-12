@@ -29,7 +29,7 @@ void main() {
     expect(find.text(SettingsSample.floorPlanAccessAllowed), findsNothing);
   });
 
-  testWidgets('info warung ditandai sebagai data contoh', (tester) async {
+  testWidgets('profil warung kosong tidak memakai data contoh', (tester) async {
     _usePhoneViewport(tester);
     final session = AppSession();
     addTearDown(session.dispose);
@@ -37,12 +37,14 @@ void main() {
     await tester.pumpWidget(_host(const SettingsScreen(), session));
     await tester.pumpAndSettle();
 
-    final badge = find.text(SettingsSample.sampleBadge);
-    await tester.ensureVisible(badge);
-    await tester.pumpAndSettle();
-
-    expect(badge, findsOneWidget);
-    expect(find.text(SettingsSample.storeProfile.name), findsOneWidget);
+    expect(find.text('Profil warung belum diatur'), findsOneWidget);
+    expect(find.text(SettingsSample.storeProfile.name), findsNothing);
+    expect(find.text(SettingsSample.sampleBadge), findsNothing);
+    expect(find.text('Belum ada printer terhubung'), findsOneWidget);
+    expect(
+      find.textContaining('Sinkronisasi cloud belum tersedia'),
+      findsOneWidget,
+    );
   });
 }
 

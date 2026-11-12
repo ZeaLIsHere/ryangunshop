@@ -3,14 +3,12 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ryangunshop/core/data/app_database.dart';
-import 'package:ryangunshop/core/format/rupiah.dart';
 import 'package:ryangunshop/core/session/app_session.dart';
 import 'package:ryangunshop/core/theme/app_theme.dart';
-import 'package:ryangunshop/features/statistics/sample/statistics_sample.dart';
 import 'package:ryangunshop/features/statistics/view/statistics_screen.dart';
 
 void main() {
-  testWidgets('statistik menampilkan ringkasan contoh pada 360 dp skala 1,3', (
+  testWidgets('statistik tanpa sesi menampilkan state kosong pada 360 dp', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(360, 800);
@@ -30,44 +28,13 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final today = StatisticsSample.forPeriod(StatisticsPeriod.today);
-
     expect(find.text('Statistik'), findsOneWidget);
-    expect(find.text(formatRupiah(today.total)), findsOneWidget);
-    expect(find.text('Tren 7 hari terakhir'), findsOneWidget);
-    expect(find.text(today.topProducts.first.name), findsOneWidget);
-    expect(find.textContaining('Perlu restok'), findsOneWidget);
-    expect(find.text('Metode pembayaran'), findsOneWidget);
-    expect(find.text('Margin produk'), findsOneWidget);
+    expect(find.text('Belum ada data'), findsOneWidget);
+    expect(find.text('Tren penjualan'), findsOneWidget);
+    expect(find.text('Belum ada data transaksi produk'), findsOneWidget);
+    expect(find.text('Belum ada data metode pembayaran'), findsOneWidget);
+    expect(find.textContaining('Deterjen'), findsNothing);
     expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('pemilih periode menukar ringkasan', (tester) async {
-    tester.view.physicalSize = const Size(360, 800);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-
-    await tester.pumpWidget(
-      MaterialApp(theme: AppTheme.light(), home: const StatisticsScreen()),
-    );
-    await tester.pumpAndSettle();
-
-    expect(
-      find.text(
-        formatRupiah(StatisticsSample.forPeriod(StatisticsPeriod.today).total),
-      ),
-      findsOneWidget,
-    );
-
-    await tester.tap(find.text(StatisticsPeriod.week.label));
-    await tester.pumpAndSettle();
-
-    expect(
-      find.text(
-        formatRupiah(StatisticsSample.forPeriod(StatisticsPeriod.week).total),
-      ),
-      findsOneWidget,
-    );
   });
 
   testWidgets('statistik menampilkan data lokal bila tersedia di sesi', (

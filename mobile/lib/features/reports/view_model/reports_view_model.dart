@@ -15,7 +15,9 @@ class ReportsViewModel extends ChangeNotifier {
     this.repository,
     this.initialRecords,
     this.loadDelay = const Duration(milliseconds: 350),
-  });
+  }) : _scenario = initialRecords != null
+           ? ReportScenario.withData
+           : ReportScenario.empty;
 
   db.TransactionRepository? repository;
   final List<TransactionRecord>? initialRecords;
@@ -25,7 +27,7 @@ class ReportsViewModel extends ChangeNotifier {
 
   bool get isLocal => repository != null;
 
-  ReportScenario _scenario = ReportScenario.withData;
+  ReportScenario _scenario;
   ReportsStatus _status = ReportsStatus.loading;
   List<TransactionRecord> _records = const <TransactionRecord>[];
   bool _disposed = false;
@@ -50,13 +52,14 @@ class ReportsViewModel extends ChangeNotifier {
 
   /// Memuat ulang riwayat, atau mengganti skenario contoh bila dioper.
   Future<void> load({ReportScenario? scenario}) async {
+    final explicitScenario = scenario;
     _scenario = scenario ?? _scenario;
     _status = ReportsStatus.loading;
     _records = const <TransactionRecord>[];
     notifyListeners();
 
     final source = repository;
-    if (source != null && scenario == null) {
+    if (source != null && explicitScenario == null) {
       final version = ++_loadVersion;
       try {
         final localRecords = await source.listRecent(limit: 50);
@@ -90,16 +93,26 @@ class ReportsViewModel extends ChangeNotifier {
       return;
     }
 
-    switch (_scenario) {
-      case ReportScenario.withData:
-        _records = initialRecords ?? ReportsSample.records;
-        _status = ReportsStatus.ready;
-      case ReportScenario.empty:
-        _records = const <TransactionRecord>[];
-        _status = ReportsStatus.ready;
-      case ReportScenario.failure:
-        _records = const <TransactionRecord>[];
-        _status = ReportsStatus.failure;
+    if (explicitScenario != null) {
+      switch (explicitScenario) {
+        case ReportScenario.withData:
+          _records = initialRecords ?? ReportsSample.records;
+          _status = ReportsStatus.ready;
+        case ReportScenario.empty:
+          _records = const <TransactionRecord>[];
+          _status = ReportsStatus.ready;
+        case ReportScenario.failure:
+          _records = const <TransactionRecord>[];
+          _status = ReportsStatus.failure;
+      }
+    } else if (initialRecords != null) {
+      _scenario = ReportScenario.withData;
+      _records = initialRecords!;
+      _status = ReportsStatus.ready;
+    } else {
+      _scenario = ReportScenario.empty;
+      _records = const <TransactionRecord>[];
+      _status = ReportsStatus.ready;
     }
     notifyListeners();
   }

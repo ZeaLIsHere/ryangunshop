@@ -333,6 +333,8 @@ class _QuickActionBento extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final session = AppSessionScope.maybeOf(context);
+    final lowStock = session?.lowStockCount ?? 0;
     return Row(
       children: [
         Expanded(
@@ -362,7 +364,7 @@ class _QuickActionBento extends StatelessWidget {
             assetPath: 'assets/icon/09_stok_produk.png',
             icon: Icons.inventory_2_outlined,
             label: 'Stok',
-            badgeText: '3',
+            badgeText: lowStock > 0 ? '$lowStock' : null,
             bgColor: const Color(0xFFFFF7ED),
             iconColor: const Color(0xFFEA580C),
             onTap: onOpenCatalog,

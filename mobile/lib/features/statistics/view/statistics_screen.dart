@@ -9,7 +9,6 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/sample_badge.dart';
 import '../../catalog/model/catalog_product.dart';
-import '../../catalog/sample/catalog_sample.dart';
 import '../sample/statistics_sample.dart';
 
 /// Layar statistik penjualan dan stok dengan data contoh.
@@ -21,7 +20,6 @@ class StatisticsScreen extends StatefulWidget {
 }
 
 class _StatisticsScreenState extends State<StatisticsScreen> {
-  StatisticsPeriod _period = StatisticsPeriod.today;
   List<CatalogProduct>? _localProducts;
 
   @override
@@ -52,16 +50,17 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     if (session != null) {
       final todayTotal = session.todayRevenue;
       final todayCount = session.todayTransactionCount;
+      final itemsSold = session.recentTransactions.fold<int>(
+        0,
+        (sum, tx) => sum + tx.itemCount,
+      );
       data = StatisticsDataSet(
         total: todayTotal,
         previousTotal: 0,
         transactions: todayCount,
-        itemsSold: session.recentTransactions.fold<int>(
-          0,
-          (sum, tx) => sum + tx.itemCount,
-        ),
-        grossProfit: (todayTotal * 0.2).round(),
-        payments: [PaymentSlice(label: 'Tunai', total: todayTotal)],
+        itemsSold: itemsSold,
+        grossProfit: 0,
+        payments: const [],
         peakTitle: 'Waktu transaksi terbanyak',
         peakHours: const [
           HourBucket(label: 'Pagi', transactions: 0),
@@ -83,12 +82,36 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         slowMoving: const [],
       );
     } else {
-      data = StatisticsSample.forPeriod(_period);
+      data = const StatisticsDataSet(
+        total: 0,
+        previousTotal: 0,
+        transactions: 0,
+        itemsSold: 0,
+        grossProfit: 0,
+        payments: [],
+        peakTitle: 'Waktu transaksi terbanyak',
+        peakHours: [
+          HourBucket(label: 'Pagi', transactions: 0),
+          HourBucket(label: 'Siang', transactions: 0),
+          HourBucket(label: 'Sore', transactions: 0),
+          HourBucket(label: 'Malam', transactions: 0),
+        ],
+        trendTitle: 'Tren penjualan',
+        trend: [
+          SalesPoint(label: 'Sen', total: 0),
+          SalesPoint(label: 'Sel', total: 0),
+          SalesPoint(label: 'Rab', total: 0),
+          SalesPoint(label: 'Kam', total: 0),
+          SalesPoint(label: 'Jum', total: 0),
+          SalesPoint(label: 'Sab', total: 0),
+          SalesPoint(label: 'Hari ini', total: 0),
+        ],
+        topProducts: [],
+        slowMoving: [],
+      );
     }
 
-    final products = session != null
-        ? (_localProducts ?? const <CatalogProduct>[])
-        : CatalogSample.products;
+    final products = _localProducts ?? const <CatalogProduct>[];
 
     final lowStock = products
         .where((p) => p.stockStatus == ProductStockStatus.low)
@@ -142,7 +165,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                         SampleBadge(
                           label: isLocal
                               ? 'Tersimpan di perangkat'
-                              : 'Data contoh',
+                              : 'Belum ada data',
                         ),
                       ],
                     ),
@@ -150,22 +173,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 ],
               ),
               const SizedBox(height: AppSpacing.sm),
-              Wrap(
-                spacing: AppSpacing.xs,
-                runSpacing: AppSpacing.xs,
-                children: [
-                  for (final period in StatisticsPeriod.values)
-                    ChoiceChip(
-                      label: Text(period.label),
-                      selected: period == _period,
-                      onSelected: (_) => setState(() => _period = period),
-                    ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.sm),
               _SummaryHero(data: data),
               const SizedBox(height: AppSpacing.sm),
-              _MetricGrid(data: data, activeProducts: products.length),
+              _MetricGrid(
+                data: data,
+                activeProducts: products.length,
+                lowStockCount: lowStock.length,
+              ),
               const SizedBox(height: AppSpacing.lg),
               _SectionTitle(text: data.trendTitle),
               const SizedBox(height: AppSpacing.sm),
@@ -317,40 +331,42 @@ class _SummaryHero extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm,
-              vertical: AppSpacing.xxs,
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.surface.withValues(alpha: 0.16),
-              borderRadius: AppRadius.fixtureBorder,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  up ? Icons.trending_up : Icons.trending_down,
-                  size: 16,
-                  color: AppColors.surface,
-                ),
-                const SizedBox(width: AppSpacing.xxs),
-                Flexible(
-                  child: Text(
-                    '${up ? 'Naik' : 'Turun'} ${_percent(change.abs())} '
-                    'vs periode sebelumnya',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.surface,
-                      fontWeight: FontWeight.w600,
+          if (data.previousTotal > 0) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.xxs,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.surface.withValues(alpha: 0.16),
+                borderRadius: AppRadius.fixtureBorder,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    up ? Icons.trending_up : Icons.trending_down,
+                    size: 16,
+                    color: AppColors.surface,
+                  ),
+                  const SizedBox(width: AppSpacing.xxs),
+                  Flexible(
+                    child: Text(
+                      '${up ? 'Naik' : 'Turun'} ${_percent(change.abs())} '
+                      'vs periode sebelumnya',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.surface,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -358,10 +374,15 @@ class _SummaryHero extends StatelessWidget {
 }
 
 class _MetricGrid extends StatelessWidget {
-  const _MetricGrid({required this.data, required this.activeProducts});
+  const _MetricGrid({
+    required this.data,
+    required this.activeProducts,
+    required this.lowStockCount,
+  });
 
   final StatisticsDataSet data;
   final int activeProducts;
+  final int lowStockCount;
 
   @override
   Widget build(BuildContext context) {
@@ -387,14 +408,9 @@ class _MetricGrid extends StatelessWidget {
         value: '$activeProducts',
       ),
       _MetricTile(
-        icon: Icons.savings_outlined,
-        label: 'Laba kotor',
-        value: formatRupiah(data.grossProfit),
-      ),
-      _MetricTile(
-        icon: Icons.percent_outlined,
-        label: 'Margin',
-        value: _percent(data.marginPercent),
+        icon: Icons.warning_amber_rounded,
+        label: 'Stok menipis',
+        value: '$lowStockCount',
       ),
     ];
 
@@ -521,6 +537,19 @@ class _PaymentSplit extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    if (slices.isEmpty) {
+      return const AppCard(
+        child: Padding(
+          padding: EdgeInsets.all(AppSpacing.md),
+          child: Center(
+            child: Text(
+              'Belum ada data metode pembayaran',
+              style: TextStyle(color: AppColors.muted),
+            ),
+          ),
+        ),
+      );
+    }
     final total = slices.fold<int>(0, (sum, s) => sum + s.total);
     const colors = [AppColors.primary, AppColors.accent];
 

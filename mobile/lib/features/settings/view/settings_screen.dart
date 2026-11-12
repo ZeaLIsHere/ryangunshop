@@ -6,8 +6,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_card.dart';
-import '../../../core/widgets/sample_badge.dart';
-import '../model/store_profile.dart';
 import '../sample/settings_sample.dart';
 import '../view_model/settings_view_model.dart';
 
@@ -81,18 +79,21 @@ class _SettingsContent extends StatelessWidget {
           const SizedBox(height: AppSpacing.lg),
           const _SectionTitle(text: SettingsSample.storeSectionTitle),
           const SizedBox(height: AppSpacing.sm),
-          _StoreProfileCard(profile: viewModel.storeProfile),
+          const _StoreProfileCard(),
           const SizedBox(height: AppSpacing.lg),
           const _SectionTitle(text: SettingsSample.hardwareSectionTitle),
           const SizedBox(height: AppSpacing.sm),
           AppCard(
             child: Row(
               children: [
-                const Icon(Icons.print_outlined, color: AppColors.primary),
+                const Icon(
+                  Icons.print_disabled_outlined,
+                  color: AppColors.muted,
+                ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
-                    SettingsSample.printerStatus,
+                    'Belum ada printer terhubung',
                     style: theme.textTheme.bodyMedium,
                   ),
                 ),
@@ -105,11 +106,11 @@ class _SettingsContent extends StatelessWidget {
           AppCard(
             child: Row(
               children: [
-                const Icon(Icons.cloud_done_outlined, color: AppColors.success),
+                const Icon(Icons.storage_outlined, color: AppColors.success),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
-                    SettingsSample.syncStatus,
+                    'Penyimpanan lokal aktif. Sinkronisasi cloud belum tersedia.',
                     style: theme.textTheme.bodyMedium,
                   ),
                 ),
@@ -221,65 +222,45 @@ class _FloorPlanAccessStatus extends StatelessWidget {
 }
 
 class _StoreProfileCard extends StatelessWidget {
-  const _StoreProfileCard({required this.profile});
-
-  final StoreProfile profile;
+  const _StoreProfileCard();
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return AppCard(
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: const BoxDecoration(
-                  color: AppColors.primaryLight,
-                  borderRadius: AppRadius.controlCompactBorder,
-                ),
-                child: const Icon(
-                  Icons.storefront_outlined,
-                  color: AppColors.primaryDark,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(profile.name, style: theme.textTheme.titleMedium),
-                    const SizedBox(height: AppSpacing.xxs),
-                    Text(
-                      profile.address,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: AppColors.muted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          Container(
+            width: 44,
+            height: 44,
+            decoration: const BoxDecoration(
+              color: AppColors.primaryLight,
+              borderRadius: AppRadius.controlCompactBorder,
+            ),
+            child: const Icon(
+              Icons.storefront_outlined,
+              color: AppColors.primaryDark,
+            ),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          Row(
-            children: [
-              const SampleBadge(label: SettingsSample.sampleBadge),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text(
-                  'Jumlah kasir: ${profile.cashierCount}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.right,
-                  style: theme.textTheme.bodySmall,
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Profil warung belum diatur',
+                  style: theme.textTheme.titleMedium,
                 ),
-              ),
-            ],
+                const SizedBox(height: AppSpacing.xxs),
+                Text(
+                  'Nama dan alamat toko akan tersedia setelah data warung diisi.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.muted,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

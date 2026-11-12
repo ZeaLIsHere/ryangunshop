@@ -84,20 +84,27 @@ class _ReportsScreenState extends State<ReportsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Align(
+                Align(
                   alignment: Alignment.centerLeft,
-                  child: SampleBadge(label: 'Tersimpan di perangkat'),
+                  child: SampleBadge(
+                    label: _viewModel.isLocal
+                        ? 'Tersimpan di perangkat'
+                        : 'Pratinjau data contoh',
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 _SummaryCard(
                   total: _viewModel.totalAmount,
                   transactionCount: _viewModel.records.length,
                 ),
-                const SizedBox(height: AppSpacing.lg),
-                _ScenarioSelector(
-                  selected: _viewModel.scenario,
-                  onSelected: (scenario) => _viewModel.load(scenario: scenario),
-                ),
+                if (!_viewModel.isLocal) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  _ScenarioSelector(
+                    selected: _viewModel.scenario,
+                    onSelected: (scenario) =>
+                        _viewModel.load(scenario: scenario),
+                  ),
+                ],
                 const SizedBox(height: AppSpacing.lg),
                 _buildBody(context),
               ],
