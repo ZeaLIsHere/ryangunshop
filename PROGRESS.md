@@ -357,9 +357,12 @@ Rencana kerja teknis terstruktur untuk membawa prototipe UI RyanGunshop menjadi 
   Preview web tetap memakai data contoh. QRIS belum mencatat pembayaran.
 - **Verifikasi otomatis:** Migrasi dari skema v1–v3, pembukaan ulang file database,
   kategori katalog lokal, pencarian manual pemindai, dan checkout tunai diuji.
-- **Berikutnya:** Verifikasi di perangkat Android dan audit alur tambah/edit produk
-  serta nota setelah aplikasi ditutup. Laporan masih memakai contoh. Kamera barcode
-  dan printer Bluetooth tetap ditunda.
+  Alur tambah/edit produk dari formulir sampai SQLite serta pemuatan ulang nota,
+  omzet, dan stok pada sesi baru juga lulus uji. Formulir lokal menandai foto sebagai
+  contoh dan tetap dapat mengedit kategori/satuan produk lama.
+- **Berikutnya:** Verifikasi alur tersebut di perangkat Android. Laporan masih memakai
+  contoh; persistensi draft keranjang belum tersedia. Kamera barcode dan printer
+  Bluetooth tetap ditunda.
 - **Tujuan:** Data produk, stok, dan riwayat nota penjualan tersimpan permanen di HP tanpa risiko hilang saat aplikasi ditutup atau HP mati.
 - **Implementasi:**
   - Pasang SQLite via Drift / Isar untuk Flutter.

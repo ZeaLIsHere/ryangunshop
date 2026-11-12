@@ -14,12 +14,14 @@ class ProductFormScreen extends StatefulWidget {
   const ProductFormScreen({
     this.initialProduct,
     this.existingProducts = const [],
+    this.isLocal = false,
     this.onSave,
     super.key,
   });
 
   final CatalogProduct? initialProduct;
   final List<CatalogProduct> existingProducts;
+  final bool isLocal;
   final ValueChanged<CatalogProduct>? onSave;
 
   @override
@@ -41,10 +43,22 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   String _selectedFixtureId = 'contoh-rak-sembako';
   bool _hasSamplePhoto = false;
 
-  final _units = ['bungkus', 'botol', 'kotak', 'pcs', 'kg', 'sachet', 'kaleng'];
-  List<String> get _categories => CatalogSample.categories
-      .where((category) => category != CatalogSample.allCategoryLabel)
-      .toList();
+  List<String> get _units => {
+    'bungkus',
+    'botol',
+    'kotak',
+    'pcs',
+    'kg',
+    'sachet',
+    'kaleng',
+    _selectedUnit,
+  }.toList();
+  List<String> get _categories => {
+    ...CatalogSample.categories.where(
+      (category) => category != CatalogSample.allCategoryLabel,
+    ),
+    _selectedCategory,
+  }.toList();
 
   @override
   void initState() {
@@ -87,7 +101,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     final product = CatalogProduct(
       id:
           widget.initialProduct?.id ??
-          'prod-${DateTime.now().millisecondsSinceEpoch}',
+          'prod-${DateTime.now().microsecondsSinceEpoch}',
       name: _nameController.text.trim(),
       price: int.parse(_priceController.text.trim()),
       stock: int.parse(_stockController.text.trim()),
@@ -127,9 +141,13 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Align(
+                      Align(
                         alignment: Alignment.centerLeft,
-                        child: SampleBadge(label: 'Pratinjau data contoh'),
+                        child: SampleBadge(
+                          label: widget.isLocal
+                              ? 'Produk lokal • foto contoh'
+                              : 'Pratinjau data contoh',
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.lg),
                       _SectionHeader(

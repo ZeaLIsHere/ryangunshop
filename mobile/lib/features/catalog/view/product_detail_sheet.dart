@@ -14,18 +14,21 @@ class ProductDetailSheet extends StatelessWidget {
   const ProductDetailSheet({
     required this.product,
     this.existingProducts = const [],
+    this.isLocal = false,
     this.onProductUpdated,
     super.key,
   });
 
   final CatalogProduct product;
   final List<CatalogProduct> existingProducts;
+  final bool isLocal;
   final ValueChanged<CatalogProduct>? onProductUpdated;
 
   static Future<void> show(
     BuildContext context, {
     required CatalogProduct product,
     List<CatalogProduct> existingProducts = const [],
+    bool isLocal = false,
     ValueChanged<CatalogProduct>? onProductUpdated,
   }) {
     return showModalBottomSheet<void>(
@@ -35,6 +38,7 @@ class ProductDetailSheet extends StatelessWidget {
       builder: (context) => ProductDetailSheet(
         product: product,
         existingProducts: existingProducts,
+        isLocal: isLocal,
         onProductUpdated: onProductUpdated,
       ),
     );
@@ -207,16 +211,17 @@ class ProductDetailSheet extends StatelessWidget {
                   icon: const Icon(Icons.edit_outlined),
                   label: const Text('Edit Produk'),
                   onPressed: () async {
-                    Navigator.of(context).pop();
-                    final updated = await Navigator.of(context)
-                        .push<CatalogProduct>(
-                          MaterialPageRoute(
-                            builder: (_) => ProductFormScreen(
-                              initialProduct: product,
-                              existingProducts: existingProducts,
-                            ),
-                          ),
-                        );
+                    final navigator = Navigator.of(context);
+                    navigator.pop();
+                    final updated = await navigator.push<CatalogProduct>(
+                      MaterialPageRoute(
+                        builder: (_) => ProductFormScreen(
+                          initialProduct: product,
+                          existingProducts: existingProducts,
+                          isLocal: isLocal,
+                        ),
+                      ),
+                    );
                     if (updated != null) {
                       onProductUpdated?.call(updated);
                     }

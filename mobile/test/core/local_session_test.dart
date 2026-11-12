@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -45,4 +47,51 @@ void main() {
     expect(session.todayTransactionCount, 1);
     expect(session.recentTransactions.single.id, 'TRX-LOCAL-1');
   });
+
+  test(
+    'nota dan omzet tetap terbaca pada sesi setelah database dibuka ulang',
+    () async {
+      final folder = await Directory.systemTemp.createTemp(
+        'ryangunshop_session_',
+      );
+      addTearDown(() => folder.delete(recursive: true));
+      final file = File('${folder.path}${Platform.pathSeparator}kasir.sqlite');
+      final first = AppDatabase(NativeDatabase(file));
+      await first.saveProduct(
+        ProductsCompanion.insert(
+          id: 'teh',
+          name: 'Teh botol',
+          salePrice: 5000,
+          stock: 3,
+          updatedAt: DateTime.now(),
+        ),
+      );
+      await TransactionRepository(first).checkout(
+        transactionId: 'TRX-SETELAH-BUKA',
+        paymentMethod: 'cash',
+        totalAmount: 5000,
+        cashReceived: 5000,
+        changeAmount: 0,
+        lines: const [
+          CheckoutLine(
+            productId: 'teh',
+            quantity: 1,
+            unitPrice: 5000,
+            subtotal: 5000,
+          ),
+        ],
+      );
+      await first.close();
+
+      final reopened = AppDatabase(NativeDatabase(file));
+      addTearDown(reopened.close);
+      final session = AppSession(database: reopened);
+      addTearDown(session.dispose);
+      await session.loadLocalSummary();
+      expect(session.todayRevenue, 5000);
+      expect(session.todayTransactionCount, 1);
+      expect(session.recentTransactions.single.id, 'TRX-SETELAH-BUKA');
+      expect((await reopened.listProducts()).single.stock, 2);
+    },
+  );
 }

@@ -53,6 +53,7 @@ class _ProductCatalogState extends State<ProductCatalog> {
         builder: (_) => ProductFormScreen(
           initialProduct: product,
           existingProducts: _viewModel.allProducts,
+          isLocal: _viewModel.isLocal,
         ),
       ),
     );
@@ -82,6 +83,7 @@ class _ProductCatalogState extends State<ProductCatalog> {
       context,
       product: product,
       existingProducts: _viewModel.allProducts,
+      isLocal: _viewModel.isLocal,
       onProductUpdated: (updated) {
         _persistProduct(updated);
       },
