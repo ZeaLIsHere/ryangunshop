@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/data/transaction_repository.dart'
+    show TransactionRepository;
 import '../../../core/format/rupiah.dart';
+import '../../../core/session/app_session.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -16,23 +19,51 @@ import '../sample/reports_sample.dart';
 import '../view_model/reports_view_model.dart';
 
 /// Layar riwayat dan laporan transaksi.
-///
-/// Memakai data contoh, tetapi menyediakan state memuat, kosong, dan gagal yang
-/// benar-benar dapat dicoba lewat pemilih skenario.
 class ReportsScreen extends StatefulWidget {
-  const ReportsScreen({super.key});
+  const ReportsScreen({this.repository, super.key});
+
+  final TransactionRepository? repository;
 
   @override
   State<ReportsScreen> createState() => _ReportsScreenState();
 }
 
 class _ReportsScreenState extends State<ReportsScreen> {
-  final ReportsViewModel _viewModel = ReportsViewModel();
+  late final ReportsViewModel _viewModel;
+  bool _initialized = false;
 
   @override
   void initState() {
     super.initState();
-    _viewModel.load();
+    _viewModel = ReportsViewModel(
+      repository: widget.repository,
+      loadDelay: Duration.zero,
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _initialized = true;
+      if (widget.repository == null) {
+        final sessionRepo = AppSessionScope.maybeOf(context)
+            ?.transactionRepository;
+        if (sessionRepo != null) {
+          _viewModel.updateRepository(sessionRepo);
+          return;
+        }
+      }
+      _viewModel.load();
+    }
+  }
+
+  @override
+  void didUpdateWidget(ReportsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.repository != widget.repository) {
+      _viewModel.updateRepository(widget.repository);
+    }
   }
 
   @override
@@ -53,9 +84,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Align(
+                Align(
                   alignment: Alignment.centerLeft,
-                  child: SampleBadge(label: 'Laporan contoh'),
+                  child: SampleBadge(
+                    label: _viewModel.isLocal
+                        ? 'Tersimpan di perangkat'
+                        : 'Laporan contoh',
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 _SummaryCard(
@@ -284,12 +319,16 @@ class _RecordCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${record.timeLabel} · ${record.itemCount} barang',
+                  record.title.isNotEmpty
+                      ? '${record.title} · ${record.itemCount} barang'
+                      : '${record.timeLabel} · ${record.itemCount} barang',
                   style: theme.textTheme.titleMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: AppSpacing.xxs),
                 Text(
-                  '${record.id} · ${record.paymentMethod.label}',
+                  '${record.id} · ${record.paymentMethod.label} · ${record.timeLabel}',
                   style: theme.textTheme.bodySmall,
                 ),
               ],
