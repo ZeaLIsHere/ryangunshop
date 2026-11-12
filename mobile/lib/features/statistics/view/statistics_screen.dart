@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/format/rupiah.dart';
+import '../../../core/session/app_session.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -21,12 +22,46 @@ class StatisticsScreen extends StatefulWidget {
 
 class _StatisticsScreenState extends State<StatisticsScreen> {
   StatisticsPeriod _period = StatisticsPeriod.today;
+  List<CatalogProduct>? _localProducts;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadLocalProducts();
+  }
+
+  Future<void> _loadLocalProducts() async {
+    final repo = AppSessionScope.maybeOf(context)?.productRepository;
+    if (repo == null) return;
+    try {
+      final records = await repo.listProducts();
+      if (!mounted) return;
+      setState(() {
+        _localProducts = records.map(CatalogProduct.fromRecord).toList();
+      });
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final data = StatisticsSample.forPeriod(_period);
-    final products = CatalogSample.products;
+    final session = AppSessionScope.maybeOf(context);
+    final isLocal = session?.productRepository != null;
+
+    var data = StatisticsSample.forPeriod(_period);
+    if (isLocal && _period == StatisticsPeriod.today && session != null) {
+      data = data.copyWith(
+        total: session.todayRevenue,
+        transactions: session.todayTransactionCount,
+      );
+    }
+
+    final products = (_localProducts != null && _localProducts!.isNotEmpty)
+        ? _localProducts!
+        : (isLocal && _localProducts != null
+              ? <CatalogProduct>[]
+              : CatalogSample.products);
+
     final lowStock = products
         .where((p) => p.stockStatus == ProductStockStatus.low)
         .toList();
@@ -68,12 +103,22 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     ),
                   ),
                   Expanded(
-                    child: Text(
-                      'Ringkasan warung',
-                      style: theme.textTheme.headlineSmall,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Ringkasan warung',
+                          style: theme.textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 2),
+                        SampleBadge(
+                          label: isLocal
+                              ? 'Tersimpan di perangkat'
+                              : 'Data contoh',
+                        ),
+                      ],
                     ),
                   ),
-                  const SampleBadge(),
                 ],
               ),
               const SizedBox(height: AppSpacing.sm),

@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../core/config/env.dart';
 import '../../../core/format/rupiah.dart';
+import '../../catalog/model/catalog_product.dart';
 import '../../catalog/sample/catalog_sample.dart';
 import '../../floor_plan/sample/floor_plan_sample.dart';
 import '../../statistics/sample/statistics_sample.dart';
@@ -23,9 +24,13 @@ class DeepSeekService {
   static const String defaultModel = 'deepseek-chat';
 
   /// Membangun system prompt dengan injeksi konteks data warung.
-  String _buildSystemPrompt() {
-    final products = CatalogSample.products;
-    final productSummary = products
+  String _buildSystemPrompt({
+    List<CatalogProduct>? products,
+    int? todayRevenue,
+    int? todayTransactions,
+  }) {
+    final activeProducts = products ?? CatalogSample.products;
+    final productSummary = activeProducts
         .map(
           (p) =>
               '- ${p.name} [Kategori: ${p.category}] | Harga: ${formatRupiah(p.price)} per ${p.unit} | '
@@ -34,13 +39,15 @@ class DeepSeekService {
         .join('\n');
 
     final todayStats = StatisticsSample.forPeriod(StatisticsPeriod.today);
+    final revenue = todayRevenue ?? todayStats.total;
+    final transCount = todayTransactions ?? todayStats.transactions;
 
     return '''
 Nama kamu adalah IyanBoT, asisten toko resmi aplikasi kasir RyanGunshop.
 Konteks warung:
 - Nama toko: ${FloorPlanSample.storeName}
 - Alamat: ${FloorPlanSample.storeAddress}
-- Ringkasan omzet hari ini: ${formatRupiah(todayStats.total)} (${todayStats.transactions} transaksi, ${todayStats.itemsSold} item terjual).
+- Ringkasan omzet hari ini: ${formatRupiah(revenue)} ($transCount transaksi, ${todayStats.itemsSold} item terjual).
 
 Daftar barang warung saat ini:
 $productSummary
@@ -59,13 +66,20 @@ BATASAN RUANG LINGKUP (MUTLAK & KETAT):
   Future<String> ask({
     required String userMessage,
     required List<ChatMessage> history,
+    List<CatalogProduct>? products,
+    int? todayRevenue,
+    int? todayTransactions,
   }) async {
     final apiKey = AppEnv.deepseekApiKey;
     if (apiKey.isEmpty) {
       throw StateError('Kunci API DeepSeek belum diatur.');
     }
 
-    final systemPrompt = _buildSystemPrompt();
+    final systemPrompt = _buildSystemPrompt(
+      products: products,
+      todayRevenue: todayRevenue,
+      todayTransactions: todayTransactions,
+    );
 
     // Ambil maksimal 6 riwayat percakapan terakhir agar konteks tetap terjaga
     final contextMessages = <Map<String, String>>[

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/session/app_session.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../catalog/model/catalog_product.dart';
 import '../model/chat_message.dart';
 import '../view_model/chatbot_view_model.dart';
 
@@ -30,13 +32,28 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     super.dispose();
   }
 
-  void _send() {
+  void _send() async {
     final text = _inputController.text;
     if (text.trim().isEmpty || _viewModel.isLoading) {
       return;
     }
-    _viewModel.send(text);
     _inputController.clear();
+
+    final session = AppSessionScope.maybeOf(context);
+    List<CatalogProduct>? products;
+    if (session?.productRepository != null) {
+      try {
+        final records = await session!.productRepository!.listProducts();
+        products = records.map(CatalogProduct.fromRecord).toList();
+      } catch (_) {}
+    }
+
+    _viewModel.send(
+      text,
+      products: products,
+      todayRevenue: session?.todayRevenue,
+      todayTransactions: session?.todayTransactionCount,
+    );
     _scrollToBottom();
   }
 

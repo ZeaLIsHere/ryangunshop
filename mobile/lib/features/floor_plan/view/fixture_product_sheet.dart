@@ -31,6 +31,25 @@ class FixtureProductSheet extends StatefulWidget {
 
 class _FixtureProductSheetState extends State<FixtureProductSheet> {
   String _searchQuery = '';
+  List<CatalogProduct>? _localProducts;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadProducts();
+  }
+
+  Future<void> _loadProducts() async {
+    final repo = AppSessionScope.of(context).productRepository;
+    if (repo == null) return;
+    try {
+      final records = await repo.listProducts();
+      if (!mounted) return;
+      setState(() {
+        _localProducts = records.map(CatalogProduct.fromRecord).toList();
+      });
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +57,8 @@ class _FixtureProductSheetState extends State<FixtureProductSheet> {
     final session = AppSessionScope.of(context);
 
     // Filter produk yang ada di fixture ini
-    final allProducts = CatalogSample.products
+    final sourceProducts = _localProducts ?? CatalogSample.products;
+    final allProducts = sourceProducts
         .where((p) => p.fixtureId == widget.fixture.id)
         .toList();
 

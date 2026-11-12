@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/config/env.dart';
+import '../../catalog/model/catalog_product.dart';
 import '../model/chat_message.dart';
 import '../service/deepseek_service.dart';
 
@@ -34,7 +35,12 @@ class ChatbotViewModel extends ChangeNotifier {
   bool get isAiActive => AppEnv.hasDeepseekKey;
 
   /// Mengirim pesan ke AI DeepSeek atau fallback ke simulasi lokal.
-  Future<void> send(String rawText) async {
+  Future<void> send(
+    String rawText, {
+    List<CatalogProduct>? products,
+    int? todayRevenue,
+    int? todayTransactions,
+  }) async {
     final text = rawText.trim();
     if (text.isEmpty || _isLoading) {
       return;
@@ -57,6 +63,9 @@ class ChatbotViewModel extends ChangeNotifier {
       final reply = await _service.ask(
         userMessage: text,
         history: _messages.sublist(0, _messages.length - 1),
+        products: products,
+        todayRevenue: todayRevenue,
+        todayTransactions: todayTransactions,
       );
       _messages.add(ChatMessage(text: reply, isUser: false));
     } catch (e) {
