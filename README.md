@@ -17,8 +17,9 @@ Peran dan porsi kerja masing-masing ada di [TEAM.md](TEAM.md).
 ## Cakupan tahap ini: UI dan data lokal
 
 Pada branch `feat/backend-persistence`, aplikasi Android memakai SQLite/Drift untuk
-produk, stok, nota tunai, dan ringkasan Beranda. Basis data baru dimulai kosong; tambahkan
-produk lewat Katalog. QRIS, laporan, dan sebagian pratinjau pemindai masih berupa contoh.
+produk, stok, draft keranjang, nota tunai, dan ringkasan Beranda. Basis data baru
+dimulai kosong; tambahkan produk lewat Katalog. QRIS, laporan, dan sebagian
+pratinjau pemindai masih berupa contoh.
 Pratinjau Chrome tetap memakai data contoh agar susunan layar mudah diperiksa.
 
 Mulai membaca dari berkas berikut:

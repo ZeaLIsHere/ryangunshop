@@ -349,20 +349,22 @@ Rencana kerja teknis terstruktur untuk membawa prototipe UI RyanGunshop menjadi 
 
 ### Fase 1: Persistensi Data Lokal (Offline-First Database) — *Prioritas Tertinggi*
 - **Status 2026-11-12 — berjalan di `feat/backend-persistence`:** Drift sudah memiliki
-  tabel produk, nota, item nota, repository produk/transaksi, migrasi versi 1–4,
+  tabel produk, nota, item nota, draft keranjang, repository lokal, migrasi versi 1–5,
   dan checkout tunai atomik dengan validasi stok, harga, total, diskon, serta
   kembalian. Produk tanpa barcode serta metadata katalog tersimpan di SQLite.
-  Pada Android, katalog, keranjang, pembayaran tunai, dan ringkasan omzet
-  membaca data lokal; katalog awalnya kosong sampai pengguna menambah produk.
+  Pada Android, katalog, draft keranjang (barang, diskon, catatan), pembayaran tunai,
+  dan ringkasan omzet membaca data lokal; katalog awalnya kosong sampai pengguna
+  menambah produk. Checkout menghapus draft di transaksi SQLite yang sama dengan nota.
   Preview web tetap memakai data contoh. QRIS belum mencatat pembayaran.
 - **Verifikasi otomatis:** Migrasi dari skema v1–v3, pembukaan ulang file database,
   kategori katalog lokal, pencarian manual pemindai, dan checkout tunai diuji.
   Alur tambah/edit produk dari formulir sampai SQLite serta pemuatan ulang nota,
   omzet, dan stok pada sesi baru juga lulus uji. Formulir lokal menandai foto sebagai
   contoh dan tetap dapat mengedit kategori/satuan produk lama.
+  Migrasi v4–v5, pemulihan draft setelah file SQLite dibuka ulang, penulisan perubahan
+  cepat, dan draft yang tetap ada saat checkout gagal juga diuji.
 - **Berikutnya:** Verifikasi alur tersebut di perangkat Android. Laporan masih memakai
-  contoh; persistensi draft keranjang belum tersedia. Kamera barcode dan printer
-  Bluetooth tetap ditunda.
+  contoh; kamera barcode dan printer Bluetooth tetap ditunda.
 - **Tujuan:** Data produk, stok, dan riwayat nota penjualan tersimpan permanen di HP tanpa risiko hilang saat aplikasi ditutup atau HP mati.
 - **Implementasi:**
   - Pasang SQLite via Drift / Isar untuk Flutter.

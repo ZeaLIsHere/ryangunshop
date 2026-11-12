@@ -96,12 +96,14 @@ class CartViewModel extends ChangeNotifier {
         quantity: newQuantity,
         unit: existing.unit,
       );
+      _discount = _discount.clamp(0, subtotal);
       notifyListeners();
     }
   }
 
   void removeItem(String productId) {
     _items.removeWhere((item) => item.productId == productId);
+    _discount = _discount.clamp(0, subtotal);
     notifyListeners();
   }
 
@@ -111,6 +113,19 @@ class CartViewModel extends ChangeNotifier {
   }
 
   void setNote(String note) {
+    _note = note;
+    notifyListeners();
+  }
+
+  void restoreDraft(
+    List<CartItem> items, {
+    int discount = 0,
+    String note = '',
+  }) {
+    _items
+      ..clear()
+      ..addAll(items);
+    _discount = discount.clamp(0, subtotal);
     _note = note;
     notifyListeners();
   }

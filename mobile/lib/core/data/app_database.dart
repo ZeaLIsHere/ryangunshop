@@ -49,12 +49,41 @@ class TransactionItems extends Table {
   IntColumn get subtotal => integer()();
 }
 
-@DriftDatabase(tables: [Products, Transactions, TransactionItems])
+class CartDrafts extends Table {
+  IntColumn get id => integer()();
+  IntColumn get discount => integer()();
+  TextColumn get note => text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+class CartDraftItems extends Table {
+  TextColumn get productId => text()();
+  TextColumn get productName => text()();
+  IntColumn get unitPrice => integer()();
+  IntColumn get quantity => integer()();
+  TextColumn get unit => text()();
+  IntColumn get position => integer()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {productId};
+}
+
+@DriftDatabase(
+  tables: [
+    Products,
+    Transactions,
+    TransactionItems,
+    CartDrafts,
+    CartDraftItems,
+  ],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   // Versi 1 di branch ini memiliki dua bentuk: hanya products, atau seluruh
   // tabel transaksi. Periksa tabel sebelum membuatnya agar kedua bentuk aman.
@@ -94,6 +123,10 @@ class AppDatabase extends _$AppDatabase {
               ],
             ),
           );
+        }
+        if (from < 5) {
+          await m.createTable(cartDrafts);
+          await m.createTable(cartDraftItems);
         }
       });
     },
@@ -205,6 +238,8 @@ class AppDatabase extends _$AppDatabase {
             );
         if (changed != 1) throw StateError('Gagal memperbarui stok');
       }
+      await delete(cartDraftItems).go();
+      await delete(cartDrafts).go();
     });
   }
 }

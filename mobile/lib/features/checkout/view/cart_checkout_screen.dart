@@ -38,6 +38,40 @@ class CartCheckoutScreen extends StatelessWidget {
     final localTransactions =
         transactionRepository ?? session.transactionRepository;
 
+    if (!session.isLocalCartReady) {
+      return Scaffold(
+        backgroundColor: AppColors.canvas,
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                session.isLocalCartLoadFailed
+                    ? Icons.error_outline
+                    : Icons.hourglass_empty,
+                color: session.isLocalCartLoadFailed
+                    ? AppColors.error
+                    : AppColors.primary,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                session.isLocalCartLoadFailed
+                    ? 'Keranjang lokal gagal dimuat'
+                    : 'Memuat keranjang lokal',
+                style: theme.textTheme.titleMedium,
+              ),
+              if (session.isLocalCartLoadFailed)
+                TextButton.icon(
+                  onPressed: session.loadLocalCart,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Coba lagi'),
+                ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return ListenableBuilder(
       listenable: cart,
       builder: (context, _) {
@@ -153,6 +187,13 @@ class CartCheckoutScreen extends StatelessWidget {
                         ),
                       ],
                     ),
+                    if (session.isLocalCartSaveFailed)
+                      Text(
+                        'Perubahan keranjang belum tersimpan di perangkat.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: AppColors.error,
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -270,6 +311,7 @@ class CartCheckoutScreen extends StatelessWidget {
                                   onCashConfirmed: localTransactions == null
                                       ? null
                                       : (received, change) async {
+                                          await session.flushCartDraft();
                                           final id =
                                               'TRX-${DateTime.now().microsecondsSinceEpoch}';
                                           await localTransactions.checkout(

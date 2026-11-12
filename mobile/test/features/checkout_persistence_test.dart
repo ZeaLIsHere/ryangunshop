@@ -3,8 +3,10 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ryangunshop/core/data/app_database.dart';
+import 'package:ryangunshop/core/data/cart_draft_repository.dart';
 import 'package:ryangunshop/core/data/transaction_repository.dart';
 import 'package:ryangunshop/core/session/app_session.dart';
+import 'package:ryangunshop/features/catalog/model/catalog_product.dart';
 import 'package:ryangunshop/features/checkout/view/cart_checkout_screen.dart';
 import 'package:ryangunshop/features/payment/view/payment_success_screen.dart';
 
@@ -102,5 +104,34 @@ void main() {
     expect(session.cart.isEmpty, isFalse);
     expect((await database.select(database.transactions).get()), isEmpty);
     expect((await database.findProductByBarcode('CONTOH-001'))!.stock, 12);
+  });
+
+  testWidgets('kasir lokal menghapus draft setelah nota tersimpan', (
+    tester,
+  ) async {
+    session.dispose();
+    session = AppSession(database: database);
+    await session.loadLocalCart();
+    session.cart.addProduct(
+      const CatalogProduct(
+        id: 'contoh-produk-1',
+        name: 'Beras pandan wangi 1 kg',
+        price: 16000,
+        stock: 12,
+        unit: 'bungkus',
+        fixtureId: '',
+        locationLabel: 'Rak sembako',
+        category: 'Sembako',
+      ),
+    );
+    await session.flushCartDraft();
+    expect((await CartDraftRepository(database).load()).items, hasLength(1));
+
+    await openPayment(tester);
+    await tester.tap(find.text('Simpan Transaksi Tunai'));
+    await tester.pumpAndSettle();
+    expect(find.byType(PaymentSuccessScreen), findsOneWidget);
+    expect((await CartDraftRepository(database).load()).items, isEmpty);
+    expect(session.cart.isEmpty, isTrue);
   });
 }

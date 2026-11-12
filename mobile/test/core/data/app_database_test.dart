@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ryangunshop/core/data/app_database.dart';
+import 'package:ryangunshop/core/data/cart_draft_repository.dart';
 
 void main() {
   late AppDatabase database;
@@ -125,6 +126,57 @@ void main() {
     expect((await database.select(database.transactions).get()), isEmpty);
     expect((await database.findProductByBarcode('8990001'))!.stock, 1);
   });
+
+  test(
+    'checkout tunai menghapus draft hanya jika transaksi berhasil',
+    () async {
+      await database.saveProduct(
+        ProductsCompanion.insert(
+          id: 'teh',
+          name: 'Teh botol',
+          salePrice: 5000,
+          stock: 1,
+          updatedAt: DateTime.now(),
+        ),
+      );
+      final drafts = CartDraftRepository(database);
+      await drafts.save(
+        const CartDraftSnapshot(
+          items: [
+            CartDraftLine(
+              productId: 'teh',
+              productName: 'Teh botol',
+              unitPrice: 5000,
+              quantity: 1,
+              unit: 'botol',
+            ),
+          ],
+        ),
+      );
+      Future<void> checkout(int quantity, String id) =>
+          database.completeCheckout(
+            transactionId: id,
+            paymentMethod: 'cash',
+            totalAmount: 5000 * quantity,
+            cashReceived: 5000 * quantity,
+            changeAmount: 0,
+            lines: [
+              CheckoutLine(
+                productId: 'teh',
+                quantity: quantity,
+                unitPrice: 5000,
+                subtotal: 5000 * quantity,
+              ),
+            ],
+          );
+
+      await expectLater(checkout(2, 'TRX-GAGAL'), throwsStateError);
+      expect((await drafts.load()).items.single.productId, 'teh');
+      await checkout(1, 'TRX-BERHASIL');
+      expect((await drafts.load()).items, isEmpty);
+      expect((await database.listProducts()).single.stock, 0);
+    },
+  );
 
   test('menolak kuantitas negatif, harga palsu, dan nota duplikat', () async {
     await database.saveProduct(
@@ -355,6 +407,44 @@ void main() {
       ),
     );
     expect((await legacy.listProducts()).last.barcode, isNull);
+  });
+
+  test('migrasi dari skema v4 menambah penyimpanan draft keranjang', () async {
+    await database.close();
+    final legacy = AppDatabase(
+      NativeDatabase.memory(
+        setup: (raw) {
+          raw.execute('''CREATE TABLE products (
+        id TEXT NOT NULL PRIMARY KEY, barcode TEXT UNIQUE, name TEXT NOT NULL,
+        sale_price INTEGER NOT NULL, cost_price INTEGER NOT NULL DEFAULT 0,
+        stock INTEGER NOT NULL, category TEXT NOT NULL DEFAULT 'Lainnya',
+        unit TEXT NOT NULL DEFAULT 'pcs', fixture_id TEXT NOT NULL DEFAULT '',
+        location_label TEXT NOT NULL DEFAULT 'Belum ditentukan',
+        low_stock_threshold INTEGER NOT NULL DEFAULT 5,
+        updated_at INTEGER NOT NULL)''');
+          raw.execute('''CREATE TABLE transactions (
+        id TEXT NOT NULL PRIMARY KEY, created_at INTEGER NOT NULL,
+        total_amount INTEGER NOT NULL, discount_amount INTEGER NOT NULL DEFAULT 0,
+        payment_method TEXT NOT NULL, cash_received INTEGER,
+        change_amount INTEGER)''');
+          raw.execute('''CREATE TABLE transaction_items (
+        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        transaction_id TEXT NOT NULL, product_id TEXT NOT NULL,
+        product_name TEXT NOT NULL, quantity INTEGER NOT NULL,
+        unit_price INTEGER NOT NULL, subtotal INTEGER NOT NULL)''');
+          raw.execute(
+            "INSERT INTO products (id, name, sale_price, stock, updated_at) VALUES ('lama', 'Produk lama', 5000, 3, 0)",
+          );
+          raw.execute('PRAGMA user_version = 4');
+        },
+      ),
+    );
+    addTearDown(legacy.close);
+    final drafts = CartDraftRepository(legacy);
+    expect((await legacy.listProducts()).single.name, 'Produk lama');
+    expect((await drafts.load()).items, isEmpty);
+    await drafts.save(const CartDraftSnapshot(note: 'Draft baru'));
+    expect((await drafts.load()).note, 'Draft baru');
   });
 
   test(
