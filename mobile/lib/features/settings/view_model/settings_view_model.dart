@@ -2,8 +2,6 @@ import 'package:flutter/foundation.dart';
 
 import '../../../core/session/app_session.dart';
 import '../../../core/session/user_role.dart';
-import '../model/store_profile.dart';
-import '../sample/settings_sample.dart';
 
 /// Keadaan halaman pengaturan.
 ///
@@ -21,8 +19,6 @@ class SettingsViewModel extends ChangeNotifier {
   bool get canEditFloorPlan => session.canEditFloorPlan;
 
   List<UserRole> get roleOptions => UserRole.values;
-
-  StoreProfile get storeProfile => SettingsSample.storeProfile;
 
   void selectRole(UserRole role) => session.selectRole(role);
 

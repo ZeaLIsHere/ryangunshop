@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/format/rupiah.dart';
+import '../../../core/session/app_session.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -8,7 +9,6 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/sample_badge.dart';
 import '../../catalog/model/catalog_product.dart';
-import '../../catalog/sample/catalog_sample.dart';
 import '../sample/statistics_sample.dart';
 
 /// Layar statistik penjualan dan stok dengan data contoh.
@@ -20,13 +20,99 @@ class StatisticsScreen extends StatefulWidget {
 }
 
 class _StatisticsScreenState extends State<StatisticsScreen> {
-  StatisticsPeriod _period = StatisticsPeriod.today;
+  List<CatalogProduct>? _localProducts;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadLocalProducts();
+  }
+
+  Future<void> _loadLocalProducts() async {
+    final repo = AppSessionScope.maybeOf(context)?.productRepository;
+    if (repo == null) return;
+    try {
+      final records = await repo.listProducts();
+      if (!mounted) return;
+      setState(() {
+        _localProducts = records.map(CatalogProduct.fromRecord).toList();
+      });
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final data = StatisticsSample.forPeriod(_period);
-    final products = CatalogSample.products;
+    final session = AppSessionScope.maybeOf(context);
+    final isLocal = session?.productRepository != null;
+
+    final StatisticsDataSet data;
+    if (session != null) {
+      final todayTotal = session.todayRevenue;
+      final todayCount = session.todayTransactionCount;
+      final itemsSold = session.recentTransactions.fold<int>(
+        0,
+        (sum, tx) => sum + tx.itemCount,
+      );
+      data = StatisticsDataSet(
+        total: todayTotal,
+        previousTotal: 0,
+        transactions: todayCount,
+        itemsSold: itemsSold,
+        grossProfit: 0,
+        payments: const [],
+        peakTitle: 'Waktu transaksi terbanyak',
+        peakHours: const [
+          HourBucket(label: 'Pagi', transactions: 0),
+          HourBucket(label: 'Siang', transactions: 0),
+          HourBucket(label: 'Sore', transactions: 0),
+          HourBucket(label: 'Malam', transactions: 0),
+        ],
+        trendTitle: 'Tren penjualan',
+        trend: [
+          const SalesPoint(label: 'Sen', total: 0),
+          const SalesPoint(label: 'Sel', total: 0),
+          const SalesPoint(label: 'Rab', total: 0),
+          const SalesPoint(label: 'Kam', total: 0),
+          const SalesPoint(label: 'Jum', total: 0),
+          const SalesPoint(label: 'Sab', total: 0),
+          SalesPoint(label: 'Hari ini', total: todayTotal),
+        ],
+        topProducts: const [],
+        slowMoving: const [],
+      );
+    } else {
+      data = const StatisticsDataSet(
+        total: 0,
+        previousTotal: 0,
+        transactions: 0,
+        itemsSold: 0,
+        grossProfit: 0,
+        payments: [],
+        peakTitle: 'Waktu transaksi terbanyak',
+        peakHours: [
+          HourBucket(label: 'Pagi', transactions: 0),
+          HourBucket(label: 'Siang', transactions: 0),
+          HourBucket(label: 'Sore', transactions: 0),
+          HourBucket(label: 'Malam', transactions: 0),
+        ],
+        trendTitle: 'Tren penjualan',
+        trend: [
+          SalesPoint(label: 'Sen', total: 0),
+          SalesPoint(label: 'Sel', total: 0),
+          SalesPoint(label: 'Rab', total: 0),
+          SalesPoint(label: 'Kam', total: 0),
+          SalesPoint(label: 'Jum', total: 0),
+          SalesPoint(label: 'Sab', total: 0),
+          SalesPoint(label: 'Hari ini', total: 0),
+        ],
+        topProducts: [],
+        slowMoving: [],
+      );
+    }
+
+    final products = _localProducts ?? const <CatalogProduct>[];
+
     final lowStock = products
         .where((p) => p.stockStatus == ProductStockStatus.low)
         .toList();
@@ -68,31 +154,32 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     ),
                   ),
                   Expanded(
-                    child: Text(
-                      'Ringkasan warung',
-                      style: theme.textTheme.headlineSmall,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Ringkasan warung',
+                          style: theme.textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 2),
+                        SampleBadge(
+                          label: isLocal
+                              ? 'Tersimpan di perangkat'
+                              : 'Belum ada data',
+                        ),
+                      ],
                     ),
                   ),
-                  const SampleBadge(),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Wrap(
-                spacing: AppSpacing.xs,
-                runSpacing: AppSpacing.xs,
-                children: [
-                  for (final period in StatisticsPeriod.values)
-                    ChoiceChip(
-                      label: Text(period.label),
-                      selected: period == _period,
-                      onSelected: (_) => setState(() => _period = period),
-                    ),
                 ],
               ),
               const SizedBox(height: AppSpacing.sm),
               _SummaryHero(data: data),
               const SizedBox(height: AppSpacing.sm),
-              _MetricGrid(data: data, activeProducts: products.length),
+              _MetricGrid(
+                data: data,
+                activeProducts: products.length,
+                lowStockCount: lowStock.length,
+              ),
               const SizedBox(height: AppSpacing.lg),
               _SectionTitle(text: data.trendTitle),
               const SizedBox(height: AppSpacing.sm),
@@ -111,23 +198,60 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               AppCard(
                 child: Column(
                   children: [
-                    for (var i = 0; i < data.topProducts.length; i++)
-                      _ProductRow(
-                        rank: i + 1,
-                        product: data.topProducts[i],
-                        isLast: i == data.topProducts.length - 1,
-                      ),
+                    if (data.topProducts.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.all(AppSpacing.md),
+                        child: Center(
+                          child: Text(
+                            'Belum ada data transaksi produk',
+                            style: TextStyle(color: AppColors.muted),
+                          ),
+                        ),
+                      )
+                    else
+                      for (var i = 0; i < data.topProducts.length; i++)
+                        _ProductRow(
+                          rank: i + 1,
+                          product: data.topProducts[i],
+                          isLast: i == data.topProducts.length - 1,
+                        ),
                   ],
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
               _SectionTitle(text: 'Produk lambat laku'),
               const SizedBox(height: AppSpacing.sm),
-              _SlowMoving(products: data.slowMoving),
+              if (data.slowMoving.isEmpty)
+                const AppCard(
+                  child: Padding(
+                    padding: EdgeInsets.all(AppSpacing.md),
+                    child: Center(
+                      child: Text(
+                        'Belum ada data produk lambat laku',
+                        style: TextStyle(color: AppColors.muted),
+                      ),
+                    ),
+                  ),
+                )
+              else
+                _SlowMoving(products: data.slowMoving),
               const SizedBox(height: AppSpacing.lg),
               _SectionTitle(text: 'Margin produk'),
               const SizedBox(height: AppSpacing.sm),
-              _MarginList(products: marginProducts.take(4).toList()),
+              if (marginProducts.isEmpty)
+                const AppCard(
+                  child: Padding(
+                    padding: EdgeInsets.all(AppSpacing.md),
+                    child: Center(
+                      child: Text(
+                        'Belum ada produk dengan harga modal',
+                        style: TextStyle(color: AppColors.muted),
+                      ),
+                    ),
+                  ),
+                )
+              else
+                _MarginList(products: marginProducts.take(4).toList()),
               const SizedBox(height: AppSpacing.lg),
               _SectionTitle(text: 'Stok'),
               const SizedBox(height: AppSpacing.sm),
@@ -207,40 +331,42 @@ class _SummaryHero extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm,
-              vertical: AppSpacing.xxs,
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.surface.withValues(alpha: 0.16),
-              borderRadius: AppRadius.fixtureBorder,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  up ? Icons.trending_up : Icons.trending_down,
-                  size: 16,
-                  color: AppColors.surface,
-                ),
-                const SizedBox(width: AppSpacing.xxs),
-                Flexible(
-                  child: Text(
-                    '${up ? 'Naik' : 'Turun'} ${_percent(change.abs())} '
-                    'vs periode sebelumnya',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.surface,
-                      fontWeight: FontWeight.w600,
+          if (data.previousTotal > 0) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.xxs,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.surface.withValues(alpha: 0.16),
+                borderRadius: AppRadius.fixtureBorder,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    up ? Icons.trending_up : Icons.trending_down,
+                    size: 16,
+                    color: AppColors.surface,
+                  ),
+                  const SizedBox(width: AppSpacing.xxs),
+                  Flexible(
+                    child: Text(
+                      '${up ? 'Naik' : 'Turun'} ${_percent(change.abs())} '
+                      'vs periode sebelumnya',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.surface,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -248,10 +374,15 @@ class _SummaryHero extends StatelessWidget {
 }
 
 class _MetricGrid extends StatelessWidget {
-  const _MetricGrid({required this.data, required this.activeProducts});
+  const _MetricGrid({
+    required this.data,
+    required this.activeProducts,
+    required this.lowStockCount,
+  });
 
   final StatisticsDataSet data;
   final int activeProducts;
+  final int lowStockCount;
 
   @override
   Widget build(BuildContext context) {
@@ -277,14 +408,9 @@ class _MetricGrid extends StatelessWidget {
         value: '$activeProducts',
       ),
       _MetricTile(
-        icon: Icons.savings_outlined,
-        label: 'Laba kotor',
-        value: formatRupiah(data.grossProfit),
-      ),
-      _MetricTile(
-        icon: Icons.percent_outlined,
-        label: 'Margin',
-        value: _percent(data.marginPercent),
+        icon: Icons.warning_amber_rounded,
+        label: 'Stok menipis',
+        value: '$lowStockCount',
       ),
     ];
 
@@ -411,6 +537,19 @@ class _PaymentSplit extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    if (slices.isEmpty) {
+      return const AppCard(
+        child: Padding(
+          padding: EdgeInsets.all(AppSpacing.md),
+          child: Center(
+            child: Text(
+              'Belum ada data metode pembayaran',
+              style: TextStyle(color: AppColors.muted),
+            ),
+          ),
+        ),
+      );
+    }
     final total = slices.fold<int>(0, (sum, s) => sum + s.total);
     const colors = [AppColors.primary, AppColors.accent];
 
@@ -421,15 +560,20 @@ class _PaymentSplit extends StatelessWidget {
             borderRadius: AppRadius.fixtureBorder,
             child: SizedBox(
               height: 12,
-              child: Row(
-                children: [
-                  for (var i = 0; i < slices.length; i++)
-                    Expanded(
-                      flex: slices[i].total,
-                      child: ColoredBox(color: colors[i % colors.length]),
+              child: total == 0
+                  ? Container(color: AppColors.primaryLight)
+                  : Row(
+                      children: [
+                        for (var i = 0; i < slices.length; i++)
+                          if (slices[i].total > 0)
+                            Expanded(
+                              flex: slices[i].total,
+                              child: ColoredBox(
+                                color: colors[i % colors.length],
+                              ),
+                            ),
+                      ],
                     ),
-                ],
-              ),
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -697,7 +841,7 @@ class _MarginList extends StatelessWidget {
           ],
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'Estimasi dari harga jual dan modal (data contoh).',
+            'Dihitung dari selisih harga jual dan harga modal produk.',
             style: theme.textTheme.bodySmall?.copyWith(color: AppColors.muted),
           ),
         ],

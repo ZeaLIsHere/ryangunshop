@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../../core/format/rupiah.dart';
 import '../../../core/session/app_session.dart';
+import '../../../core/session/user_role.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/category_icon.dart';
 import '../../../core/widgets/primary_action.dart';
 import '../model/catalog_product.dart';
 import 'product_form_screen.dart';
@@ -16,6 +18,7 @@ class ProductDetailSheet extends StatelessWidget {
     this.existingProducts = const [],
     this.isLocal = false,
     this.onProductUpdated,
+    this.onProductDeleted,
     super.key,
   });
 
@@ -23,6 +26,7 @@ class ProductDetailSheet extends StatelessWidget {
   final List<CatalogProduct> existingProducts;
   final bool isLocal;
   final ValueChanged<CatalogProduct>? onProductUpdated;
+  final ValueChanged<CatalogProduct>? onProductDeleted;
 
   static Future<void> show(
     BuildContext context, {
@@ -30,6 +34,7 @@ class ProductDetailSheet extends StatelessWidget {
     List<CatalogProduct> existingProducts = const [],
     bool isLocal = false,
     ValueChanged<CatalogProduct>? onProductUpdated,
+    ValueChanged<CatalogProduct>? onProductDeleted,
   }) {
     return showModalBottomSheet<void>(
       context: context,
@@ -40,6 +45,7 @@ class ProductDetailSheet extends StatelessWidget {
         existingProducts: existingProducts,
         isLocal: isLocal,
         onProductUpdated: onProductUpdated,
+        onProductDeleted: onProductDeleted,
       ),
     );
   }
@@ -107,9 +113,34 @@ class ProductDetailSheet extends StatelessWidget {
                         ],
                       ),
                     ],
+                    Row(
+                      children: [
+                        CategoryIcon(category: product.category, size: 14),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            '${product.category} \u00b7 ${product.locationLabel}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppColors.muted,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
+              if (session.role == UserRole.owner && onProductDeleted != null)
+                IconButton(
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: AppColors.error,
+                  ),
+                  tooltip: 'Hapus Produk',
+                  onPressed: () => _confirmDelete(context),
+                ),
               IconButton(
                 icon: const Icon(Icons.close),
                 tooltip: 'Tutup',
@@ -254,5 +285,31 @@ class ProductDetailSheet extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _confirmDelete(BuildContext context) {
+    showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Hapus Produk?'),
+        content: Text('Produk "${product.name}" akan dihapus secara permanen.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Batal'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    ).then((confirmed) {
+      if (confirmed == true && context.mounted) {
+        Navigator.of(context).pop();
+        onProductDeleted?.call(product);
+      }
+    });
   }
 }

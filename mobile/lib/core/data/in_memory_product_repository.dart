@@ -24,4 +24,18 @@ class InMemoryProductRepository implements ProductRepository {
   Future<void> save(ProductRecord product) async {
     _products[product.id] = product;
   }
+
+  @override
+  Future<void> delete(String id) async {
+    _products.remove(id);
+  }
+
+  @override
+  Future<void> seedIfEmpty(List<ProductRecord> starterRecords) async {
+    if (_products.isEmpty) {
+      for (final product in starterRecords) {
+        _products[product.id] = product;
+      }
+    }
+  }
 }

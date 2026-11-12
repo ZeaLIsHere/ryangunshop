@@ -7,7 +7,6 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../catalog/model/catalog_product.dart';
-import '../../catalog/sample/catalog_sample.dart';
 import '../model/fixture_item.dart';
 
 /// Bottom sheet menampilkan daftar produk pada fixture yang dipilih.
@@ -31,6 +30,24 @@ class FixtureProductSheet extends StatefulWidget {
 
 class _FixtureProductSheetState extends State<FixtureProductSheet> {
   String _searchQuery = '';
+  List<CatalogProduct>? _localProducts;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadProducts();
+  }
+
+  Future<void> _loadProducts() async {
+    final repo = AppSessionScope.of(context).productRepository;
+    try {
+      final records = await repo.listProducts();
+      if (!mounted) return;
+      setState(() {
+        _localProducts = records.map(CatalogProduct.fromRecord).toList();
+      });
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +55,8 @@ class _FixtureProductSheetState extends State<FixtureProductSheet> {
     final session = AppSessionScope.of(context);
 
     // Filter produk yang ada di fixture ini
-    final allProducts = CatalogSample.products
+    final sourceProducts = _localProducts ?? const <CatalogProduct>[];
+    final allProducts = sourceProducts
         .where((p) => p.fixtureId == widget.fixture.id)
         .toList();
 

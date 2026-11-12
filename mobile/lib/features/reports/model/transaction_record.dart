@@ -8,6 +8,7 @@ class TransactionRecord {
     required this.itemCount,
     required this.total,
     required this.paymentMethod,
+    this.title = '',
   });
 
   final String id;
@@ -22,4 +23,7 @@ class TransactionRecord {
   final int total;
 
   final ReportPaymentMethod paymentMethod;
+
+  /// Ringkasan nama barang untuk nota transaksi.
+  final String title;
 }

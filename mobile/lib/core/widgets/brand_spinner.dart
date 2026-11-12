@@ -16,7 +16,7 @@ class BrandSpinner extends StatelessWidget {
     super.key,
   });
 
-  /// Label status, misalnya "Memuat data contoh".
+  /// Label status, misalnya "Memuat data".
   final String? label;
 
   /// Diameter spinner dalam dp.

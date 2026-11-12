@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../core/data/transaction_repository.dart' as db;
+import '../model/report_payment_method.dart';
 import '../model/report_scenario.dart';
 import '../model/transaction_record.dart';
 import '../sample/reports_sample.dart';
@@ -9,16 +11,27 @@ enum ReportsStatus { loading, ready, failure }
 
 /// Keadaan layar riwayat dan laporan transaksi.
 class ReportsViewModel extends ChangeNotifier {
-  ReportsViewModel({this.loadDelay = const Duration(milliseconds: 350)});
+  ReportsViewModel({
+    this.repository,
+    this.initialRecords,
+    this.loadDelay = const Duration(milliseconds: 350),
+  }) : _scenario = initialRecords != null
+           ? ReportScenario.withData
+           : ReportScenario.empty;
 
-  /// Jeda tiruan agar state memuat terlihat dan dapat dicoba. Saat lapisan data
-  /// tersedia, jeda ini diganti pemanggilan sumber data.
+  db.TransactionRepository? repository;
+  final List<TransactionRecord>? initialRecords;
+
+  /// Jeda tiruan agar state memuat terlihat dan dapat dicoba saat data contoh.
   final Duration loadDelay;
 
-  ReportScenario _scenario = ReportScenario.withData;
+  bool get isLocal => repository != null;
+
+  ReportScenario _scenario;
   ReportsStatus _status = ReportsStatus.loading;
   List<TransactionRecord> _records = const <TransactionRecord>[];
   bool _disposed = false;
+  int _loadVersion = 0;
 
   ReportScenario get scenario => _scenario;
 
@@ -31,28 +44,75 @@ class ReportsViewModel extends ChangeNotifier {
   int get totalAmount =>
       _records.fold(0, (total, record) => total + record.total);
 
+  void updateRepository(db.TransactionRepository? newRepository) {
+    if (repository == newRepository) return;
+    repository = newRepository;
+    load();
+  }
+
   /// Memuat ulang riwayat, atau mengganti skenario contoh bila dioper.
   Future<void> load({ReportScenario? scenario}) async {
+    final explicitScenario = scenario;
     _scenario = scenario ?? _scenario;
     _status = ReportsStatus.loading;
     _records = const <TransactionRecord>[];
     notifyListeners();
+
+    final source = repository;
+    if (source != null && explicitScenario == null) {
+      final version = ++_loadVersion;
+      try {
+        final localRecords = await source.listRecent(limit: 50);
+        if (_disposed || version != _loadVersion) return;
+        _records = localRecords.map((r) {
+          final timeStr =
+              '${r.createdAt.hour.toString().padLeft(2, '0')}:${r.createdAt.minute.toString().padLeft(2, '0')} WIB';
+          final method = r.paymentMethod == 'cash'
+              ? ReportPaymentMethod.cash
+              : ReportPaymentMethod.qris;
+          return TransactionRecord(
+            id: r.id,
+            timeLabel: timeStr,
+            itemCount: r.itemCount,
+            total: r.totalAmount,
+            paymentMethod: method,
+            title: r.summaryTitle,
+          );
+        }).toList();
+        _status = ReportsStatus.ready;
+      } catch (_) {
+        if (_disposed || version != _loadVersion) return;
+        _status = ReportsStatus.failure;
+      }
+      notifyListeners();
+      return;
+    }
 
     await Future<void>.delayed(loadDelay);
     if (_disposed) {
       return;
     }
 
-    switch (_scenario) {
-      case ReportScenario.withData:
-        _records = ReportsSample.records;
-        _status = ReportsStatus.ready;
-      case ReportScenario.empty:
-        _records = const <TransactionRecord>[];
-        _status = ReportsStatus.ready;
-      case ReportScenario.failure:
-        _records = const <TransactionRecord>[];
-        _status = ReportsStatus.failure;
+    if (explicitScenario != null) {
+      switch (explicitScenario) {
+        case ReportScenario.withData:
+          _records = initialRecords ?? ReportsSample.records;
+          _status = ReportsStatus.ready;
+        case ReportScenario.empty:
+          _records = const <TransactionRecord>[];
+          _status = ReportsStatus.ready;
+        case ReportScenario.failure:
+          _records = const <TransactionRecord>[];
+          _status = ReportsStatus.failure;
+      }
+    } else if (initialRecords != null) {
+      _scenario = ReportScenario.withData;
+      _records = initialRecords!;
+      _status = ReportsStatus.ready;
+    } else {
+      _scenario = ReportScenario.empty;
+      _records = const <TransactionRecord>[];
+      _status = ReportsStatus.ready;
     }
     notifyListeners();
   }

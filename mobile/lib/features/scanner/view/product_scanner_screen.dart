@@ -26,12 +26,36 @@ class ProductScannerScreen extends StatefulWidget {
 }
 
 class _ProductScannerScreenState extends State<ProductScannerScreen> {
-  late final ScannerViewModel _viewModel;
+  late ScannerViewModel _viewModel;
+  bool _initialized = false;
 
   @override
   void initState() {
     super.initState();
     _viewModel = widget.viewModel ?? ScannerViewModel();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized && widget.viewModel == null) {
+      _initialized = true;
+      _loadScannerProducts();
+    }
+  }
+
+  Future<void> _loadScannerProducts() async {
+    final session = AppSessionScope.of(context);
+    if (session.database == null) return;
+    try {
+      final records = await session.productRepository.listProducts();
+      if (!mounted) return;
+      setState(() {
+        _viewModel = ScannerViewModel(
+          products: records.map(CatalogProduct.fromRecord).toList(),
+        );
+      });
+    } catch (_) {}
   }
 
   @override
@@ -41,11 +65,11 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
   }
 
   Future<void> _openManualSearch() async {
-    final repository = AppSessionScope.of(context).productRepository;
+    final session = AppSessionScope.of(context);
     ScannerViewModel? localViewModel;
-    if (repository != null) {
+    if (session.database != null) {
       try {
-        final records = await repository.listProducts();
+        final records = await session.productRepository.listProducts();
         if (!mounted) return;
         localViewModel = ScannerViewModel(
           products: records.map(CatalogProduct.fromRecord).toList(),
@@ -65,7 +89,7 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
       MaterialPageRoute(
         builder: (_) => ManualProductSearchScreen(
           viewModel: searchViewModel,
-          isLocal: repository != null,
+          isLocal: session.database != null,
         ),
       ),
     );
@@ -78,11 +102,10 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
     final product = _viewModel.detectedProduct;
     if (product == null || product.stock == 0) return;
     final session = AppSessionScope.of(context);
-    final repository = session.productRepository;
     var selected = product;
-    if (repository != null) {
+    if (session.database != null) {
       try {
-        final products = await repository.listProducts();
+        final products = await session.productRepository.listProducts();
         if (!mounted) return;
         final matches = products.where((record) => record.id == product.id);
         if (matches.isEmpty || matches.first.stock == 0) {
@@ -295,7 +318,9 @@ class _SimulatedCameraPreview extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.xxs),
                   Text(
-                    isTorchOn ? 'Lampu simulasi aktif' : 'Pratinjau simulasi',
+                    isTorchOn
+                        ? 'Lampu simulasi aktif'
+                        : 'Arahkan barcode ke bingkai kamera',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodySmall
                         ?.copyWith(color: AppColors.primaryLight),

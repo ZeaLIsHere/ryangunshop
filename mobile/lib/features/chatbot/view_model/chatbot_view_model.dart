@@ -1,21 +1,22 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/config/env.dart';
+import '../../catalog/model/catalog_product.dart';
 import '../model/chat_message.dart';
-import '../service/deepseek_service.dart';
+import '../service/groq_service.dart';
 
 /// State percakapan chatbot.
 ///
-/// Jika kunci API DeepSeek tersedia (lewat [AppEnv]), pesan dikirim ke model
-/// `deepseek-chat` dengan injeksi data toko secara real-time. Jika kunci belum
-/// diatur atau koneksi gagal, sistem secara anggun beralih ke simulasi lokal.
+/// Jika kunci API Groq tersedia (lewat [AppEnv]), pesan dikirim ke model Groq
+/// dengan injeksi data toko secara real-time. Jika kunci belum diatur atau
+/// koneksi gagal, sistem secara anggun beralih ke simulasi lokal.
 class ChatbotViewModel extends ChangeNotifier {
-  ChatbotViewModel({DeepSeekService? service})
-    : _service = service ?? DeepSeekService() {
+  ChatbotViewModel({GroqService? service})
+    : _service = service ?? GroqService() {
     _messages.add(const ChatMessage(text: greeting, isUser: false));
   }
 
-  final DeepSeekService _service;
+  final GroqService _service;
 
   static const String greeting =
       'Halo! Saya IyanBoT, asisten toko RyanGunshop. Ada yang bisa dibantu '
@@ -30,11 +31,16 @@ class ChatbotViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get lastError => _lastError;
 
-  /// Menandakan apakah kunci API DeepSeek aktif dan siap digunakan.
-  bool get isAiActive => AppEnv.hasDeepseekKey;
+  /// Menandakan apakah kunci API Groq aktif dan siap digunakan.
+  bool get isAiActive => AppEnv.hasGroqKey;
 
-  /// Mengirim pesan ke AI DeepSeek atau fallback ke simulasi lokal.
-  Future<void> send(String rawText) async {
+  /// Mengirim pesan ke AI Groq atau fallback ke simulasi lokal.
+  Future<void> send(
+    String rawText, {
+    List<CatalogProduct>? products,
+    int? todayRevenue,
+    int? todayTransactions,
+  }) async {
     final text = rawText.trim();
     if (text.isEmpty || _isLoading) {
       return;
@@ -57,6 +63,9 @@ class ChatbotViewModel extends ChangeNotifier {
       final reply = await _service.ask(
         userMessage: text,
         history: _messages.sublist(0, _messages.length - 1),
+        products: products,
+        todayRevenue: todayRevenue,
+        todayTransactions: todayTransactions,
       );
       _messages.add(ChatMessage(text: reply, isUser: false));
     } catch (e) {
@@ -65,8 +74,8 @@ class ChatbotViewModel extends ChangeNotifier {
       _messages.add(
         ChatMessage(
           text:
-              'Terjadi kendala ke DeepSeek ($e).\n\n'
-              'Balasan simulasi lokal:\n$localReply',
+              'Terjadi kendala menghubungi layanan asisten AI ($e).\n\n'
+              'Balasan cepat asisten:\n$localReply',
           isUser: false,
         ),
       );
@@ -90,7 +99,10 @@ class ChatbotViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Balasan hardcoded berdasarkan kata kunci pada [input].
+  /// Panduan lokal berdasarkan kata kunci pada [input].
+  ///
+  /// Tidak memuat data bisnis apa pun; angka dan produk hanya boleh berasal
+  /// dari repository atau respons AI.
   @visibleForTesting
   String replyFor(String input) {
     final q = input.toLowerCase();
@@ -100,21 +112,20 @@ class ChatbotViewModel extends ChangeNotifier {
       return 'Halo! Saya IyanBoT. Mau cek stok, harga, atau kasir toko?';
     }
     if (has(['stok', 'restok', 'habis', 'menipis'])) {
-      return 'Ada 2 produk stok menipis: Minyak goreng 1 liter (3 botol) dan '
-          'Air mineral 600 ml (5 botol). Buka Katalog lalu urutkan '
-          '"Stok menipis dulu".';
+      return 'Buka tab Katalog lalu gunakan filter "Stok menipis" untuk melihat '
+          'stok terkini.';
     }
     if (has(['penjualan', 'omzet', 'omset', 'total', 'laba', 'jual'])) {
-      return 'Penjualan hari ini Rp 175.000 dari 3 transaksi (data contoh). '
-          'Buka halaman Statistik untuk rincian.';
+      return 'Penjualan dan omzet hari ini dapat dipantau langsung di Beranda '
+          'atau buka halaman Statistik untuk analisis transaksi.';
     }
     if (has(['pindai', 'scan', 'barcode', 'kamera'])) {
-      return 'Tekan tombol Kasir di tengah navigasi, lalu "Scan". Arahkan '
-          'kamera ke barcode, lalu konfirmasi produk.';
+      return 'Tekan tombol Kasir di navigasi, lalu "Scan". Arahkan '
+          'kamera ke barcode, lalu konfirmasi produk ke keranjang.';
     }
     if (has(['qris', 'qr'])) {
       return 'Saat membayar, buka sheet pembayaran lalu pilih '
-          '"QRIS Dinamis". QR contoh tampil di kartu QRIS.';
+          '"QRIS Dinamis". Minta pelanggan memindai kode QRIS dengan e-wallet/mobile banking.';
     }
     if (has(['tunai', 'kembalian', 'cash'])) {
       return 'Pilih "Tunai", isi uang diterima atau pakai tombol uang cepat, '

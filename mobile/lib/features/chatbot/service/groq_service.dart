@@ -4,68 +4,87 @@ import 'package:http/http.dart' as http;
 
 import '../../../core/config/env.dart';
 import '../../../core/format/rupiah.dart';
-import '../../catalog/sample/catalog_sample.dart';
-import '../../floor_plan/sample/floor_plan_sample.dart';
-import '../../statistics/sample/statistics_sample.dart';
+import '../../catalog/model/catalog_product.dart';
 import '../model/chat_message.dart';
 
-/// Layanan integrasi DeepSeek Chat API (`deepseek-chat`).
+/// Layanan integrasi Groq Chat Completions API.
 ///
-/// Menyediakan konteks data warung real-time (katalog produk, stok, harga,
-/// lokasi rak denah, omzet hari ini) ke dalam system prompt agar asisten AI
-/// dapat menjawab pertanyaan operasional warung secara tepat dan kontekstual.
-class DeepSeekService {
-  DeepSeekService({http.Client? client}) : _client = client ?? http.Client();
+/// Endpoint Groq memakai format yang kompatibel dengan OpenAI Chat Completions.
+/// Konteks warung (katalog, stok, harga, dan omzet) hanya berasal dari data
+/// yang dioper pemanggil, tanpa fallback ke data contoh.
+class GroqService {
+  GroqService({http.Client? client}) : _client = client ?? http.Client();
 
   final http.Client _client;
 
-  static const String endpoint = 'https://api.deepseek.com/chat/completions';
-  static const String defaultModel = 'deepseek-chat';
+  static const String endpoint =
+      'https://api.groq.com/openai/v1/chat/completions';
+
+  /// Model yang dipakai bila `GROQ_MODEL` tidak diatur.
+  static const String defaultModel = AppEnv.defaultGroqModel;
 
   /// Membangun system prompt dengan injeksi konteks data warung.
-  String _buildSystemPrompt() {
-    final products = CatalogSample.products;
-    final productSummary = products
-        .map(
-          (p) =>
-              '- ${p.name} [Kategori: ${p.category}] | Harga: ${formatRupiah(p.price)} per ${p.unit} | '
-              'Stok: ${p.stock} (${p.stockStatus.name}) | Lokasi: ${p.locationLabel}',
-        )
-        .join('\n');
+  String _buildSystemPrompt({
+    List<CatalogProduct>? products,
+    int? todayRevenue,
+    int? todayTransactions,
+  }) {
+    final activeProducts = products ?? const <CatalogProduct>[];
+    final productSummary = activeProducts.isEmpty
+        ? 'Belum ada produk tersimpan di katalog.'
+        : activeProducts
+              .map(
+                (p) =>
+                    '- ${p.name} [Kategori: ${p.category}] | Harga: ${formatRupiah(p.price)} per ${p.unit} | '
+                    'Stok: ${p.stock} (${p.stockStatus.name}) | Lokasi: ${p.locationLabel}',
+              )
+              .join('\n');
 
-    final todayStats = StatisticsSample.forPeriod(StatisticsPeriod.today);
+    final revenueText = todayRevenue == null
+        ? 'belum tersedia'
+        : formatRupiah(todayRevenue);
+    final transactionText = todayTransactions == null
+        ? 'belum tersedia'
+        : '$todayTransactions transaksi';
 
     return '''
 Nama kamu adalah IyanBoT, asisten toko resmi aplikasi kasir RyanGunshop.
 Konteks warung:
-- Nama toko: ${FloorPlanSample.storeName}
-- Alamat: ${FloorPlanSample.storeAddress}
-- Ringkasan omzet hari ini: ${formatRupiah(todayStats.total)} (${todayStats.transactions} transaksi, ${todayStats.itemsSold} item terjual).
+- Omzet hari ini: $revenueText.
+- Jumlah transaksi hari ini: $transactionText.
 
 Daftar barang warung saat ini:
 $productSummary
 
 BATASAN RUANG LINGKUP (MUTLAK & KETAT):
-1. Kamu HANYA boleh menjawab pertanyaan seputar toko RyanGunshop: stok barang, harga, lokasi rak/denah, transaksi kasir, atau panduan aplikasi RyanGunshop.
+1. Kamu HANYA boleh menjawab pertanyaan seputar toko RyanGunshop: stok barang, harga, lokasi rak, transaksi kasir, atau panduan aplikasi RyanGunshop.
 2. DILARANG KERAS melayani permintaan di luar toko RyanGunshop. Jika pengguna meminta kode pemrograman (HTML, CSS, JavaScript, Python, dll), cerita fiksi, esai, tugas sekolah, atau topik umum lain, TOLAK DENGAN TEGAS DAN SINGKAT: "Maaf, saya IyanBoT hanya melayani seputar operasional toko RyanGunshop." Jangan pernah menulis kode program apa pun.
 3. DILARANG menggunakan tanda bintang ganda (**) atau format markdown bold/italic apa pun. Selalu tulis dalam teks biasa.
 4. DILARANG menggunakan tanda kutip kode (```) atau sintaks kode.
 5. DILARANG menggunakan emoji atau emotikon sama sekali (tidak boleh ada simbol wajah, tangan, atau ikon apa pun).
 6. Jawaban harus sangat ringkas, sederhana, langsung to the point tanpa basa-basi pembuka atau penutup yang panjang.
+7. Gunakan HANYA data pada konteks di atas. Jika data tidak tersedia, katakan belum tersedia. JANGAN mengarang nama produk, harga, stok, omzet, atau angka apa pun.
 ''';
   }
 
-  /// Mengirim pesan ke DeepSeek API dan mengembalikan respons teks asisten.
+  /// Mengirim pesan ke Groq API dan mengembalikan respons teks asisten.
   Future<String> ask({
     required String userMessage,
     required List<ChatMessage> history,
+    List<CatalogProduct>? products,
+    int? todayRevenue,
+    int? todayTransactions,
   }) async {
-    final apiKey = AppEnv.deepseekApiKey;
+    final apiKey = AppEnv.groqApiKey;
     if (apiKey.isEmpty) {
-      throw StateError('Kunci API DeepSeek belum diatur.');
+      throw StateError('Kunci API Groq belum diatur.');
     }
 
-    final systemPrompt = _buildSystemPrompt();
+    final systemPrompt = _buildSystemPrompt(
+      products: products,
+      todayRevenue: todayRevenue,
+      todayTransactions: todayTransactions,
+    );
 
     // Ambil maksimal 6 riwayat percakapan terakhir agar konteks tetap terjaga
     final contextMessages = <Map<String, String>>[
@@ -85,10 +104,13 @@ BATASAN RUANG LINGKUP (MUTLAK & KETAT):
 
     contextMessages.add({'role': 'user', 'content': userMessage});
 
+    final model = AppEnv.groqModel;
     final requestBody = jsonEncode({
-      'model': defaultModel,
+      'model': model,
       'messages': contextMessages,
       'temperature': 0.7,
+      'max_tokens': 512,
+      if (model.contains('gpt-oss')) 'reasoning_effort': 'low',
       'stream': false,
     });
 
@@ -115,11 +137,11 @@ BATASAN RUANG LINGKUP (MUTLAK & KETAT):
           return _cleanOutput(content);
         }
       }
-      throw const FormatException('Format respons DeepSeek tidak sesuai.');
+      throw const FormatException('Format respons Groq tidak sesuai.');
     } else {
       final errorBody = response.body;
       throw http.ClientException(
-        'Gagal menghubungi DeepSeek (HTTP ${response.statusCode}): $errorBody',
+        'Gagal menghubungi Groq (HTTP ${response.statusCode}): $errorBody',
       );
     }
   }

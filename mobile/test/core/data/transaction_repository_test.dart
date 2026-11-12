@@ -47,6 +47,8 @@ void main() {
     expect(records, hasLength(1));
     expect(records.single.id, 'TRX-0001');
     expect(records.single.changeAmount, 1000);
+    expect(records.single.itemCount, 1);
+    expect(records.single.summaryTitle, 'Air Mineral');
     final summary = await repository.summaryForDay(DateTime.now());
     expect(summary.total, 4000);
     expect(summary.count, 1);

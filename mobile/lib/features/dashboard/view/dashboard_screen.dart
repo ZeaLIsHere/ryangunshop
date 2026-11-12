@@ -110,9 +110,9 @@ class _HeroOmzetCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final session = AppSessionScope.maybeOf(context);
-    final todayRevenue = session?.todayRevenue ?? 1450000;
-    final todayTransactionCount = session?.todayTransactionCount ?? 42;
-    final todayAverageRevenue = session?.todayAverageRevenue ?? 34500;
+    final todayRevenue = session?.todayRevenue ?? 0;
+    final todayTransactionCount = session?.todayTransactionCount ?? 0;
+    final todayAverageRevenue = session?.todayAverageRevenue ?? 0;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -333,6 +333,8 @@ class _QuickActionBento extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final session = AppSessionScope.maybeOf(context);
+    final lowStock = session?.lowStockCount ?? 0;
     return Row(
       children: [
         Expanded(
@@ -362,7 +364,7 @@ class _QuickActionBento extends StatelessWidget {
             assetPath: 'assets/icon/09_stok_produk.png',
             icon: Icons.inventory_2_outlined,
             label: 'Stok',
-            badgeText: '3',
+            badgeText: lowStock > 0 ? '$lowStock' : null,
             bgColor: const Color(0xFFFFF7ED),
             iconColor: const Color(0xFFEA580C),
             onTap: onOpenCatalog,
@@ -489,34 +491,7 @@ class _RecentTransactionsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final session = AppSessionScope.maybeOf(context);
-    final transactions =
-        session?.recentTransactions ??
-        const [
-          CompletedTransaction(
-            id: 'TRX-9481',
-            timeLabel: '13:42 WIB',
-            title: 'Minyak Goreng Bimoli 2L',
-            amount: 36500,
-            itemCount: 1,
-            paymentMethod: 'Tunai',
-          ),
-          CompletedTransaction(
-            id: 'TRX-9480',
-            timeLabel: '13:30 WIB',
-            title: 'Indomie Goreng Spesial (5 Pcs)',
-            amount: 15500,
-            itemCount: 5,
-            paymentMethod: 'QRIS',
-          ),
-          CompletedTransaction(
-            id: 'TRX-9479',
-            timeLabel: '13:18 WIB',
-            title: 'Teh Pucuk Harum Dingin 350ml (2)',
-            amount: 8000,
-            itemCount: 2,
-            paymentMethod: 'Tunai',
-          ),
-        ];
+    final transactions = session?.recentTransactions ?? const [];
 
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.md),

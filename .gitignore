@@ -2,6 +2,11 @@
 .env
 .env.*
 
+# Konfigurasi Firebase lokal (jangan di-commit)
+mobile/android/app/google-services.json
+mobile/ios/Runner/GoogleService-Info.plist
+mobile/lib/firebase_options.dart
+
 # Editor dan sistem operasi
 .freebuff/
 .idea/

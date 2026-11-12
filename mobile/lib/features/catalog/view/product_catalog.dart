@@ -39,6 +39,14 @@ class _ProductCatalogState extends State<ProductCatalog> {
   }
 
   @override
+  void didUpdateWidget(ProductCatalog oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.viewModel == null && oldWidget.repository != widget.repository) {
+      _viewModel.updateRepository(widget.repository);
+    }
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     if (widget.viewModel == null) {
@@ -60,6 +68,24 @@ class _ProductCatalogState extends State<ProductCatalog> {
 
     if (result != null) {
       await _persistProduct(result);
+    }
+  }
+
+  Future<void> _deleteProduct(CatalogProduct product) async {
+    try {
+      await _viewModel.deleteProduct(product.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Produk "${product.name}" berhasil dihapus.'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal menghapus produk. Coba lagi.')),
+      );
     }
   }
 
@@ -86,6 +112,9 @@ class _ProductCatalogState extends State<ProductCatalog> {
       isLocal: _viewModel.isLocal,
       onProductUpdated: (updated) {
         _persistProduct(updated);
+      },
+      onProductDeleted: (deleted) {
+        _deleteProduct(deleted);
       },
     );
   }
@@ -201,10 +230,7 @@ class _ProductCatalogState extends State<ProductCatalog> {
               ),
               const SizedBox(height: AppSpacing.md),
 
-              if (_viewModel.isLocal)
-                const SampleBadge(label: 'Tersimpan di perangkat')
-              else
-                const SampleBadge(label: 'Data contoh'),
+              const SampleBadge(label: 'Tersimpan di perangkat'),
               const SizedBox(height: AppSpacing.xs),
 
               // Search Bar dan kontrol urutkan
@@ -315,7 +341,9 @@ class _ProductCatalogState extends State<ProductCatalog> {
           const SizedBox(height: AppSpacing.md),
           PrimaryAction(
             label: 'Muat Ulang',
-            onPressed: _viewModel.showSampleProducts,
+            onPressed: _viewModel.isLocal
+                ? _viewModel.loadProducts
+                : _viewModel.showCachedProducts,
           ),
         ];
       case CatalogScenario.empty:
@@ -344,7 +372,9 @@ class _ProductCatalogState extends State<ProductCatalog> {
           const SizedBox(height: AppSpacing.md),
           PrimaryAction(
             label: 'Coba lagi',
-            onPressed: _viewModel.showSampleProducts,
+            onPressed: _viewModel.isLocal
+                ? _viewModel.loadProducts
+                : _viewModel.showCachedProducts,
           ),
         ];
       case CatalogScenario.withData:

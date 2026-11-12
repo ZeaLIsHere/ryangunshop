@@ -36,7 +36,8 @@ class CartCheckoutScreen extends StatelessWidget {
     final session = AppSessionScope.of(context);
     final cart = session.cart;
     final localTransactions =
-        transactionRepository ?? session.transactionRepository;
+        transactionRepository ??
+        (session.database != null ? session.transactionRepository : null);
 
     if (!session.isLocalCartReady) {
       return Scaffold(
@@ -154,38 +155,10 @@ class CartCheckoutScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: AppSpacing.xs),
-                    Row(
-                      children: [
-                        SampleBadge(
-                          label: localTransactions == null
-                              ? 'Keranjang contoh'
-                              : 'Keranjang lokal',
-                        ),
-                        const Spacer(),
-                        PopupMenuButton<CartScenario>(
-                          tooltip: 'Pilih Skenario Keranjang',
-                          icon: const Icon(Icons.more_horiz),
-                          onSelected: cart.selectScenario,
-                          itemBuilder: (context) => const [
-                            PopupMenuItem(
-                              value: CartScenario.ready,
-                              child: Text('Tampilkan keranjang'),
-                            ),
-                            PopupMenuItem(
-                              value: CartScenario.loading,
-                              child: Text('Memuat'),
-                            ),
-                            PopupMenuItem(
-                              value: CartScenario.failure,
-                              child: Text('Gagal'),
-                            ),
-                            PopupMenuItem(
-                              value: CartScenario.offline,
-                              child: Text('Offline'),
-                            ),
-                          ],
-                        ),
-                      ],
+                    SampleBadge(
+                      label: localTransactions == null
+                          ? 'Keranjang contoh'
+                          : 'Keranjang lokal',
                     ),
                     if (session.isLocalCartSaveFailed)
                       Text(
@@ -304,9 +277,7 @@ class CartCheckoutScreen extends StatelessWidget {
                                   cartItems: cart.items,
                                   onPaymentCompleted: () {
                                     cart.clearCart();
-                                    if (session.database != null) {
-                                      session.loadLocalSummary();
-                                    }
+                                    session.loadLocalSummary();
                                   },
                                   onCashConfirmed: localTransactions == null
                                       ? null
@@ -537,13 +508,7 @@ class CartCheckoutScreen extends StatelessWidget {
                     : 'Voucher/Diskon',
                 bgColor: const Color(0xFFECFDF5),
                 iconColor: const Color(0xFF059669),
-                onTap: () {
-                  if (cart.discount > 0) {
-                    cart.setDiscount(0);
-                  } else {
-                    cart.setDiscount(5000);
-                  }
-                },
+                onTap: () => _openDiscountDialog(context, cart),
               ),
             ),
           ],
@@ -625,7 +590,7 @@ class CartCheckoutScreen extends StatelessWidget {
             ),
             if (showSpinner && !MediaQuery.disableAnimationsOf(context)) ...[
               const SizedBox(height: AppSpacing.md),
-              const BrandSpinner(label: 'Memuat keranjang contoh'),
+              const BrandSpinner(label: 'Memuat keranjang'),
             ],
             const SizedBox(height: AppSpacing.lg),
             PrimaryAction(
@@ -694,6 +659,68 @@ class CartCheckoutScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _openDiscountDialog(BuildContext context, CartViewModel cart) {
+    final controller = TextEditingController(
+      text: cart.discount > 0 ? cart.discount.toString() : '',
+    );
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Atur Diskon Transaksi'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Nominal Diskon (Rp)',
+                prefixText: 'Rp ',
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Wrap(
+              spacing: 6,
+              children: [
+                ActionChip(
+                  label: const Text('Rp 2.000'),
+                  onPressed: () => controller.text = '2000',
+                ),
+                ActionChip(
+                  label: const Text('Rp 5.000'),
+                  onPressed: () => controller.text = '5000',
+                ),
+                ActionChip(
+                  label: const Text('Rp 10.000'),
+                  onPressed: () => controller.text = '10000',
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              cart.setDiscount(0);
+              Navigator.of(dialogContext).pop();
+            },
+            child: const Text('Hapus Diskon'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final val = int.tryParse(controller.text) ?? 0;
+              cart.setDiscount(val);
+              Navigator.of(dialogContext).pop();
+            },
+            child: const Text('Terapkan'),
+          ),
+        ],
       ),
     );
   }
@@ -850,11 +877,11 @@ class _CartItemTile extends StatelessWidget {
   }
 
   String _rackTagFor(String productId) {
-    if (productId.contains('1')) return 'SKU-01';
-    if (productId.contains('2')) return 'SKU-02';
-    if (productId.contains('3')) return 'SKU-03';
-    if (productId.contains('4')) return 'SKU-04';
-    return 'PRODUK';
+    final clean = productId.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '');
+    if (clean.length >= 4) {
+      return 'SKU-${clean.substring(clean.length - 4).toUpperCase()}';
+    }
+    return clean.isNotEmpty ? 'SKU-${clean.toUpperCase()}' : 'ITEM';
   }
 }
 

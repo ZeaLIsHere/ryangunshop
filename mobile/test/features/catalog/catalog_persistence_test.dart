@@ -123,6 +123,67 @@ void main() {
     expect((await database.listProducts()).single.stock, 9);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'katalog lokal mendukung penambahan produk dari nol dan penghapusan produk',
+    (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+      final session = AppSession(database: database);
+      addTearDown(session.dispose);
+
+      await tester.pumpWidget(
+        AppSessionScope(
+          session: session,
+          child: MaterialApp(
+            home: Scaffold(
+              body: ProductCatalog(repository: session.productRepository),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Belum ada produk'), findsOneWidget);
+      expect(find.text('Tambah Produk'), findsWidgets);
+
+      // Buka form tambah produk dari empty state
+      await tester.tap(find.text('Tambah Produk').first);
+      await tester.pumpAndSettle();
+
+      await _enterField(tester, 'Nama Produk *', 'Kopi Lokal');
+      await _enterField(tester, 'Harga Jual *', '5000');
+      await _enterField(tester, 'Stok Saat Ini *', '10');
+      await tester.tap(find.text('Simpan Produk'));
+      await tester.pumpAndSettle();
+
+      final allDbProducts = await database.listProducts();
+      expect(allDbProducts, hasLength(1));
+      expect(find.text('Belum ada produk'), findsNothing);
+      expect(find.text('Kopi Lokal'), findsOneWidget);
+
+      // Buka detail produk dan hapus
+      await tester.tap(find.text('Kopi Lokal'));
+      await tester.pumpAndSettle();
+
+      // Tombol hapus ada untuk owner
+      expect(find.byTooltip('Hapus Produk'), findsOneWidget);
+      await tester.tap(find.byTooltip('Hapus Produk'));
+      await tester.pumpAndSettle();
+
+      // Dialog konfirmasi
+      expect(find.text('Hapus Produk?'), findsOneWidget);
+      await tester.tap(find.text('Hapus'));
+      await tester.pumpAndSettle();
+
+      final afterDeleteDb = await database.listProducts();
+      expect(afterDeleteDb, isEmpty);
+      expect(find.text('Belum ada produk'), findsOneWidget);
+    },
+  );
 }
 
 Future<void> _enterField(

@@ -5,6 +5,10 @@ import 'package:flutter/widgets.dart';
 import '../data/app_database.dart';
 import '../data/cart_draft_repository.dart';
 import '../data/drift_product_repository.dart';
+import '../data/in_memory_product_repository.dart';
+import '../data/in_memory_transaction_repository.dart';
+import '../data/product_repository.dart';
+import '../data/sync/sync_queue.dart';
 import '../data/transaction_repository.dart';
 import '../../features/checkout/model/cart_item.dart';
 import '../../features/checkout/view_model/cart_view_model.dart';
@@ -16,13 +20,16 @@ import 'user_role.dart';
 /// Dipisahkan dari fitur agar denah, pengaturan, dan kasir membaca peran dari satu
 /// sumber yang sama.
 class AppSession extends ChangeNotifier {
-  AppSession({this.database})
-    : cart = CartViewModel(withSampleItems: database == null),
-      _todayRevenue = database == null ? 1450000 : 0,
-      _todayTransactionCount = database == null ? 42 : 0,
-      _recentTransactions = database == null
-          ? List.of(_sampleTransactions)
-          : [] {
+  AppSession({this.database, this.syncQueue})
+    : _inMemoryProducts = InMemoryProductRepository([]),
+      cart = CartViewModel(withSampleItems: false),
+      _todayRevenue = 0,
+      _todayTransactionCount = 0,
+      _lowStockCount = 0,
+      _recentTransactions = [] {
+    _inMemoryTransactions = InMemoryTransactionRepository(
+      productRepository: _inMemoryProducts,
+    );
     if (database != null) {
       cart.addListener(_onCartChanged);
       unawaited(loadLocalCart());
@@ -30,43 +37,26 @@ class AppSession extends ChangeNotifier {
   }
 
   final AppDatabase? database;
+
+  /// Antrean Firestore. Kosong berarti aplikasi berjalan lokal saja.
+  final SyncQueue? syncQueue;
+  final InMemoryProductRepository _inMemoryProducts;
+  late final InMemoryTransactionRepository _inMemoryTransactions;
   final CartViewModel cart;
-  DriftProductRepository? get productRepository =>
-      database == null ? null : DriftProductRepository(database!);
-  TransactionRepository? get transactionRepository =>
-      database == null ? null : TransactionRepository(database!);
+
+  ProductRepository get productRepository => database != null
+      ? DriftProductRepository(database!, queue: syncQueue)
+      : _inMemoryProducts;
+
+  TransactionRepository get transactionRepository => database != null
+      ? DriftTransactionRepository(database!, queue: syncQueue)
+      : _inMemoryTransactions;
 
   UserRole _role = UserRole.owner;
 
   int _todayRevenue;
   int _todayTransactionCount;
-
-  static const _sampleTransactions = <CompletedTransaction>[
-    CompletedTransaction(
-      id: 'TRX-9481',
-      timeLabel: '13:42 WIB',
-      title: 'Minyak Goreng Bimoli 2L',
-      amount: 36500,
-      itemCount: 1,
-      paymentMethod: 'Tunai',
-    ),
-    CompletedTransaction(
-      id: 'TRX-9480',
-      timeLabel: '13:30 WIB',
-      title: 'Indomie Goreng Spesial (5 Pcs)',
-      amount: 15500,
-      itemCount: 5,
-      paymentMethod: 'QRIS',
-    ),
-    CompletedTransaction(
-      id: 'TRX-9479',
-      timeLabel: '13:18 WIB',
-      title: 'Teh Pucuk Harum Dingin 350ml (2)',
-      amount: 8000,
-      itemCount: 2,
-      paymentMethod: 'Tunai',
-    ),
-  ];
+  int _lowStockCount;
   final List<CompletedTransaction> _recentTransactions;
   bool _disposed = false;
   int _localLoadVersion = 0;
@@ -185,14 +175,17 @@ class AppSession extends ChangeNotifier {
   Future<void> loadLocalSummary() async {
     if (_disposed) return;
     final source = transactionRepository;
-    if (source == null) return;
     final version = ++_localLoadVersion;
     try {
       final today = await source.summaryForDay(DateTime.now());
       final recent = await source.listRecent(limit: 20);
+      final allProducts = await productRepository.listProducts();
       if (_disposed || version != _localLoadVersion) return;
       _todayRevenue = today.total;
       _todayTransactionCount = today.count;
+      _lowStockCount = allProducts
+          .where((p) => p.stock > 0 && p.stock <= p.lowStockThreshold)
+          .length;
       _recentTransactions
         ..clear()
         ..addAll(
@@ -201,10 +194,10 @@ class AppSession extends ChangeNotifier {
               id: row.id,
               timeLabel:
                   '${row.createdAt.hour.toString().padLeft(2, '0')}:${row.createdAt.minute.toString().padLeft(2, '0')} WIB',
-              title: 'Nota tunai',
+              title: row.summaryTitle,
               amount: row.totalAmount,
-              itemCount: 0,
-              paymentMethod: 'Tunai',
+              itemCount: row.itemCount,
+              paymentMethod: row.paymentMethod == 'qris' ? 'QRIS' : 'Tunai',
             ),
           ),
         );
@@ -217,6 +210,7 @@ class AppSession extends ChangeNotifier {
   UserRole get role => _role;
   int get todayRevenue => _todayRevenue;
   int get todayTransactionCount => _todayTransactionCount;
+  int get lowStockCount => _lowStockCount;
   int get todayAverageRevenue => _todayTransactionCount > 0
       ? (_todayRevenue / _todayTransactionCount).round()
       : 0;

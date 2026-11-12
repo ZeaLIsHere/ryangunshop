@@ -1,5 +1,8 @@
+import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ryangunshop/core/data/app_database.dart';
+import 'package:ryangunshop/core/data/transaction_repository.dart';
 import 'package:ryangunshop/core/theme/app_theme.dart';
 import 'package:ryangunshop/core/widgets/brand_spinner.dart';
 import 'package:ryangunshop/features/reports/model/report_scenario.dart';
@@ -22,6 +25,11 @@ void main() {
     await tester.pump();
 
     expect(find.byType(BrandSpinner), findsNothing);
+
+    await tester.tap(find.text(ReportScenario.withData.label));
+    await tester.pump(_pastLoadDelay);
+    await tester.pump();
+
     expect(find.text('Rp 175.000'), findsOneWidget);
     expect(
       find.text('${ReportsSample.records.length} transaksi'),
@@ -69,6 +77,55 @@ void main() {
     expect(find.text(ReportsSample.errorTitle), findsOneWidget);
     expect(find.text(ReportsSample.errorDescription), findsOneWidget);
     expect(find.text('Coba lagi'), findsOneWidget);
+  });
+
+  testWidgets('menampilkan riwayat transaksi nyata dari repository lokal', (
+    tester,
+  ) async {
+    _usePhoneViewport(tester);
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = TransactionRepository(database);
+
+    await database.saveProduct(
+      ProductsCompanion.insert(
+        id: 'p-1',
+        name: 'Minyak Goreng 2L',
+        salePrice: 35000,
+        stock: 5,
+        updatedAt: DateTime.now(),
+      ),
+    );
+
+    await repository.checkout(
+      transactionId: 'TRX-LOKAL-01',
+      paymentMethod: 'cash',
+      totalAmount: 35000,
+      cashReceived: 50000,
+      changeAmount: 15000,
+      lines: const [
+        CheckoutLine(
+          productId: 'p-1',
+          quantity: 1,
+          unitPrice: 35000,
+          subtotal: 35000,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: ReportsScreen(repository: repository),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Tersimpan di perangkat'), findsOneWidget);
+    expect(find.text('Rp 35.000'), findsNWidgets(2));
+    expect(find.text('1 transaksi'), findsOneWidget);
+    expect(find.textContaining('Minyak Goreng 2L'), findsOneWidget);
+    expect(find.textContaining('TRX-LOKAL-01'), findsOneWidget);
   });
 }
 

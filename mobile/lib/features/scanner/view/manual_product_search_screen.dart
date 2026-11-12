@@ -90,9 +90,7 @@ class _ManualProductSearchScreenState extends State<ManualProductSearchScreen> {
                         const SizedBox(height: AppSpacing.xs),
                         Text(
                           _query.isEmpty
-                              ? widget.isLocal
-                                    ? 'Belum ada produk lokal'
-                                    : 'Belum ada produk contoh'
+                              ? 'Belum ada produk di katalog'
                               : 'Produk tidak ditemukan',
                           style: theme.textTheme.titleMedium,
                         ),

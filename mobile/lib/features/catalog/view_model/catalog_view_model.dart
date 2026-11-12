@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 
-import '../../../core/data/product_record.dart';
 import '../../../core/data/product_repository.dart';
 import '../model/catalog_product.dart';
 import '../model/catalog_scenario.dart';
@@ -9,25 +8,41 @@ import '../sample/catalog_sample.dart';
 
 /// State UI dan interaksi untuk mengelola katalog produk warung.
 class CatalogViewModel extends ChangeNotifier {
-  CatalogViewModel({this.repository})
-    : _products = repository == null ? List.of(CatalogSample.products) : [],
-      _scenario = repository == null
-          ? CatalogScenario.withData
-          : CatalogScenario.loading;
+  CatalogViewModel({
+    ProductRepository? repository,
+    List<CatalogProduct>? initialProducts,
+  }) : _repository = repository,
+       _products = List.of(initialProducts ?? const <CatalogProduct>[]),
+       _scenario = initialProducts != null && initialProducts.isNotEmpty
+           ? CatalogScenario.withData
+           : (repository == null
+                 ? CatalogScenario.empty
+                 : CatalogScenario.loading);
 
-  final ProductRepository? repository;
+  ProductRepository? _repository;
+  ProductRepository? get repository => _repository;
   final List<CatalogProduct> _products;
   CatalogScenario _scenario;
   bool _disposed = false;
   int _loadVersion = 0;
 
-  bool get isLocal => repository != null;
+  bool get isLocal => _repository != null;
+
+  void updateRepository(ProductRepository? newRepository) {
+    if (_repository == newRepository) return;
+    _repository = newRepository;
+    if (isLocal) {
+      loadProducts();
+    } else {
+      showCachedProducts();
+    }
+  }
 
   Future<void> loadProducts() async {
     if (_disposed) return;
-    final source = repository;
+    final source = _repository;
     if (source == null) {
-      showSampleProducts();
+      showCachedProducts();
       return;
     }
     final version = ++_loadVersion;
@@ -54,7 +69,7 @@ class CatalogViewModel extends ChangeNotifier {
   }
 
   Future<void> persistProduct(CatalogProduct product) async {
-    final source = repository;
+    final source = _repository;
     if (source == null) {
       final exists = _products.any((entry) => entry.id == product.id);
       if (exists) {
@@ -64,21 +79,18 @@ class CatalogViewModel extends ChangeNotifier {
       }
       return;
     }
-    await source.save(
-      ProductRecord(
-        id: product.id,
-        barcode: product.barcode,
-        name: product.name,
-        salePrice: product.price,
-        costPrice: product.costPrice,
-        stock: product.stock,
-        category: product.category,
-        unit: product.unit,
-        fixtureId: product.fixtureId,
-        locationLabel: product.locationLabel,
-        lowStockThreshold: product.lowStockThreshold,
-      ),
-    );
+    await source.save(product.toRecord());
+    if (_disposed) return;
+    await loadProducts();
+  }
+
+  Future<void> deleteProduct(String id) async {
+    final source = _repository;
+    if (source == null) {
+      removeProduct(id);
+      return;
+    }
+    await source.delete(id);
     if (_disposed) return;
     await loadProducts();
   }
@@ -185,17 +197,27 @@ class CatalogViewModel extends ChangeNotifier {
     }
   }
 
+  void removeProduct(String id) {
+    _products.removeWhere((p) => p.id == id);
+    if (_products.isEmpty && !isLocal) {
+      _scenario = CatalogScenario.empty;
+    }
+    notifyListeners();
+  }
+
   void selectScenario(CatalogScenario scenario) {
     if (_scenario == scenario) return;
     _scenario = scenario;
     notifyListeners();
   }
 
-  void showSampleProducts() {
+  void showCachedProducts() {
     if (isLocal) {
       loadProducts();
     } else {
-      selectScenario(CatalogScenario.withData);
+      selectScenario(
+        _products.isEmpty ? CatalogScenario.empty : CatalogScenario.withData,
+      );
     }
   }
 

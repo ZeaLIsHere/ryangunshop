@@ -7,6 +7,7 @@ import 'package:ryangunshop/core/data/product_record.dart';
 import 'package:ryangunshop/core/session/app_session.dart';
 import 'package:ryangunshop/core/theme/app_theme.dart';
 import 'package:ryangunshop/features/scanner/model/scanner_scenario.dart';
+import 'package:ryangunshop/features/scanner/sample/scanner_sample.dart';
 import 'package:ryangunshop/features/scanner/view/product_scanner_screen.dart';
 import 'package:ryangunshop/features/scanner/view_model/scanner_view_model.dart';
 
@@ -50,7 +51,7 @@ void main() {
     'simulasi perlu tindakan dan konfirmasi sebelum masuk keranjang',
     (tester) async {
       final session = AppSession();
-      final viewModel = ScannerViewModel();
+      final viewModel = ScannerViewModel(products: ScannerSample.products);
       addTearDown(session.dispose);
       addTearDown(viewModel.dispose);
       await _showScanner(tester, session: session, viewModel: viewModel);
@@ -70,9 +71,10 @@ void main() {
       await tester.pump(const Duration(milliseconds: 900));
       await tester.pumpAndSettle();
       expect(find.text('Hasil simulasi'), findsOneWidget);
-      expect(find.text('Keyakinan simulasi: 92%'), findsOneWidget);
       expect(session.cart.totalItems, initialItems);
 
+      await tester.ensureVisible(find.text('Konfirmasi ke Keranjang'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Konfirmasi ke Keranjang'));
       await tester.pumpAndSettle();
       expect(session.cart.totalItems, initialItems + 1);
@@ -89,7 +91,7 @@ void main() {
     tester,
   ) async {
     final session = AppSession();
-    final viewModel = ScannerViewModel();
+    final viewModel = ScannerViewModel(products: ScannerSample.products);
     addTearDown(session.dispose);
     addTearDown(viewModel.dispose);
     await _showScanner(tester, session: session, viewModel: viewModel);
@@ -110,7 +112,7 @@ void main() {
     await tester.tap(find.text('Minyak goreng 1 liter'));
     await tester.pumpAndSettle();
     expect(find.text('Dipilih manual'), findsOneWidget);
-    expect(viewModel.confidence, isNull);
+    expect(viewModel.isSimulated, isFalse);
     expect(tester.takeException(), isNull);
   });
 

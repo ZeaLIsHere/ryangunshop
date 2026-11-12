@@ -142,81 +142,106 @@ class _OnboardingPageView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.md,
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
-            height: 240,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFFF5F3FF), Color(0xFFFAF8FE)],
-              ),
-              borderRadius: AppRadius.panelBorder,
-              border: Border.all(color: AppColors.primaryLight, width: 1.5),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.08),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Center(
-              child: Container(
-                width: 140,
-                height: 140,
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryDark.withValues(alpha: 0.14),
-                      blurRadius: 28,
-                      offset: const Offset(0, 10),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.sm,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: IntrinsicHeight(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxHeight: 240,
+                      minHeight: 140,
                     ),
-                  ],
-                ),
-                child: Center(
-                  child: page.assetPath != null
-                      ? Image.asset(
-                          page.assetPath!,
-                          width: 96,
-                          height: 96,
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, _, _) => Icon(
-                            page.icon,
-                            size: 56,
-                            color: AppColors.primary,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFFF5F3FF), Color(0xFFFAF8FE)],
+                        ),
+                        borderRadius: AppRadius.panelBorder,
+                        border: Border.all(
+                          color: AppColors.primaryLight,
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.08),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
                           ),
-                        )
-                      : Icon(page.icon, size: 56, color: AppColors.primary),
-                ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Container(
+                          width: 130,
+                          height: 130,
+                          padding: const EdgeInsets.all(AppSpacing.md),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primaryDark.withValues(
+                                  alpha: 0.14,
+                                ),
+                                blurRadius: 28,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: page.assetPath != null
+                                ? Image.asset(
+                                    page.assetPath!,
+                                    width: 90,
+                                    height: 90,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (_, _, _) => Icon(
+                                      page.icon,
+                                      size: 56,
+                                      color: AppColors.primary,
+                                    ),
+                                  )
+                                : Icon(
+                                    page.icon,
+                                    size: 56,
+                                    color: AppColors.primary,
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(
+                    page.title,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    page.description,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: AppColors.muted,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-          const SizedBox(height: AppSpacing.xl),
-          Text(
-            page.title,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.headlineSmall,
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            page.description,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.muted),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -238,6 +263,7 @@ class _OnboardingProgress extends StatelessWidget {
     return Semantics(
       label: 'Halaman ${currentIndex + 1} dari $pageCount',
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           for (var index = 0; index < pageCount; index++)

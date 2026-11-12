@@ -47,6 +47,29 @@ class StatisticsDataSet {
 
   int get average => transactions == 0 ? 0 : total ~/ transactions;
 
+  StatisticsDataSet copyWith({
+    int? total,
+    int? previousTotal,
+    int? transactions,
+    int? itemsSold,
+    int? grossProfit,
+  }) {
+    return StatisticsDataSet(
+      total: total ?? this.total,
+      previousTotal: previousTotal ?? this.previousTotal,
+      transactions: transactions ?? this.transactions,
+      itemsSold: itemsSold ?? this.itemsSold,
+      grossProfit: grossProfit ?? this.grossProfit,
+      payments: payments,
+      peakTitle: peakTitle,
+      peakHours: peakHours,
+      trendTitle: trendTitle,
+      trend: trend,
+      topProducts: topProducts,
+      slowMoving: slowMoving,
+    );
+  }
+
   double get changePercent {
     if (previousTotal == 0) {
       return 0;
