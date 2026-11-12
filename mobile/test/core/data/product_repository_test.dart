@@ -65,4 +65,39 @@ void main() {
     );
     expect((await repository.findByBarcode('8990002'))?.stock, 2);
   });
+
+  test('produk tanpa barcode dan metadata katalog tetap tersimpan', () async {
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = DriftProductRepository(database);
+    await repository.save(
+      const ProductRecord(
+        id: 'tanpa-1',
+        name: 'Mi instan',
+        salePrice: 3500,
+        costPrice: 2800,
+        stock: 4,
+        category: 'Makanan',
+        unit: 'bungkus',
+        fixtureId: 'rak-mi',
+        locationLabel: 'Rak mi',
+        lowStockThreshold: 2,
+      ),
+    );
+    await repository.save(
+      const ProductRecord(
+        id: 'tanpa-2',
+        name: 'Air mineral',
+        salePrice: 4000,
+        stock: 3,
+      ),
+    );
+    final records = await repository.listProducts();
+    expect(records, hasLength(2));
+    final product = records.singleWhere((item) => item.id == 'tanpa-1');
+    expect(product.barcode, isNull);
+    expect(product.category, 'Makanan');
+    expect(product.locationLabel, 'Rak mi');
+    expect(product.lowStockThreshold, 2);
+  });
 }

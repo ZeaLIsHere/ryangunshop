@@ -1,5 +1,8 @@
 import 'package:flutter/widgets.dart';
 
+import '../data/app_database.dart';
+import '../data/drift_product_repository.dart';
+import '../data/transaction_repository.dart';
 import '../../features/checkout/model/cart_item.dart';
 import '../../features/checkout/view_model/cart_view_model.dart';
 import 'completed_transaction.dart';
@@ -10,15 +13,28 @@ import 'user_role.dart';
 /// Dipisahkan dari fitur agar denah, pengaturan, dan kasir membaca peran dari satu
 /// sumber yang sama.
 class AppSession extends ChangeNotifier {
-  final CartViewModel cart = CartViewModel();
+  AppSession({this.database})
+    : cart = CartViewModel(withSampleItems: database == null),
+      _todayRevenue = database == null ? 1450000 : 0,
+      _todayTransactionCount = database == null ? 42 : 0,
+      _recentTransactions = database == null
+          ? List.of(_sampleTransactions)
+          : [];
+
+  final AppDatabase? database;
+  final CartViewModel cart;
+  DriftProductRepository? get productRepository =>
+      database == null ? null : DriftProductRepository(database!);
+  TransactionRepository? get transactionRepository =>
+      database == null ? null : TransactionRepository(database!);
 
   UserRole _role = UserRole.owner;
 
-  int _todayRevenue = 1450000;
-  int _todayTransactionCount = 42;
+  int _todayRevenue;
+  int _todayTransactionCount;
 
-  final List<CompletedTransaction> _recentTransactions = [
-    const CompletedTransaction(
+  static const _sampleTransactions = <CompletedTransaction>[
+    CompletedTransaction(
       id: 'TRX-9481',
       timeLabel: '13:42 WIB',
       title: 'Minyak Goreng Bimoli 2L',
@@ -26,7 +42,7 @@ class AppSession extends ChangeNotifier {
       itemCount: 1,
       paymentMethod: 'Tunai',
     ),
-    const CompletedTransaction(
+    CompletedTransaction(
       id: 'TRX-9480',
       timeLabel: '13:30 WIB',
       title: 'Indomie Goreng Spesial (5 Pcs)',
@@ -34,7 +50,7 @@ class AppSession extends ChangeNotifier {
       itemCount: 5,
       paymentMethod: 'QRIS',
     ),
-    const CompletedTransaction(
+    CompletedTransaction(
       id: 'TRX-9479',
       timeLabel: '13:18 WIB',
       title: 'Teh Pucuk Harum Dingin 350ml (2)',
@@ -43,6 +59,41 @@ class AppSession extends ChangeNotifier {
       paymentMethod: 'Tunai',
     ),
   ];
+  final List<CompletedTransaction> _recentTransactions;
+  bool _disposed = false;
+  int _localLoadVersion = 0;
+
+  Future<void> loadLocalSummary() async {
+    if (_disposed) return;
+    final source = transactionRepository;
+    if (source == null) return;
+    final version = ++_localLoadVersion;
+    try {
+      final today = await source.summaryForDay(DateTime.now());
+      final recent = await source.listRecent(limit: 20);
+      if (_disposed || version != _localLoadVersion) return;
+      _todayRevenue = today.total;
+      _todayTransactionCount = today.count;
+      _recentTransactions
+        ..clear()
+        ..addAll(
+          recent.map(
+            (row) => CompletedTransaction(
+              id: row.id,
+              timeLabel:
+                  '${row.createdAt.hour.toString().padLeft(2, '0')}:${row.createdAt.minute.toString().padLeft(2, '0')} WIB',
+              title: 'Nota tunai',
+              amount: row.totalAmount,
+              itemCount: 0,
+              paymentMethod: 'Tunai',
+            ),
+          ),
+        );
+      notifyListeners();
+    } catch (_) {
+      // Data contoh tidak boleh ditampilkan sebagai pengganti data lokal.
+    }
+  }
 
   UserRole get role => _role;
   int get todayRevenue => _todayRevenue;
@@ -99,6 +150,7 @@ class AppSession extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     cart.dispose();
     super.dispose();
   }

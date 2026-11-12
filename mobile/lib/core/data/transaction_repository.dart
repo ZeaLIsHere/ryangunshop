@@ -22,6 +22,13 @@ class TransactionRecord {
   final int? changeAmount;
 }
 
+class DailySalesSummary {
+  const DailySalesSummary({required this.total, required this.count});
+
+  final int total;
+  final int count;
+}
+
 class TransactionRepository {
   const TransactionRepository(this.database);
 
@@ -65,5 +72,24 @@ class TransactionRepository {
           ),
         )
         .toList();
+  }
+
+  Future<DailySalesSummary> summaryForDay(DateTime day) async {
+    final start = DateTime(day.year, day.month, day.day);
+    final end = start.add(const Duration(days: 1));
+    final row = await database
+        .customSelect(
+          'SELECT COUNT(*) AS note_count, COALESCE(SUM(total_amount), 0) AS total '
+          'FROM transactions WHERE created_at >= ? AND created_at < ?',
+          variables: [
+            Variable.withInt(start.millisecondsSinceEpoch ~/ 1000),
+            Variable.withInt(end.millisecondsSinceEpoch ~/ 1000),
+          ],
+        )
+        .getSingle();
+    return DailySalesSummary(
+      total: row.read<int>('total'),
+      count: row.read<int>('note_count'),
+    );
   }
 }

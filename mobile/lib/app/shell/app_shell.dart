@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/session/app_session.dart';
 import '../../core/theme/app_radius.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/widgets/ryan_app_logo.dart';
@@ -62,6 +63,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   Widget _viewFor(ShellDestination destination) {
+    final session = AppSessionScope.of(context);
     switch (destination) {
       case ShellDestination.floorPlan:
         return DashboardScreen(
@@ -70,12 +72,16 @@ class _AppShellState extends State<AppShell> {
         );
       case ShellDestination.cashier:
         return CartCheckoutScreen(
+          transactionRepository: session.transactionRepository,
           onOpenScanner: _openScanner,
           onOpenCatalog: () =>
               _selectDestination(ShellDestination.catalog.index),
         );
       case ShellDestination.catalog:
-        return const ProductCatalog();
+        return ProductCatalog(
+          key: ValueKey('catalog-${session.todayTransactionCount}'),
+          repository: session.productRepository,
+        );
       case ShellDestination.settings:
         return const SettingsScreen();
     }

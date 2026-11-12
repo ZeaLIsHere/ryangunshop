@@ -9,9 +9,14 @@ import '../view_model/scanner_view_model.dart';
 
 /// Jalan keluar tanpa kamera untuk memilih produk dari data contoh.
 class ManualProductSearchScreen extends StatefulWidget {
-  const ManualProductSearchScreen({required this.viewModel, super.key});
+  const ManualProductSearchScreen({
+    required this.viewModel,
+    this.isLocal = false,
+    super.key,
+  });
 
   final ScannerViewModel viewModel;
+  final bool isLocal;
 
   @override
   State<ManualProductSearchScreen> createState() =>
@@ -41,9 +46,13 @@ class _ManualProductSearchScreenState extends State<ManualProductSearchScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Align(
+              Align(
                 alignment: Alignment.centerLeft,
-                child: SampleBadge(label: 'Pencarian data contoh'),
+                child: SampleBadge(
+                  label: widget.isLocal
+                      ? 'Pencarian produk lokal'
+                      : 'Pencarian data contoh',
+                ),
               ),
               const SizedBox(height: AppSpacing.md),
               TextField(
@@ -81,7 +90,9 @@ class _ManualProductSearchScreenState extends State<ManualProductSearchScreen> {
                         const SizedBox(height: AppSpacing.xs),
                         Text(
                           _query.isEmpty
-                              ? 'Belum ada produk contoh'
+                              ? widget.isLocal
+                                    ? 'Belum ada produk lokal'
+                                    : 'Belum ada produk contoh'
                               : 'Produk tidak ditemukan',
                           style: theme.textTheme.titleMedium,
                         ),

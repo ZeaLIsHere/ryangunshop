@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ryangunshop/core/data/app_database.dart';
@@ -18,7 +19,7 @@ void main() {
     await database.saveProduct(
       ProductsCompanion.insert(
         id: 'p-1',
-        barcode: '8990001',
+        barcode: const Value('8990001'),
         name: 'Air Mineral',
         salePrice: 4000,
         stock: 2,
@@ -46,5 +47,8 @@ void main() {
     expect(records, hasLength(1));
     expect(records.single.id, 'TRX-0001');
     expect(records.single.changeAmount, 1000);
+    final summary = await repository.summaryForDay(DateTime.now());
+    expect(summary.total, 4000);
+    expect(summary.count, 1);
   });
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/format/rupiah.dart';
+import '../../../core/data/app_database.dart';
+import '../../../core/data/transaction_repository.dart';
 import '../../../core/session/app_session.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -17,16 +19,24 @@ import '../../payment/view/payment_sheet.dart';
 
 /// Layar kasir dan keranjang transaksi RyanGunshop.
 class CartCheckoutScreen extends StatelessWidget {
-  const CartCheckoutScreen({this.onOpenScanner, this.onOpenCatalog, super.key});
+  const CartCheckoutScreen({
+    this.onOpenScanner,
+    this.onOpenCatalog,
+    this.transactionRepository,
+    super.key,
+  });
 
   final VoidCallback? onOpenScanner;
   final VoidCallback? onOpenCatalog;
+  final TransactionRepository? transactionRepository;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final session = AppSessionScope.of(context);
     final cart = session.cart;
+    final localTransactions =
+        transactionRepository ?? session.transactionRepository;
 
     return ListenableBuilder(
       listenable: cart,
@@ -112,7 +122,11 @@ class CartCheckoutScreen extends StatelessWidget {
                     const SizedBox(height: AppSpacing.xs),
                     Row(
                       children: [
-                        const SampleBadge(label: 'Keranjang contoh'),
+                        SampleBadge(
+                          label: localTransactions == null
+                              ? 'Keranjang contoh'
+                              : 'Keranjang lokal',
+                        ),
                         const Spacer(),
                         PopupMenuButton<CartScenario>(
                           tooltip: 'Pilih Skenario Keranjang',
@@ -247,7 +261,36 @@ class CartCheckoutScreen extends StatelessWidget {
                                   context,
                                   totalAmount: cart.total,
                                   cartItems: cart.items,
-                                  onPaymentCompleted: cart.clearCart,
+                                  onPaymentCompleted: () {
+                                    cart.clearCart();
+                                    if (session.database != null) {
+                                      session.loadLocalSummary();
+                                    }
+                                  },
+                                  onCashConfirmed: localTransactions == null
+                                      ? null
+                                      : (received, change) async {
+                                          final id =
+                                              'TRX-${DateTime.now().microsecondsSinceEpoch}';
+                                          await localTransactions.checkout(
+                                            transactionId: id,
+                                            paymentMethod: 'cash',
+                                            totalAmount: cart.total,
+                                            discountAmount: cart.discount,
+                                            cashReceived: received,
+                                            changeAmount: change,
+                                            lines: [
+                                              for (final item in cart.items)
+                                                CheckoutLine(
+                                                  productId: item.productId,
+                                                  quantity: item.quantity,
+                                                  unitPrice: item.unitPrice,
+                                                  subtotal: item.subtotal,
+                                                ),
+                                            ],
+                                          );
+                                          return id;
+                                        },
                                 );
                               },
                       ),

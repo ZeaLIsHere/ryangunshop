@@ -9,10 +9,17 @@ part 'app_database.g.dart';
 
 class Products extends Table {
   TextColumn get id => text()();
-  TextColumn get barcode => text().unique()();
+  TextColumn get barcode => text().nullable().unique()();
   TextColumn get name => text()();
   IntColumn get salePrice => integer()();
+  IntColumn get costPrice => integer().withDefault(const Constant(0))();
   IntColumn get stock => integer()();
+  TextColumn get category => text().withDefault(const Constant('Lainnya'))();
+  TextColumn get unit => text().withDefault(const Constant('pcs'))();
+  TextColumn get fixtureId => text().withDefault(const Constant(''))();
+  TextColumn get locationLabel =>
+      text().withDefault(const Constant('Belum ditentukan'))();
+  IntColumn get lowStockThreshold => integer().withDefault(const Constant(5))();
   DateTimeColumn get updatedAt => dateTime()();
 
   @override
@@ -47,7 +54,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   // Versi 1 di branch ini memiliki dua bentuk: hanya products, atau seluruh
   // tabel transaksi. Periksa tabel sebelum membuatnya agar kedua bentuk aman.
@@ -72,6 +79,21 @@ class AppDatabase extends _$AppDatabase {
         }
         if (from < 3 && !createdTransactions) {
           await m.addColumn(transactions, transactions.discountAmount);
+        }
+        if (from < 4) {
+          await m.alterTable(
+            TableMigration(
+              products,
+              newColumns: [
+                products.costPrice,
+                products.category,
+                products.unit,
+                products.fixtureId,
+                products.locationLabel,
+                products.lowStockThreshold,
+              ],
+            ),
+          );
         }
       });
     },

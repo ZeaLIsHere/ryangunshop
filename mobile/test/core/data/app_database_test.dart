@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ryangunshop/core/data/app_database.dart';
@@ -12,7 +15,7 @@ void main() {
     await database.saveProduct(
       ProductsCompanion.insert(
         id: 'p-1',
-        barcode: '8990001',
+        barcode: const Value('8990001'),
         name: 'Air Mineral',
         salePrice: 4000,
         stock: 3,
@@ -27,7 +30,7 @@ void main() {
     await database.saveProduct(
       ProductsCompanion.insert(
         id: 'p-1',
-        barcode: '8990001',
+        barcode: const Value('8990001'),
         name: 'Air Mineral',
         salePrice: 4000,
         stock: 3,
@@ -60,7 +63,7 @@ void main() {
     await database.saveProduct(
       ProductsCompanion.insert(
         id: 'p-1',
-        barcode: '8990001',
+        barcode: const Value('8990001'),
         name: 'Air Mineral',
         salePrice: 4000,
         stock: 2,
@@ -93,7 +96,7 @@ void main() {
     await database.saveProduct(
       ProductsCompanion.insert(
         id: 'p-1',
-        barcode: '8990001',
+        barcode: const Value('8990001'),
         name: 'Air Mineral',
         salePrice: 4000,
         stock: 1,
@@ -127,7 +130,7 @@ void main() {
     await database.saveProduct(
       ProductsCompanion.insert(
         id: 'p-1',
-        barcode: '8990001',
+        barcode: const Value('8990001'),
         name: 'Air Mineral',
         salePrice: 4000,
         stock: 3,
@@ -246,6 +249,9 @@ void main() {
     addTearDown(legacy.close);
 
     expect((await legacy.findProductByBarcode('123'))?.stock, 7);
+    final migrated = (await legacy.listProducts()).single;
+    expect(migrated.barcode, '123');
+    expect(migrated.category, 'Lainnya');
     expect(await legacy.select(legacy.transactions).get(), isEmpty);
     expect(await legacy.select(legacy.transactionItems).get(), isEmpty);
     await legacy.completeCheckout(
@@ -299,4 +305,99 @@ void main() {
     expect(notes.single.id, 'TRX-LAMA');
     expect(notes.single.discountAmount, 0);
   });
+
+  test('migrasi dari skema v3 menjaga produk dan nota tunai', () async {
+    await database.close();
+    final legacy = AppDatabase(
+      NativeDatabase.memory(
+        setup: (raw) {
+          raw.execute('''CREATE TABLE products (
+        id TEXT NOT NULL PRIMARY KEY, barcode TEXT NOT NULL UNIQUE,
+        name TEXT NOT NULL, sale_price INTEGER NOT NULL,
+        stock INTEGER NOT NULL, updated_at INTEGER NOT NULL)''');
+          raw.execute('''CREATE TABLE transactions (
+        id TEXT NOT NULL PRIMARY KEY, created_at INTEGER NOT NULL,
+        total_amount INTEGER NOT NULL, discount_amount INTEGER NOT NULL DEFAULT 0,
+        payment_method TEXT NOT NULL, cash_received INTEGER NULL,
+        change_amount INTEGER NULL)''');
+          raw.execute('''CREATE TABLE transaction_items (
+        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        transaction_id TEXT NOT NULL, product_id TEXT NOT NULL,
+        product_name TEXT NOT NULL, quantity INTEGER NOT NULL,
+        unit_price INTEGER NOT NULL, subtotal INTEGER NOT NULL)''');
+          raw.execute(
+            "INSERT INTO products VALUES ('lama', '123', 'Produk lama', 5000, 7, 0)",
+          );
+          raw.execute(
+            "INSERT INTO transactions VALUES ('TRX-LAMA', 0, 4500, 500, 'cash', 5000, 500)",
+          );
+          raw.execute('PRAGMA user_version = 3');
+        },
+      ),
+    );
+    addTearDown(legacy.close);
+
+    final product = (await legacy.listProducts()).single;
+    expect(product.stock, 7);
+    expect(product.barcode, '123');
+    expect(product.category, 'Lainnya');
+    expect(
+      (await legacy.select(legacy.transactions).get()).single.discountAmount,
+      500,
+    );
+    await legacy.saveProduct(
+      ProductsCompanion.insert(
+        id: 'tanpa-barcode',
+        name: 'Produk baru',
+        salePrice: 3000,
+        stock: 1,
+        updatedAt: DateTime.now(),
+      ),
+    );
+    expect((await legacy.listProducts()).last.barcode, isNull);
+  });
+
+  test(
+    'produk dan nota tetap ada setelah database file dibuka ulang',
+    () async {
+      await database.close();
+      final folder = await Directory.systemTemp.createTemp('ryangunshop_db_');
+      addTearDown(() => folder.delete(recursive: true));
+      final file = File('${folder.path}${Platform.pathSeparator}kasir.sqlite');
+      final first = AppDatabase(NativeDatabase(file));
+      await first.saveProduct(
+        ProductsCompanion.insert(
+          id: 'produk-file',
+          name: 'Susu kotak',
+          salePrice: 6000,
+          stock: 2,
+          updatedAt: DateTime.now(),
+        ),
+      );
+      await first.completeCheckout(
+        transactionId: 'TRX-FILE',
+        paymentMethod: 'cash',
+        totalAmount: 6000,
+        cashReceived: 6000,
+        changeAmount: 0,
+        lines: const [
+          CheckoutLine(
+            productId: 'produk-file',
+            quantity: 1,
+            unitPrice: 6000,
+            subtotal: 6000,
+          ),
+        ],
+      );
+      await first.close();
+
+      final reopened = AppDatabase(NativeDatabase(file));
+      addTearDown(reopened.close);
+      expect((await reopened.listProducts()).single.stock, 1);
+      expect(
+        (await reopened.select(reopened.transactions).get()).single.id,
+        'TRX-FILE',
+      );
+    },
+  );
 }

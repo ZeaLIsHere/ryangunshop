@@ -131,6 +131,8 @@ void main() {
       expect(find.text('Beras pandan wangi 1 kg'), findsOneWidget);
 
       // 2. Ketuk salah satu produk untuk membuka detail
+      await tester.ensureVisible(find.text('Beras pandan wangi 1 kg'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Beras pandan wangi 1 kg'));
       await tester.pumpAndSettle();
 

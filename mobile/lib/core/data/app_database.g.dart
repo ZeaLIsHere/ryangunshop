@@ -24,9 +24,9 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
   late final GeneratedColumn<String> barcode = GeneratedColumn<String>(
     'barcode',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.string,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
     defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
   );
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
@@ -49,6 +49,18 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _costPriceMeta = const VerificationMeta(
+    'costPrice',
+  );
+  @override
+  late final GeneratedColumn<int> costPrice = GeneratedColumn<int>(
+    'cost_price',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _stockMeta = const VerificationMeta('stock');
   @override
   late final GeneratedColumn<int> stock = GeneratedColumn<int>(
@@ -57,6 +69,64 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     false,
     type: DriftSqlType.int,
     requiredDuringInsert: true,
+  );
+  static const VerificationMeta _categoryMeta = const VerificationMeta(
+    'category',
+  );
+  @override
+  late final GeneratedColumn<String> category = GeneratedColumn<String>(
+    'category',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('Lainnya'),
+  );
+  static const VerificationMeta _unitMeta = const VerificationMeta('unit');
+  @override
+  late final GeneratedColumn<String> unit = GeneratedColumn<String>(
+    'unit',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('pcs'),
+  );
+  static const VerificationMeta _fixtureIdMeta = const VerificationMeta(
+    'fixtureId',
+  );
+  @override
+  late final GeneratedColumn<String> fixtureId = GeneratedColumn<String>(
+    'fixture_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _locationLabelMeta = const VerificationMeta(
+    'locationLabel',
+  );
+  @override
+  late final GeneratedColumn<String> locationLabel = GeneratedColumn<String>(
+    'location_label',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('Belum ditentukan'),
+  );
+  static const VerificationMeta _lowStockThresholdMeta = const VerificationMeta(
+    'lowStockThreshold',
+  );
+  @override
+  late final GeneratedColumn<int> lowStockThreshold = GeneratedColumn<int>(
+    'low_stock_threshold',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(5),
   );
   static const VerificationMeta _updatedAtMeta = const VerificationMeta(
     'updatedAt',
@@ -75,7 +145,13 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     barcode,
     name,
     salePrice,
+    costPrice,
     stock,
+    category,
+    unit,
+    fixtureId,
+    locationLabel,
+    lowStockThreshold,
     updatedAt,
   ];
   @override
@@ -100,8 +176,6 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
         _barcodeMeta,
         barcode.isAcceptableOrUnknown(data['barcode']!, _barcodeMeta),
       );
-    } else if (isInserting) {
-      context.missing(_barcodeMeta);
     }
     if (data.containsKey('name')) {
       context.handle(
@@ -119,6 +193,12 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     } else if (isInserting) {
       context.missing(_salePriceMeta);
     }
+    if (data.containsKey('cost_price')) {
+      context.handle(
+        _costPriceMeta,
+        costPrice.isAcceptableOrUnknown(data['cost_price']!, _costPriceMeta),
+      );
+    }
     if (data.containsKey('stock')) {
       context.handle(
         _stockMeta,
@@ -126,6 +206,42 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
       );
     } else if (isInserting) {
       context.missing(_stockMeta);
+    }
+    if (data.containsKey('category')) {
+      context.handle(
+        _categoryMeta,
+        category.isAcceptableOrUnknown(data['category']!, _categoryMeta),
+      );
+    }
+    if (data.containsKey('unit')) {
+      context.handle(
+        _unitMeta,
+        unit.isAcceptableOrUnknown(data['unit']!, _unitMeta),
+      );
+    }
+    if (data.containsKey('fixture_id')) {
+      context.handle(
+        _fixtureIdMeta,
+        fixtureId.isAcceptableOrUnknown(data['fixture_id']!, _fixtureIdMeta),
+      );
+    }
+    if (data.containsKey('location_label')) {
+      context.handle(
+        _locationLabelMeta,
+        locationLabel.isAcceptableOrUnknown(
+          data['location_label']!,
+          _locationLabelMeta,
+        ),
+      );
+    }
+    if (data.containsKey('low_stock_threshold')) {
+      context.handle(
+        _lowStockThresholdMeta,
+        lowStockThreshold.isAcceptableOrUnknown(
+          data['low_stock_threshold']!,
+          _lowStockThresholdMeta,
+        ),
+      );
     }
     if (data.containsKey('updated_at')) {
       context.handle(
@@ -151,7 +267,7 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
       barcode: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}barcode'],
-      )!,
+      ),
       name: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}name'],
@@ -160,9 +276,33 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
         DriftSqlType.int,
         data['${effectivePrefix}sale_price'],
       )!,
+      costPrice: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}cost_price'],
+      )!,
       stock: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}stock'],
+      )!,
+      category: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}category'],
+      )!,
+      unit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}unit'],
+      )!,
+      fixtureId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}fixture_id'],
+      )!,
+      locationLabel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}location_label'],
+      )!,
+      lowStockThreshold: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}low_stock_threshold'],
       )!,
       updatedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
@@ -179,27 +319,47 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
 
 class Product extends DataClass implements Insertable<Product> {
   final String id;
-  final String barcode;
+  final String? barcode;
   final String name;
   final int salePrice;
+  final int costPrice;
   final int stock;
+  final String category;
+  final String unit;
+  final String fixtureId;
+  final String locationLabel;
+  final int lowStockThreshold;
   final DateTime updatedAt;
   const Product({
     required this.id,
-    required this.barcode,
+    this.barcode,
     required this.name,
     required this.salePrice,
+    required this.costPrice,
     required this.stock,
+    required this.category,
+    required this.unit,
+    required this.fixtureId,
+    required this.locationLabel,
+    required this.lowStockThreshold,
     required this.updatedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
-    map['barcode'] = Variable<String>(barcode);
+    if (!nullToAbsent || barcode != null) {
+      map['barcode'] = Variable<String>(barcode);
+    }
     map['name'] = Variable<String>(name);
     map['sale_price'] = Variable<int>(salePrice);
+    map['cost_price'] = Variable<int>(costPrice);
     map['stock'] = Variable<int>(stock);
+    map['category'] = Variable<String>(category);
+    map['unit'] = Variable<String>(unit);
+    map['fixture_id'] = Variable<String>(fixtureId);
+    map['location_label'] = Variable<String>(locationLabel);
+    map['low_stock_threshold'] = Variable<int>(lowStockThreshold);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
   }
@@ -207,10 +367,18 @@ class Product extends DataClass implements Insertable<Product> {
   ProductsCompanion toCompanion(bool nullToAbsent) {
     return ProductsCompanion(
       id: Value(id),
-      barcode: Value(barcode),
+      barcode: barcode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(barcode),
       name: Value(name),
       salePrice: Value(salePrice),
+      costPrice: Value(costPrice),
       stock: Value(stock),
+      category: Value(category),
+      unit: Value(unit),
+      fixtureId: Value(fixtureId),
+      locationLabel: Value(locationLabel),
+      lowStockThreshold: Value(lowStockThreshold),
       updatedAt: Value(updatedAt),
     );
   }
@@ -222,10 +390,16 @@ class Product extends DataClass implements Insertable<Product> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Product(
       id: serializer.fromJson<String>(json['id']),
-      barcode: serializer.fromJson<String>(json['barcode']),
+      barcode: serializer.fromJson<String?>(json['barcode']),
       name: serializer.fromJson<String>(json['name']),
       salePrice: serializer.fromJson<int>(json['salePrice']),
+      costPrice: serializer.fromJson<int>(json['costPrice']),
       stock: serializer.fromJson<int>(json['stock']),
+      category: serializer.fromJson<String>(json['category']),
+      unit: serializer.fromJson<String>(json['unit']),
+      fixtureId: serializer.fromJson<String>(json['fixtureId']),
+      locationLabel: serializer.fromJson<String>(json['locationLabel']),
+      lowStockThreshold: serializer.fromJson<int>(json['lowStockThreshold']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
   }
@@ -234,27 +408,45 @@ class Product extends DataClass implements Insertable<Product> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
-      'barcode': serializer.toJson<String>(barcode),
+      'barcode': serializer.toJson<String?>(barcode),
       'name': serializer.toJson<String>(name),
       'salePrice': serializer.toJson<int>(salePrice),
+      'costPrice': serializer.toJson<int>(costPrice),
       'stock': serializer.toJson<int>(stock),
+      'category': serializer.toJson<String>(category),
+      'unit': serializer.toJson<String>(unit),
+      'fixtureId': serializer.toJson<String>(fixtureId),
+      'locationLabel': serializer.toJson<String>(locationLabel),
+      'lowStockThreshold': serializer.toJson<int>(lowStockThreshold),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
   }
 
   Product copyWith({
     String? id,
-    String? barcode,
+    Value<String?> barcode = const Value.absent(),
     String? name,
     int? salePrice,
+    int? costPrice,
     int? stock,
+    String? category,
+    String? unit,
+    String? fixtureId,
+    String? locationLabel,
+    int? lowStockThreshold,
     DateTime? updatedAt,
   }) => Product(
     id: id ?? this.id,
-    barcode: barcode ?? this.barcode,
+    barcode: barcode.present ? barcode.value : this.barcode,
     name: name ?? this.name,
     salePrice: salePrice ?? this.salePrice,
+    costPrice: costPrice ?? this.costPrice,
     stock: stock ?? this.stock,
+    category: category ?? this.category,
+    unit: unit ?? this.unit,
+    fixtureId: fixtureId ?? this.fixtureId,
+    locationLabel: locationLabel ?? this.locationLabel,
+    lowStockThreshold: lowStockThreshold ?? this.lowStockThreshold,
     updatedAt: updatedAt ?? this.updatedAt,
   );
   Product copyWithCompanion(ProductsCompanion data) {
@@ -263,7 +455,17 @@ class Product extends DataClass implements Insertable<Product> {
       barcode: data.barcode.present ? data.barcode.value : this.barcode,
       name: data.name.present ? data.name.value : this.name,
       salePrice: data.salePrice.present ? data.salePrice.value : this.salePrice,
+      costPrice: data.costPrice.present ? data.costPrice.value : this.costPrice,
       stock: data.stock.present ? data.stock.value : this.stock,
+      category: data.category.present ? data.category.value : this.category,
+      unit: data.unit.present ? data.unit.value : this.unit,
+      fixtureId: data.fixtureId.present ? data.fixtureId.value : this.fixtureId,
+      locationLabel: data.locationLabel.present
+          ? data.locationLabel.value
+          : this.locationLabel,
+      lowStockThreshold: data.lowStockThreshold.present
+          ? data.lowStockThreshold.value
+          : this.lowStockThreshold,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
@@ -275,15 +477,33 @@ class Product extends DataClass implements Insertable<Product> {
           ..write('barcode: $barcode, ')
           ..write('name: $name, ')
           ..write('salePrice: $salePrice, ')
+          ..write('costPrice: $costPrice, ')
           ..write('stock: $stock, ')
+          ..write('category: $category, ')
+          ..write('unit: $unit, ')
+          ..write('fixtureId: $fixtureId, ')
+          ..write('locationLabel: $locationLabel, ')
+          ..write('lowStockThreshold: $lowStockThreshold, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, barcode, name, salePrice, stock, updatedAt);
+  int get hashCode => Object.hash(
+    id,
+    barcode,
+    name,
+    salePrice,
+    costPrice,
+    stock,
+    category,
+    unit,
+    fixtureId,
+    locationLabel,
+    lowStockThreshold,
+    updatedAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -292,16 +512,28 @@ class Product extends DataClass implements Insertable<Product> {
           other.barcode == this.barcode &&
           other.name == this.name &&
           other.salePrice == this.salePrice &&
+          other.costPrice == this.costPrice &&
           other.stock == this.stock &&
+          other.category == this.category &&
+          other.unit == this.unit &&
+          other.fixtureId == this.fixtureId &&
+          other.locationLabel == this.locationLabel &&
+          other.lowStockThreshold == this.lowStockThreshold &&
           other.updatedAt == this.updatedAt);
 }
 
 class ProductsCompanion extends UpdateCompanion<Product> {
   final Value<String> id;
-  final Value<String> barcode;
+  final Value<String?> barcode;
   final Value<String> name;
   final Value<int> salePrice;
+  final Value<int> costPrice;
   final Value<int> stock;
+  final Value<String> category;
+  final Value<String> unit;
+  final Value<String> fixtureId;
+  final Value<String> locationLabel;
+  final Value<int> lowStockThreshold;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
   const ProductsCompanion({
@@ -309,20 +541,31 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     this.barcode = const Value.absent(),
     this.name = const Value.absent(),
     this.salePrice = const Value.absent(),
+    this.costPrice = const Value.absent(),
     this.stock = const Value.absent(),
+    this.category = const Value.absent(),
+    this.unit = const Value.absent(),
+    this.fixtureId = const Value.absent(),
+    this.locationLabel = const Value.absent(),
+    this.lowStockThreshold = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ProductsCompanion.insert({
     required String id,
-    required String barcode,
+    this.barcode = const Value.absent(),
     required String name,
     required int salePrice,
+    this.costPrice = const Value.absent(),
     required int stock,
+    this.category = const Value.absent(),
+    this.unit = const Value.absent(),
+    this.fixtureId = const Value.absent(),
+    this.locationLabel = const Value.absent(),
+    this.lowStockThreshold = const Value.absent(),
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
-       barcode = Value(barcode),
        name = Value(name),
        salePrice = Value(salePrice),
        stock = Value(stock),
@@ -332,7 +575,13 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     Expression<String>? barcode,
     Expression<String>? name,
     Expression<int>? salePrice,
+    Expression<int>? costPrice,
     Expression<int>? stock,
+    Expression<String>? category,
+    Expression<String>? unit,
+    Expression<String>? fixtureId,
+    Expression<String>? locationLabel,
+    Expression<int>? lowStockThreshold,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
   }) {
@@ -341,7 +590,13 @@ class ProductsCompanion extends UpdateCompanion<Product> {
       if (barcode != null) 'barcode': barcode,
       if (name != null) 'name': name,
       if (salePrice != null) 'sale_price': salePrice,
+      if (costPrice != null) 'cost_price': costPrice,
       if (stock != null) 'stock': stock,
+      if (category != null) 'category': category,
+      if (unit != null) 'unit': unit,
+      if (fixtureId != null) 'fixture_id': fixtureId,
+      if (locationLabel != null) 'location_label': locationLabel,
+      if (lowStockThreshold != null) 'low_stock_threshold': lowStockThreshold,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -349,10 +604,16 @@ class ProductsCompanion extends UpdateCompanion<Product> {
 
   ProductsCompanion copyWith({
     Value<String>? id,
-    Value<String>? barcode,
+    Value<String?>? barcode,
     Value<String>? name,
     Value<int>? salePrice,
+    Value<int>? costPrice,
     Value<int>? stock,
+    Value<String>? category,
+    Value<String>? unit,
+    Value<String>? fixtureId,
+    Value<String>? locationLabel,
+    Value<int>? lowStockThreshold,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
   }) {
@@ -361,7 +622,13 @@ class ProductsCompanion extends UpdateCompanion<Product> {
       barcode: barcode ?? this.barcode,
       name: name ?? this.name,
       salePrice: salePrice ?? this.salePrice,
+      costPrice: costPrice ?? this.costPrice,
       stock: stock ?? this.stock,
+      category: category ?? this.category,
+      unit: unit ?? this.unit,
+      fixtureId: fixtureId ?? this.fixtureId,
+      locationLabel: locationLabel ?? this.locationLabel,
+      lowStockThreshold: lowStockThreshold ?? this.lowStockThreshold,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
     );
@@ -382,8 +649,26 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     if (salePrice.present) {
       map['sale_price'] = Variable<int>(salePrice.value);
     }
+    if (costPrice.present) {
+      map['cost_price'] = Variable<int>(costPrice.value);
+    }
     if (stock.present) {
       map['stock'] = Variable<int>(stock.value);
+    }
+    if (category.present) {
+      map['category'] = Variable<String>(category.value);
+    }
+    if (unit.present) {
+      map['unit'] = Variable<String>(unit.value);
+    }
+    if (fixtureId.present) {
+      map['fixture_id'] = Variable<String>(fixtureId.value);
+    }
+    if (locationLabel.present) {
+      map['location_label'] = Variable<String>(locationLabel.value);
+    }
+    if (lowStockThreshold.present) {
+      map['low_stock_threshold'] = Variable<int>(lowStockThreshold.value);
     }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
@@ -401,7 +686,13 @@ class ProductsCompanion extends UpdateCompanion<Product> {
           ..write('barcode: $barcode, ')
           ..write('name: $name, ')
           ..write('salePrice: $salePrice, ')
+          ..write('costPrice: $costPrice, ')
           ..write('stock: $stock, ')
+          ..write('category: $category, ')
+          ..write('unit: $unit, ')
+          ..write('fixtureId: $fixtureId, ')
+          ..write('locationLabel: $locationLabel, ')
+          ..write('lowStockThreshold: $lowStockThreshold, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -1383,19 +1674,31 @@ abstract class _$AppDatabase extends GeneratedDatabase {
 
 typedef $$ProductsTableCreateCompanionBuilder = ProductsCompanion Function({
   required String id,
-  required String barcode,
+  Value<String?> barcode,
   required String name,
   required int salePrice,
+  Value<int> costPrice,
   required int stock,
+  Value<String> category,
+  Value<String> unit,
+  Value<String> fixtureId,
+  Value<String> locationLabel,
+  Value<int> lowStockThreshold,
   required DateTime updatedAt,
   Value<int> rowid,
 });
 typedef $$ProductsTableUpdateCompanionBuilder = ProductsCompanion Function({
   Value<String> id,
-  Value<String> barcode,
+  Value<String?> barcode,
   Value<String> name,
   Value<int> salePrice,
+  Value<int> costPrice,
   Value<int> stock,
+  Value<String> category,
+  Value<String> unit,
+  Value<String> fixtureId,
+  Value<String> locationLabel,
+  Value<int> lowStockThreshold,
   Value<DateTime> updatedAt,
   Value<int> rowid,
 });
@@ -1429,8 +1732,38 @@ class $$ProductsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get costPrice => $composableBuilder(
+    column: $table.costPrice,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<int> get stock => $composableBuilder(
     column: $table.stock,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get unit => $composableBuilder(
+    column: $table.unit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fixtureId => $composableBuilder(
+    column: $table.fixtureId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get locationLabel => $composableBuilder(
+    column: $table.locationLabel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get lowStockThreshold => $composableBuilder(
+    column: $table.lowStockThreshold,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1469,8 +1802,38 @@ class $$ProductsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get costPrice => $composableBuilder(
+    column: $table.costPrice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get stock => $composableBuilder(
     column: $table.stock,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get unit => $composableBuilder(
+    column: $table.unit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fixtureId => $composableBuilder(
+    column: $table.fixtureId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get locationLabel => $composableBuilder(
+    column: $table.locationLabel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get lowStockThreshold => $composableBuilder(
+    column: $table.lowStockThreshold,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -1501,8 +1864,30 @@ class $$ProductsTableAnnotationComposer
   GeneratedColumn<int> get salePrice =>
       $composableBuilder(column: $table.salePrice, builder: (column) => column);
 
+  GeneratedColumn<int> get costPrice =>
+      $composableBuilder(column: $table.costPrice, builder: (column) => column);
+
   GeneratedColumn<int> get stock =>
       $composableBuilder(column: $table.stock, builder: (column) => column);
+
+  GeneratedColumn<String> get category =>
+      $composableBuilder(column: $table.category, builder: (column) => column);
+
+  GeneratedColumn<String> get unit =>
+      $composableBuilder(column: $table.unit, builder: (column) => column);
+
+  GeneratedColumn<String> get fixtureId =>
+      $composableBuilder(column: $table.fixtureId, builder: (column) => column);
+
+  GeneratedColumn<String> get locationLabel => $composableBuilder(
+    column: $table.locationLabel,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get lowStockThreshold => $composableBuilder(
+    column: $table.lowStockThreshold,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
@@ -1537,10 +1922,16 @@ class $$ProductsTableTableManager
           updateCompanionCallback:
               ({
                 Value<String> id = const Value.absent(),
-                Value<String> barcode = const Value.absent(),
+                Value<String?> barcode = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<int> salePrice = const Value.absent(),
+                Value<int> costPrice = const Value.absent(),
                 Value<int> stock = const Value.absent(),
+                Value<String> category = const Value.absent(),
+                Value<String> unit = const Value.absent(),
+                Value<String> fixtureId = const Value.absent(),
+                Value<String> locationLabel = const Value.absent(),
+                Value<int> lowStockThreshold = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ProductsCompanion(
@@ -1548,17 +1939,29 @@ class $$ProductsTableTableManager
                 barcode: barcode,
                 name: name,
                 salePrice: salePrice,
+                costPrice: costPrice,
                 stock: stock,
+                category: category,
+                unit: unit,
+                fixtureId: fixtureId,
+                locationLabel: locationLabel,
+                lowStockThreshold: lowStockThreshold,
                 updatedAt: updatedAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
               ({
                 required String id,
-                required String barcode,
+                Value<String?> barcode = const Value.absent(),
                 required String name,
                 required int salePrice,
+                Value<int> costPrice = const Value.absent(),
                 required int stock,
+                Value<String> category = const Value.absent(),
+                Value<String> unit = const Value.absent(),
+                Value<String> fixtureId = const Value.absent(),
+                Value<String> locationLabel = const Value.absent(),
+                Value<int> lowStockThreshold = const Value.absent(),
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
               }) => ProductsCompanion.insert(
@@ -1566,7 +1969,13 @@ class $$ProductsTableTableManager
                 barcode: barcode,
                 name: name,
                 salePrice: salePrice,
+                costPrice: costPrice,
                 stock: stock,
+                category: category,
+                unit: unit,
+                fixtureId: fixtureId,
+                locationLabel: locationLabel,
+                lowStockThreshold: lowStockThreshold,
                 updatedAt: updatedAt,
                 rowid: rowid,
               ),

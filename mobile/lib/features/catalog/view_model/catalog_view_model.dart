@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../core/data/product_record.dart';
+import '../../../core/data/product_repository.dart';
 import '../model/catalog_product.dart';
 import '../model/catalog_scenario.dart';
 import '../model/catalog_sort.dart';
@@ -7,10 +9,79 @@ import '../sample/catalog_sample.dart';
 
 /// State UI dan interaksi untuk mengelola katalog produk warung.
 class CatalogViewModel extends ChangeNotifier {
-  CatalogViewModel() : _products = List.of(CatalogSample.products);
+  CatalogViewModel({this.repository})
+    : _products = repository == null ? List.of(CatalogSample.products) : [],
+      _scenario = repository == null
+          ? CatalogScenario.withData
+          : CatalogScenario.loading;
 
+  final ProductRepository? repository;
   final List<CatalogProduct> _products;
-  CatalogScenario _scenario = CatalogScenario.withData;
+  CatalogScenario _scenario;
+  bool _disposed = false;
+  int _loadVersion = 0;
+
+  bool get isLocal => repository != null;
+
+  Future<void> loadProducts() async {
+    if (_disposed) return;
+    final source = repository;
+    if (source == null) {
+      showSampleProducts();
+      return;
+    }
+    final version = ++_loadVersion;
+    _scenario = CatalogScenario.loading;
+    notifyListeners();
+    try {
+      final records = await source.listProducts();
+      if (_disposed || version != _loadVersion) return;
+      _products
+        ..clear()
+        ..addAll(records.map(CatalogProduct.fromRecord));
+      if (_selectedCategory != CatalogSample.allCategoryLabel &&
+          !_products.any((product) => product.category == _selectedCategory)) {
+        _selectedCategory = CatalogSample.allCategoryLabel;
+      }
+      _scenario = _products.isEmpty
+          ? CatalogScenario.empty
+          : CatalogScenario.withData;
+    } catch (_) {
+      if (_disposed || version != _loadVersion) return;
+      _scenario = CatalogScenario.failure;
+    }
+    notifyListeners();
+  }
+
+  Future<void> persistProduct(CatalogProduct product) async {
+    final source = repository;
+    if (source == null) {
+      final exists = _products.any((entry) => entry.id == product.id);
+      if (exists) {
+        updateProduct(product);
+      } else {
+        addProduct(product);
+      }
+      return;
+    }
+    await source.save(
+      ProductRecord(
+        id: product.id,
+        barcode: product.barcode,
+        name: product.name,
+        salePrice: product.price,
+        costPrice: product.costPrice,
+        stock: product.stock,
+        category: product.category,
+        unit: product.unit,
+        fixtureId: product.fixtureId,
+        locationLabel: product.locationLabel,
+        lowStockThreshold: product.lowStockThreshold,
+      ),
+    );
+    if (_disposed) return;
+    await loadProducts();
+  }
 
   String _searchQuery = '';
   String _selectedCategory = CatalogSample.allCategoryLabel;
@@ -29,6 +100,13 @@ class CatalogViewModel extends ChangeNotifier {
   };
 
   List<CatalogProduct> get allProducts => List.unmodifiable(_products);
+
+  List<String> get categories {
+    if (!isLocal) return CatalogSample.categories;
+    final names = _products.map((product) => product.category).toSet().toList()
+      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    return [CatalogSample.allCategoryLabel, ...names];
+  }
 
   List<CatalogProduct> get filteredProducts {
     final filtered = _products.where((p) {
@@ -113,5 +191,17 @@ class CatalogViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void showSampleProducts() => selectScenario(CatalogScenario.withData);
+  void showSampleProducts() {
+    if (isLocal) {
+      loadProducts();
+    } else {
+      selectScenario(CatalogScenario.withData);
+    }
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
 }

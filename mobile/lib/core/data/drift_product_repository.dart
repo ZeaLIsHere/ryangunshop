@@ -1,4 +1,7 @@
 import 'app_database.dart';
+
+import 'package:drift/drift.dart' show Value;
+
 import 'product_record.dart';
 import 'product_repository.dart';
 
@@ -21,19 +24,30 @@ class DriftProductRepository implements ProductRepository {
   @override
   Future<void> save(ProductRecord product) async {
     if (product.id.trim().isEmpty ||
-        product.barcode.trim().isEmpty ||
+        (product.barcode != null && product.barcode!.trim().isEmpty) ||
         product.name.trim().isEmpty ||
         product.salePrice <= 0 ||
-        product.stock < 0) {
+        product.costPrice < 0 ||
+        product.stock < 0 ||
+        product.lowStockThreshold < 0 ||
+        product.category.trim().isEmpty ||
+        product.unit.trim().isEmpty ||
+        product.locationLabel.trim().isEmpty) {
       throw ArgumentError('Data produk tidak valid');
     }
     await database.saveProduct(
       ProductsCompanion.insert(
         id: product.id,
-        barcode: product.barcode,
+        barcode: Value(product.barcode?.trim()),
         name: product.name,
         salePrice: product.salePrice,
         stock: product.stock,
+        costPrice: Value(product.costPrice),
+        category: Value(product.category),
+        unit: Value(product.unit),
+        fixtureId: Value(product.fixtureId),
+        locationLabel: Value(product.locationLabel),
+        lowStockThreshold: Value(product.lowStockThreshold),
         updatedAt: DateTime.now(),
       ),
     );
@@ -45,5 +59,11 @@ class DriftProductRepository implements ProductRepository {
     name: product.name,
     salePrice: product.salePrice,
     stock: product.stock,
+    costPrice: product.costPrice,
+    category: product.category,
+    unit: product.unit,
+    fixtureId: product.fixtureId,
+    locationLabel: product.locationLabel,
+    lowStockThreshold: product.lowStockThreshold,
   );
 }

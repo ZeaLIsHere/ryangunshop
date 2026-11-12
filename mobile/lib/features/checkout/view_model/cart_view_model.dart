@@ -6,15 +6,18 @@ import '../model/cart_scenario.dart';
 
 /// ViewModel untuk mengelola keranjang transaksi kasir.
 class CartViewModel extends ChangeNotifier {
-  final List<CartItem> _items = [
-    const CartItem(
+  CartViewModel({bool withSampleItems = true})
+    : _items = withSampleItems ? List.of(_sampleItems) : <CartItem>[];
+
+  static const _sampleItems = <CartItem>[
+    CartItem(
       productId: 'contoh-produk-1',
       productName: 'Beras pandan wangi 1 kg',
       unitPrice: 16000,
       quantity: 1,
       unit: 'bungkus',
     ),
-    const CartItem(
+    CartItem(
       productId: 'contoh-produk-4',
       productName: 'Mi instan goreng',
       unitPrice: 3500,
@@ -22,6 +25,8 @@ class CartViewModel extends ChangeNotifier {
       unit: 'bungkus',
     ),
   ];
+
+  final List<CartItem> _items;
 
   int _discount = 0;
   String _note = '';

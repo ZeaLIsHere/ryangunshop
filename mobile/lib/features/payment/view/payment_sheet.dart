@@ -14,12 +14,15 @@ import '../sample/payment_sample.dart';
 import '../view_model/payment_view_model.dart';
 import 'payment_success_screen.dart';
 
-/// Pratinjau metode tunai dan state QRIS tanpa pemrosesan pembayaran nyata.
+typedef ConfirmCashPayment = Future<String> Function(int received, int change);
+
+/// Pembayaran tunai lokal bila callback tersedia; QRIS tetap pratinjau.
 class PaymentSheet extends StatefulWidget {
   const PaymentSheet({
     required this.totalAmount,
     required this.cartItems,
     this.onPaymentCompleted,
+    this.onCashConfirmed,
     super.key,
   });
 
@@ -28,12 +31,14 @@ class PaymentSheet extends StatefulWidget {
 
   /// Dipanggil hanya setelah kasir menyelesaikan simulasi tunai secara eksplisit.
   final VoidCallback? onPaymentCompleted;
+  final ConfirmCashPayment? onCashConfirmed;
 
   static Future<void> show(
     BuildContext context, {
     required int totalAmount,
     required List<CartItem> cartItems,
     VoidCallback? onPaymentCompleted,
+    ConfirmCashPayment? onCashConfirmed,
   }) {
     return showModalBottomSheet<void>(
       context: context,
@@ -49,6 +54,7 @@ class PaymentSheet extends StatefulWidget {
           totalAmount: totalAmount,
           cartItems: cartItems,
           onPaymentCompleted: onPaymentCompleted,
+          onCashConfirmed: onCashConfirmed,
         ),
       ),
     );
@@ -61,6 +67,8 @@ class PaymentSheet extends StatefulWidget {
 class _PaymentSheetState extends State<PaymentSheet> {
   late final PaymentViewModel _viewModel;
   final TextEditingController _cashController = TextEditingController();
+  bool _isSaving = false;
+  String? _saveError;
 
   @override
   void initState() {
@@ -80,12 +88,31 @@ class _PaymentSheetState extends State<PaymentSheet> {
     _viewModel.chooseCashAmount(amount);
   }
 
-  void _completeCashPreview() {
-    if (!_viewModel.canCompleteCash) return;
+  Future<void> _completeCashPreview() async {
+    if (!_viewModel.canCompleteCash || _isSaving) return;
     final navigator = Navigator.of(context);
     final items = List<CartItem>.of(widget.cartItems);
     final cashReceived = _viewModel.cashReceived!;
     final change = _viewModel.change!;
+
+    String? transactionId;
+    if (widget.onCashConfirmed != null) {
+      setState(() {
+        _isSaving = true;
+        _saveError = null;
+      });
+      try {
+        transactionId = await widget.onCashConfirmed!(cashReceived, change);
+      } catch (_) {
+        if (!mounted) return;
+        setState(() {
+          _isSaving = false;
+          _saveError = 'Transaksi gagal disimpan. Periksa stok dan harga produk, lalu coba lagi.';
+        });
+        return;
+      }
+      if (!mounted) return;
+    }
 
     widget.onPaymentCompleted?.call();
     navigator.pop();
@@ -97,6 +124,7 @@ class _PaymentSheetState extends State<PaymentSheet> {
           items: items,
           cashReceived: cashReceived,
           changeAmount: change,
+          transactionId: transactionId,
         ),
       ),
     );
@@ -153,11 +181,17 @@ class _PaymentSheetState extends State<PaymentSheet> {
                 ],
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: AppSpacing.screen),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.screen,
+              ),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: SampleBadge(label: 'Simulasi pembayaran'),
+                child: SampleBadge(
+                  label: widget.onCashConfirmed == null
+                      ? 'Simulasi pembayaran'
+                      : 'Tunai lokal • QRIS simulasi',
+                ),
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -327,13 +361,26 @@ class _PaymentSheetState extends State<PaymentSheet> {
         ),
         const SizedBox(height: AppSpacing.lg),
         PrimaryAction(
-          label: 'Selesaikan Simulasi Tunai',
+          label: _isSaving
+              ? 'Menyimpan transaksi...'
+              : widget.onCashConfirmed == null
+              ? 'Selesaikan Simulasi Tunai'
+              : 'Simpan Transaksi Tunai',
           icon: Icons.check,
-          onPressed: valid ? _completeCashPreview : null,
+          onPressed: valid && !_isSaving ? _completeCashPreview : null,
         ),
+        if (_saveError != null) ...[
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            _saveError!,
+            style: theme.textTheme.bodySmall?.copyWith(color: AppColors.error),
+          ),
+        ],
         const SizedBox(height: AppSpacing.xs),
         Text(
-          'Simulasi ini tidak mencatat transaksi atau mengurangi stok.',
+          widget.onCashConfirmed == null
+              ? 'Simulasi ini tidak mencatat transaksi atau mengurangi stok.'
+              : 'Nota dan stok disimpan di perangkat setelah pembayaran tunai dikonfirmasi.',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodySmall?.copyWith(color: AppColors.muted),
         ),

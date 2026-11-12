@@ -8,6 +8,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/brand_spinner.dart';
 import '../../../core/widgets/primary_action.dart';
+import '../../../core/widgets/sample_badge.dart';
 import '../model/report_payment_method.dart';
 import '../model/report_scenario.dart';
 import '../model/transaction_record.dart';
@@ -52,6 +53,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: SampleBadge(label: 'Laporan contoh'),
+                ),
+                const SizedBox(height: AppSpacing.sm),
                 _SummaryCard(
                   total: _viewModel.totalAmount,
                   transactionCount: _viewModel.records.length,

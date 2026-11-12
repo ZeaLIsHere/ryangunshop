@@ -1,5 +1,21 @@
+import '../../../core/data/product_record.dart';
+
 /// Data produk untuk tampilan katalog; seluruh nominal dalam rupiah bulat.
 class CatalogProduct {
+  factory CatalogProduct.fromRecord(ProductRecord record) => CatalogProduct(
+    id: record.id,
+    barcode: record.barcode,
+    name: record.name,
+    price: record.salePrice,
+    costPrice: record.costPrice,
+    stock: record.stock,
+    category: record.category,
+    unit: record.unit,
+    fixtureId: record.fixtureId,
+    locationLabel: record.locationLabel,
+    lowStockThreshold: record.lowStockThreshold,
+  );
+
   const CatalogProduct({
     required this.id,
     required this.name,
