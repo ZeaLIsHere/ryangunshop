@@ -5,6 +5,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ryangunshop/core/data/app_database.dart';
 import 'package:ryangunshop/core/data/product_record.dart';
 import 'package:ryangunshop/core/data/product_repository.dart';
+import 'package:ryangunshop/core/data/transaction_repository.dart';
+import 'package:ryangunshop/core/data/in_memory_transaction_repository.dart';
+import 'package:ryangunshop/core/format/rupiah.dart';
+import 'package:ryangunshop/features/dashboard/model/dashboard_period.dart';
 import 'package:ryangunshop/core/session/app_session.dart';
 import 'package:ryangunshop/core/session/user_role.dart';
 import 'package:ryangunshop/core/theme/app_theme.dart';
@@ -81,11 +85,29 @@ void main() {
       ]) {
         expect(find.text(label), findsNothing);
       }
+      expect(find.text('Omzet Hari Ini'), findsOneWidget);
+      expect(find.text('Aksi Cepat'), findsOneWidget);
+      expect(find.text('Penjualan harian'), findsNothing);
+      final assets = tester
+          .widgetList<Image>(find.byType(Image))
+          .map((image) => (image.image as AssetImage).assetName);
+      expect(
+        assets,
+        containsAll([
+          'assets/icon/08_pindai_barcode.png',
+          'assets/icon/02_keranjang.png',
+          'assets/icon/09_stok_produk.png',
+          'assets/icon/03_riwayat_transaksi.png',
+        ]),
+      );
       await tester.tap(find.text('Pindai Barcode'));
       expect(selected, DashboardShortcut.cashier);
       session.selectRole(UserRole.owner);
       await tester.pumpAndSettle();
       expect(find.text('Tambah Produk'), findsOneWidget);
+      expect(find.text('Penjualan harian'), findsOneWidget);
+      expect(find.text('Omzet Hari Ini'), findsNothing);
+      expect(find.text('Aksi Cepat'), findsNothing);
       expect(
         (await session.productRepository.listProducts()).single.name,
         'Kopi',
@@ -174,6 +196,7 @@ void main() {
         quantity: 2,
       );
       await host(tester);
+      await reveal(tester, 'Tambah Produk');
       await tester.tap(find.text('Tambah Produk'));
       await tester.pumpAndSettle();
       expect(find.byType(ProductFormScreen), findsOneWidget);
@@ -201,6 +224,7 @@ void main() {
 
   testWidgets('hasil form setelah role berubah tidak disimpan', (tester) async {
     await host(tester);
+    await reveal(tester, 'Tambah Produk');
     await tester.tap(find.text('Tambah Produk'));
     await tester.pumpAndSettle();
     session.selectRole(UserRole.cashier);
@@ -220,6 +244,65 @@ void main() {
     expect(await session.productRepository.listProducts(), isEmpty);
   });
 
+  testWidgets('periode mengubah query, ringkasan, grafik dan nota bersama', (
+    tester,
+  ) async {
+    session.dispose();
+    final semantics = tester.ensureSemantics();
+
+    final source = _PeriodRepository();
+    session = _PeriodSession(source);
+    await host(tester);
+    for (final days in [1, 7, 30]) {
+      if (days != 1) {
+        await tester.ensureVisible(find.text('$days hari'));
+        await tester.tap(find.text('$days hari'));
+        await tester.pumpAndSettle();
+      }
+      final expected = DashboardPeriod(DateTime.now(), days);
+      expect(source.start, expected.start);
+      expect(source.end, expected.end);
+      expect(
+        find.text('Penjualan bersih: ${formatRupiah(days * 100)}'),
+        findsOneWidget,
+      );
+      expect(find.text('1 nota'), findsOneWidget);
+      expect(find.text('Snapshot periode · $days barang'), findsOneWidget);
+      expect(find.text('Kotor: ${formatRupiah(days * 200)}'), findsOneWidget);
+      expect(find.text('nota-$days'), findsOneWidget);
+      expect(
+        find.bySemanticsLabel(
+          '${expected.start.day}/${expected.start.month}/${expected.start.year}: ${formatRupiah(days * 100)}',
+        ),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    }
+    semantics.dispose();
+  });
+
+  testWidgets(
+    'kasir gagal tidak menampilkan omzet nol dan retry memulihkan Hero',
+    (tester) async {
+      session.dispose();
+      final failing = _FailingSession();
+      session = failing;
+      session.selectRole(UserRole.cashier);
+      await host(tester);
+      expect(
+        find.text('Data beranda gagal dimuat. Angka belum tersedia.'),
+        findsOneWidget,
+      );
+      expect(find.text('Omzet Hari Ini'), findsNothing);
+      failing.fail = false;
+      await tester.tap(find.text('Coba lagi'));
+      await tester.pumpAndSettle();
+      expect(find.text('Omzet Hari Ini'), findsOneWidget);
+      expect(find.text('Belum ada transaksi hari ini'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('gagal tidak menjadi angka nol, retry dan kosong tersedia', (
     tester,
   ) async {
@@ -237,6 +320,45 @@ void main() {
     expect(find.text('Tambah Produk pertama'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+}
+
+class _PeriodSession extends AppSession {
+  _PeriodSession(this.source);
+  final TransactionRepository source;
+  @override
+  TransactionRepository get transactionRepository => source;
+}
+
+class _PeriodRepository extends InMemoryTransactionRepository {
+  DateTime? start;
+  DateTime? end;
+  @override
+  Future<List<TransactionRecord>> listForPeriod(
+    DateTime start,
+    DateTime endExclusive,
+  ) async {
+    this.start = start;
+    end = endExclusive;
+    final days = endExclusive.difference(start).inHours ~/ 24;
+    return [
+      TransactionRecord(
+        id: 'nota-$days',
+        createdAt: start,
+        totalAmount: days * 100,
+        discountAmount: days * 100,
+        paymentMethod: 'cash',
+        items: [
+          TransactionItemSnapshot(
+            productId: 'p',
+            productName: 'Snapshot periode',
+            quantity: days,
+            unitPrice: 200,
+            subtotal: days * 200,
+          ),
+        ],
+      ),
+    ];
+  }
 }
 
 class _FailingSession extends AppSession {

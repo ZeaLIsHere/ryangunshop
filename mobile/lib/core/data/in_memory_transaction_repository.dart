@@ -110,11 +110,28 @@ class InMemoryTransactionRepository implements TransactionRepository {
     final local = day.toLocal();
     final start = DateTime(local.year, local.month, local.day);
     final end = DateTime(local.year, local.month, local.day + 1);
+    return listForPeriod(start, end);
+  }
+
+  @override
+  Future<List<TransactionRecord>> listForPeriod(
+    DateTime start,
+    DateTime endExclusive,
+  ) async {
+    if (!start.isBefore(endExclusive)) {
+      throw ArgumentError('Rentang tanggal tidak valid');
+    }
     return _transactions
         .where(
-          (tx) => !tx.createdAt.isBefore(start) && tx.createdAt.isBefore(end),
+          (tx) =>
+              !tx.createdAt.isBefore(start) &&
+              tx.createdAt.isBefore(endExclusive),
         )
-        .toList();
+        .toList()
+      ..sort((a, b) {
+        final date = b.createdAt.compareTo(a.createdAt);
+        return date != 0 ? date : a.id.compareTo(b.id);
+      });
   }
 
   @override

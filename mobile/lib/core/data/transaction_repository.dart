@@ -76,6 +76,12 @@ abstract interface class TransactionRepository {
   /// Semua nota pada [tengah malam, tengah malam berikutnya) waktu perangkat.
   Future<List<TransactionRecord>> listForDay(DateTime day);
 
+  /// Seluruh nota pada [start, endExclusive), tanpa batas jumlah.
+  Future<List<TransactionRecord>> listForPeriod(
+    DateTime start,
+    DateTime endExclusive,
+  );
+
   Future<DailySalesSummary> summaryForDay(DateTime day);
 }
 
@@ -225,6 +231,18 @@ class DriftTransactionRepository implements TransactionRepository {
     final local = day.toLocal();
     final start = DateTime(local.year, local.month, local.day);
     final end = DateTime(local.year, local.month, local.day + 1);
+    return listForPeriod(start, end);
+  }
+
+  @override
+  Future<List<TransactionRecord>> listForPeriod(
+    DateTime start,
+    DateTime endExclusive,
+  ) {
+    if (!start.isBefore(endExclusive)) {
+      throw ArgumentError('Rentang tanggal tidak valid');
+    }
+    final end = endExclusive;
     final transactions = database.transactions;
     final items = database.transactionItems;
     return database.transaction(() async {

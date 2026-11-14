@@ -51,6 +51,34 @@ berkas checklist terpisah.
 
 ## Catatan per tugas
 
+**Tariq — Koreksi dua permukaan Beranda menurut peran (2026-11-14), review.**
+
+- Kasir dipulihkan dari visual `origin/main`: Hero Omzet gradien, cetak laporan,
+  empat bento dengan aset asli, serta aktivitas transaksi terbaru. Tidak ada
+  alat kelola pemilik. Angka dibaca dari repository dengan loading/error/retry,
+  bukan nol pengganti kegagalan. Status data tetap lokal perangkat.
+- `DashboardScreen` memilih `CashierDashboard` atau `OwnerDashboard` dari peran
+  sesi langsung. Pengaturan tetap tanpa autentikasi/PIN; pergantian peran tidak
+  menghapus katalog atau keranjang. Izin tambah/simpan ulang tetap diperiksa.
+- Pemilik memakai urutan ringkasan bersih/jumlah/rata-rata, grafik harian,
+  perhatian stok saat ini beserta aksi kelola, produk terlaris, dan nota periode.
+  Hari ini/7 hari/30 hari memakai kalender lokal termasuk hari ini dan batas
+  akhir eksklusif besok. `listForPeriod` memperluas query harian pada Drift dan
+  memori, tanpa limit 50 atau dependensi baru. Grafik batang native memiliki
+  tanggal, nilai rupiah, semantik, dan hari kosong bernilai nol. Nilai produk
+  terlaris berlabel kotor sebelum diskon nota; tidak ada tren/laba historis.
+- Design Read: operasional kasir lama dan tinjauan manajemen pemilik terpisah;
+  Material 3/token violet, variasi 4, motion 3, kepadatan 6. Tidak mengubah
+  katalog, ekspor, chatbot, scanner, dependensi, atau pemilihan peran.
+- Validasi: `flutter analyze --no-pub` bersih; `flutter test --reporter expanded`
+  205/205 lulus, termasuk batas tanggal 1/7/30, lebih dari 50 nota, jumlah grafik,
+  snapshot/penjualan kotor, perubahan periode, pemulihan kasir, izin formulir,
+  pergantian peran, error/retry/kosong, 360 dp/skala 1,3. APK debug berhasil
+  dalam 138,5 detik dengan
+  `JAVA_TOOL_OPTIONS=-Dorg.gradle.project.kotlin.incremental=false flutter build apk --debug --dart-define-from-file=../.env`.
+  Peringatan KGP plugin Firebase lama tetap ada. APK tidak dipasang; visual
+  emulator/perangkat Android belum diverifikasi. Tidak membuat branch/commit.
+
 **Blessly / Tim — Pembatasan kelola produk berdasarkan peran (2026-11-14), review.**
 
 - `UserRole.canManageProducts` membatasi tambah/edit/hapus untuk pemilik.
