@@ -5,6 +5,22 @@ import 'sync/firestore_schema.dart';
 import 'sync/outbox.dart';
 import 'sync/sync_queue.dart';
 
+class TransactionItemSnapshot {
+  const TransactionItemSnapshot({
+    required this.productId,
+    required this.productName,
+    required this.quantity,
+    required this.unitPrice,
+    required this.subtotal,
+  });
+
+  final String productId;
+  final String productName;
+  final int quantity;
+  final int unitPrice;
+  final int subtotal;
+}
+
 class TransactionRecord {
   const TransactionRecord({
     required this.id,
@@ -16,6 +32,7 @@ class TransactionRecord {
     this.changeAmount,
     this.itemCount = 0,
     this.summaryTitle = 'Nota tunai',
+    this.items = const [],
   });
 
   final String id;
@@ -27,6 +44,7 @@ class TransactionRecord {
   final int? changeAmount;
   final int itemCount;
   final String summaryTitle;
+  final List<TransactionItemSnapshot> items;
 }
 
 class DailySalesSummary {
@@ -37,10 +55,8 @@ class DailySalesSummary {
 }
 
 abstract interface class TransactionRepository {
-  factory TransactionRepository(
-    AppDatabase database, {
-    SyncQueue? queue,
-  }) = DriftTransactionRepository;
+  factory TransactionRepository(AppDatabase database, {SyncQueue? queue}) =
+      DriftTransactionRepository;
 
   Future<void> checkout({
     required String transactionId,
@@ -50,9 +66,15 @@ abstract interface class TransactionRepository {
     int discountAmount = 0,
     int? cashReceived,
     int? changeAmount,
+    bool clearCartDraft = true,
   });
 
+  Future<TransactionRecord?> findById(String id);
+
   Future<List<TransactionRecord>> listRecent({int limit = 20});
+
+  /// Semua nota pada [tengah malam, tengah malam berikutnya) waktu perangkat.
+  Future<List<TransactionRecord>> listForDay(DateTime day);
 
   Future<DailySalesSummary> summaryForDay(DateTime day);
 }
@@ -72,6 +94,7 @@ class DriftTransactionRepository implements TransactionRepository {
     int discountAmount = 0,
     int? cashReceived,
     int? changeAmount,
+    bool clearCartDraft = true,
   }) {
     final syncQueue = queue;
     return database.completeCheckout(
@@ -82,9 +105,27 @@ class DriftTransactionRepository implements TransactionRepository {
       lines: lines,
       cashReceived: cashReceived,
       changeAmount: changeAmount,
+      clearCartDraft: clearCartDraft,
       afterWrite: syncQueue == null
           ? null
           : () => _enqueueTransaction(syncQueue, transactionId),
+    );
+  }
+
+  @override
+  Future<TransactionRecord?> findById(String id) async {
+    final row = await (database.select(
+      database.transactions,
+    )..where((row) => row.id.equals(id))).getSingleOrNull();
+    if (row == null) return null;
+    return TransactionRecord(
+      id: row.id,
+      createdAt: row.createdAt,
+      totalAmount: row.totalAmount,
+      discountAmount: row.discountAmount,
+      paymentMethod: row.paymentMethod,
+      cashReceived: row.cashReceived,
+      changeAmount: row.changeAmount,
     );
   }
 
@@ -93,14 +134,12 @@ class DriftTransactionRepository implements TransactionRepository {
     SyncQueue syncQueue,
     String transactionId,
   ) async {
-    final row =
-        await (database.select(database.transactions)
-              ..where((item) => item.id.equals(transactionId)))
-            .getSingle();
-    final itemRows =
-        await (database.select(database.transactionItems)
-              ..where((item) => item.transactionId.equals(transactionId)))
-            .get();
+    final row = await (database.select(
+      database.transactions,
+    )..where((item) => item.id.equals(transactionId))).getSingle();
+    final itemRows = await (database.select(
+      database.transactionItems,
+    )..where((item) => item.transactionId.equals(transactionId))).get();
     final items = [
       for (final item in itemRows)
         SoldItem(
@@ -182,9 +221,80 @@ class DriftTransactionRepository implements TransactionRepository {
   }
 
   @override
+  Future<List<TransactionRecord>> listForDay(DateTime day) {
+    final local = day.toLocal();
+    final start = DateTime(local.year, local.month, local.day);
+    final end = DateTime(local.year, local.month, local.day + 1);
+    final transactions = database.transactions;
+    final items = database.transactionItems;
+    return database.transaction(() async {
+      final rows =
+          await (database.select(transactions)
+                ..where(
+                  (row) =>
+                      row.createdAt.isBiggerOrEqualValue(start) &
+                      row.createdAt.isSmallerThanValue(end),
+                )
+                ..orderBy([
+                  (row) => OrderingTerm.desc(row.createdAt),
+                  (row) => OrderingTerm.asc(row.id),
+                ]))
+              .get();
+      // Join menghindari batas jumlah parameter SQLite pada hari yang ramai.
+      final itemRows =
+          await (database.select(items).join([
+                  innerJoin(
+                    transactions,
+                    transactions.id.equalsExp(items.transactionId),
+                  ),
+                ])
+                ..where(
+                  transactions.createdAt.isBiggerOrEqualValue(start) &
+                      transactions.createdAt.isSmallerThanValue(end),
+                )
+                ..orderBy([OrderingTerm.asc(items.id)]))
+              .get();
+      final grouped = <String, List<TransactionItemSnapshot>>{};
+      for (final result in itemRows) {
+        final item = result.readTable(items);
+        grouped
+            .putIfAbsent(item.transactionId, () => [])
+            .add(
+              TransactionItemSnapshot(
+                productId: item.productId,
+                productName: item.productName,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+                subtotal: item.subtotal,
+              ),
+            );
+      }
+      return [
+        for (final row in rows)
+          TransactionRecord(
+            id: row.id,
+            createdAt: row.createdAt,
+            totalAmount: row.totalAmount,
+            discountAmount: row.discountAmount,
+            paymentMethod: row.paymentMethod,
+            cashReceived: row.cashReceived,
+            changeAmount: row.changeAmount,
+            items: List.unmodifiable(grouped[row.id] ?? const []),
+            itemCount: (grouped[row.id] ?? const []).fold<int>(
+              0,
+              (sum, item) => sum + item.quantity,
+            ),
+            summaryTitle: grouped[row.id]?.firstOrNull?.productName ?? 'Nota',
+          ),
+      ];
+    });
+  }
+
+  @override
   Future<DailySalesSummary> summaryForDay(DateTime day) async {
-    final start = DateTime(day.year, day.month, day.day);
-    final end = start.add(const Duration(days: 1));
+    final local = day.toLocal();
+    final start = DateTime(local.year, local.month, local.day);
+    final end = DateTime(local.year, local.month, local.day + 1);
     final row = await database
         .customSelect(
           'SELECT COUNT(*) AS note_count, COALESCE(SUM(total_amount), 0) AS total '

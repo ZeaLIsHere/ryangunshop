@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/config/firebase_bootstrap.dart';
 import '../../../core/session/app_session.dart';
 import '../../../core/session/user_role.dart';
 import '../../../core/theme/app_colors.dart';
@@ -106,11 +107,28 @@ class _SettingsContent extends StatelessWidget {
           AppCard(
             child: Row(
               children: [
-                const Icon(Icons.storage_outlined, color: AppColors.success),
+                Icon(
+                  FirebaseBootstrap.isReady
+                      ? Icons.cloud_done_outlined
+                      : (FirebaseBootstrap.enabled
+                            ? Icons.cloud_sync_outlined
+                            : Icons.storage_outlined),
+                  color: FirebaseBootstrap.isReady
+                      ? AppColors.success
+                      : (FirebaseBootstrap.enabled
+                            ? AppColors.warning
+                            : AppColors.muted),
+                ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
-                    'Penyimpanan lokal aktif. Sinkronisasi cloud belum tersedia.',
+                    FirebaseBootstrap.isReady
+                        ? 'Firebase terhubung (${FirebaseBootstrap.storeId}). Sinkronisasi cloud aktif.'
+                        : (FirebaseBootstrap.enabled
+                              ? (FirebaseBootstrap.lastError != null
+                                    ? 'Gagal terhubung ke Firebase: ${FirebaseBootstrap.lastError}'
+                                    : 'Menghubungkan ke Firebase...')
+                              : 'Penyimpanan lokal aktif. Sinkronisasi cloud belum tersedia.'),
                     style: theme.textTheme.bodyMedium,
                   ),
                 ),

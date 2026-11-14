@@ -4,23 +4,27 @@ import '../../../core/session/app_session.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../catalog/model/catalog_product.dart';
+import '../../../core/format/rupiah.dart';
+
+import '../../checkout/view/cart_checkout_screen.dart';
+import '../model/chat_action.dart';
 import '../model/chat_message.dart';
 import '../view_model/chatbot_view_model.dart';
 
 /// Layar chatbot asisten toko RyanGunshop.
 ///
-/// Mendukung mode AI nyata (Groq) dengan injeksi data toko, serta mode simulasi
-/// lokal otomatis saat kunci API belum diisi atau offline.
+/// Tool AI menyiapkan draft; ringkasan dan formulir lokal tetap tanpa internet.
 class ChatbotScreen extends StatefulWidget {
-  const ChatbotScreen({super.key});
+  const ChatbotScreen({this.viewModel, super.key});
+  final ChatbotViewModel? viewModel;
 
   @override
   State<ChatbotScreen> createState() => _ChatbotScreenState();
 }
 
 class _ChatbotScreenState extends State<ChatbotScreen> {
-  final ChatbotViewModel _viewModel = ChatbotViewModel();
+  late final ChatbotViewModel _viewModel =
+      widget.viewModel ?? ChatbotViewModel();
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
@@ -40,26 +44,33 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     _inputController.clear();
 
     final session = AppSessionScope.maybeOf(context);
-    var products = const <CatalogProduct>[];
-    if (session != null) {
-      try {
-        final records = await session.productRepository.listProducts();
-        products = records.map(CatalogProduct.fromRecord).toList();
-      } catch (_) {}
-    }
-
-    _viewModel.send(
-      text,
-      products: products,
-      todayRevenue: session?.todayRevenue,
-      todayTransactions: session?.todayTransactionCount,
-    );
+    _viewModel.session = session;
+    await _viewModel.send(text);
+    if (!mounted) return;
     _scrollToBottom();
+  }
+
+  void _openCheckout() {
+    final session = _viewModel.session;
+    if (session == null) return;
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => AppSessionScope(
+          session: session,
+          child: Scaffold(
+            appBar: AppBar(title: const Text('Kasir')),
+            body: CartCheckoutScreen(
+              transactionRepository: session.transactionRepository,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scrollController.hasClients) {
+      if (!mounted || !_scrollController.hasClients) {
         return;
       }
       _scrollController.animateTo(
@@ -72,6 +83,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   @override
   Widget build(BuildContext context) {
+    _viewModel.session = AppSessionScope.maybeOf(context);
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -98,6 +110,123 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.screen,
+              ),
+              child: Wrap(
+                spacing: AppSpacing.xs,
+                children: [
+                  TextButton.icon(
+                    onPressed: () async {
+                      await _viewModel.send('ringkasan toko');
+                      if (mounted) _scrollToBottom();
+                    },
+                    icon: const Icon(Icons.summarize_outlined),
+                    label: const Text('Ringkasan toko'),
+                  ),
+                  if (_viewModel.session?.role.canManageProducts ?? false)
+                    TextButton(
+                      onPressed: () async {
+                        if (!(_viewModel.session?.role.canManageProducts ??
+                            false)) {
+                          return;
+                        }
+                        final action = ChatAction(
+                          id: 'chat-${DateTime.now().microsecondsSinceEpoch}',
+                          kind: 'prepare_product',
+                          arguments: {},
+                        );
+                        final saved = await showDialog<bool>(
+                          context: context,
+                          builder: (_) => _DraftEditor(
+                            action: action,
+                            viewModel: _viewModel,
+                          ),
+                        );
+                        if (saved == true && mounted) {
+                          _viewModel.actions.add(action);
+                          setState(() {});
+                        }
+                      },
+                      child: const Text('Tambah produk'),
+                    ),
+                  TextButton(
+                    onPressed: _viewModel.session == null
+                        ? null
+                        : _openCheckout,
+                    child: const Text('Buka Kasir'),
+                  ),
+                ],
+              ),
+            ),
+            if (_viewModel.session?.role.canManageProducts ?? false)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.screen),
+                child: Text(
+                  'Tambah produk: ketik data saat AI tersambung, atau buka formulir lewat tombol di atas. Khusus pemilik; simpan setelah konfirmasi.',
+                ),
+              ),
+            ListenableBuilder(
+              listenable: _viewModel,
+              builder: (context, _) => _viewModel.choices.isEmpty
+                  ? const SizedBox.shrink()
+                  : SizedBox(
+                      height: 120,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          for (final p in _viewModel.choices)
+                            Padding(
+                              padding: const EdgeInsets.all(AppSpacing.xs),
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  _viewModel.selectProduct(p.id);
+                                  _inputController.text =
+                                      'Pilih produk ID ${p.id}. Jumlah: ';
+                                },
+                                child: Text(
+                                  'Pilih ${p.name}\n${formatRupiah(p.salePrice)} • stok ${p.stock}',
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+            ),
+            ListenableBuilder(
+              listenable: _viewModel,
+              builder: (context, _) => _viewModel.lastError == null
+                  ? const SizedBox.shrink()
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.screen,
+                      ),
+                      child: Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            color: AppColors.error,
+                          ),
+                          Text(_viewModel.lastError!),
+                          TextButton(
+                            onPressed: _viewModel.isLoading
+                                ? null
+                                : () {
+                                    final previous = _viewModel.messages
+                                        .where((m) => m.isUser)
+                                        .lastOrNull;
+                                    if (previous != null) {
+                                      _viewModel.send(previous.text);
+                                    }
+                                  },
+                            child: const Text('Coba lagi'),
+                          ),
+                        ],
+                      ),
+                    ),
+            ),
             // Daftar Pesan Obrolan
             Expanded(
               child: ListenableBuilder(
@@ -107,11 +236,19 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   padding: const EdgeInsets.all(AppSpacing.screen),
                   itemCount:
                       _viewModel.messages.length +
+                      _viewModel.actions.length +
                       (_viewModel.isLoading ? 1 : 0),
                   itemBuilder: (context, index) {
-                    if (index == _viewModel.messages.length &&
+                    if (index ==
+                            _viewModel.messages.length +
+                                _viewModel.actions.length &&
                         _viewModel.isLoading) {
                       return const _TypingBubble();
+                    }
+                    if (index >= _viewModel.messages.length) {
+                      final action = _viewModel
+                          .actions[index - _viewModel.messages.length];
+                      return _ActionCard(action: action, viewModel: _viewModel);
                     }
                     return _ChatBubble(message: _viewModel.messages[index]);
                   },
@@ -130,6 +267,277 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ActionCard extends StatelessWidget {
+  const _ActionCard({required this.action, required this.viewModel});
+  final ChatAction action;
+  final ChatbotViewModel viewModel;
+
+  @override
+  Widget build(BuildContext context) {
+    final product = action.kind == 'prepare_product';
+    final done = action.state == ChatActionState.success;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              product ? 'Konfirmasi produk baru' : 'Draft penjualan',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            if (product) ...[
+              Text('${action.product?.name ?? action.arguments['name']}'),
+              Text(
+                'Harga jual: ${formatRupiah(action.product?.salePrice ?? 0)}',
+              ),
+              Text(
+                'Modal: ${action.arguments.containsKey('cost_price') ? formatRupiah(action.arguments['cost_price'] as int) : 'Belum dicatat — wajib diisi'}',
+              ),
+              Text(
+                'Stok: ${action.arguments['stock']} • ${action.arguments['unit']} • ${action.arguments['category']}',
+              ),
+              const Text('Lokasi: Belum ditentukan • Ambang stok menipis: 5'),
+              Text('Barcode: ${action.arguments['barcode'] ?? 'Tidak diisi'}'),
+            ] else ...[
+              for (var i = 0; i < action.products.length; i++)
+                Text(
+                  '${action.products[i].name} × ${(action.arguments['items'] as List)[i]['quantity']} @ ${formatRupiah(action.products[i].salePrice)}',
+                ),
+              Text('Subtotal: ${formatRupiah(action.subtotal)}'),
+              Text(
+                'Diskon: ${formatRupiah(action.arguments['discount'] as int? ?? 0)}',
+              ),
+              Text('Total: ${formatRupiah(action.total)}'),
+              Text(
+                action.arguments['cash_received'] == null
+                    ? 'Tunai uang pas'
+                    : 'Tunai sesuai nominal yang diberikan',
+              ),
+              Text(
+                'Uang diterima: ${formatRupiah(action.arguments['cash_received'] as int? ?? action.total)} • Kembalian: ${formatRupiah(action.change ?? 0)}',
+              ),
+              if (!done)
+                const Text(
+                  'Belum tercatat. Catat Transaksi menyimpan penjualan tunai yang Anda konfirmasi, bukan verifikasi pembayaran gateway atau QRIS.',
+                ),
+            ],
+            if (action.error != null)
+              Text(
+                action.error!,
+                style: const TextStyle(color: AppColors.error),
+              ),
+            if (done)
+              Text(
+                product
+                    ? 'Tersimpan lokal. Status cloud terpisah, belum dikonfirmasi.'
+                    : viewModel.session?.database != null
+                    ? 'Transaksi tercatat di perangkat. Status cloud terpisah, belum dikonfirmasi.'
+                    : 'Transaksi tercatat sementara di memori. Hilang saat aplikasi ditutup; belum tersimpan di perangkat.',
+              ),
+            if (action.state == ChatActionState.cancelled)
+              const Text('Draft dibatalkan'),
+            if (action.state == ChatActionState.saving)
+              const LinearProgressIndicator(),
+            if (action.editable &&
+                (!product ||
+                    (AppSessionScope.maybeOf(context)?.role.canManageProducts ??
+                        false))) ...[
+              TextButton(
+                onPressed: () async {
+                  await showDialog<bool>(
+                    context: context,
+                    builder: (_) =>
+                        _DraftEditor(action: action, viewModel: viewModel),
+                  );
+                },
+                child: const Text('Edit draft'),
+              ),
+              FilledButton(
+                onPressed: () async {
+                  await viewModel.confirmAction(action);
+                },
+                child: Text(
+                  product ? 'Konfirmasi simpan lokal' : 'Catat Transaksi',
+                ),
+              ),
+              TextButton(
+                onPressed: () => viewModel.cancelAction(action),
+                child: const Text('Batal'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DraftEditor extends StatefulWidget {
+  const _DraftEditor({required this.action, required this.viewModel});
+  final ChatAction action;
+  final ChatbotViewModel viewModel;
+  @override
+  State<_DraftEditor> createState() => _DraftEditorState();
+}
+
+class _DraftEditorState extends State<_DraftEditor> {
+  final fields = <String, TextEditingController>{};
+  String? error;
+  bool busy = false;
+  bool get product => widget.action.kind == 'prepare_product';
+  @override
+  void initState() {
+    super.initState();
+    final args = widget.action.arguments;
+    if (product) {
+      for (final key in [
+        'name',
+        'sale_price',
+        'cost_price',
+        'stock',
+        'category',
+        'unit',
+        'barcode',
+      ]) {
+        fields[key] = TextEditingController(text: args[key]?.toString() ?? '');
+      }
+    } else {
+      final items = args['items'] as List;
+      for (var i = 0; i < items.length; i++) {
+        fields['qty_$i'] = TextEditingController(
+          text: items[i]['quantity'].toString(),
+        );
+      }
+      fields['discount'] = TextEditingController(
+        text: (args['discount'] ?? 0).toString(),
+      );
+      fields['cash_received'] = TextEditingController(
+        text: args['cash_received']?.toString() ?? '',
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final field in fields.values) {
+      field.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const labels = {
+      'name': 'Nama',
+      'sale_price': 'Harga jual',
+      'cost_price': 'Modal (wajib, 0 jika memang gratis)',
+      'stock': 'Stok awal',
+      'category': 'Kategori',
+      'unit': 'Satuan',
+      'barcode': 'Barcode (opsional)',
+      'discount': 'Diskon rupiah',
+      'cash_received': 'Uang diterima (kosong = uang pas)',
+    };
+    return AlertDialog(
+      title: const Text('Edit draft'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final entry in fields.entries)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                child: TextField(
+                  controller: entry.value,
+                  decoration: InputDecoration(
+                    labelText:
+                        labels[entry.key] ??
+                        'Jumlah ${widget.action.products[int.parse(entry.key.substring(4))].name}',
+                  ),
+                ),
+              ),
+            if (product)
+              const Text(
+                'Lokasi: Belum ditentukan. Ambang stok menipis: 5. Satuan: bungkus, botol, kotak, pcs, kg, sachet, kaleng.',
+              ),
+            if (error != null)
+              Text(error!, style: const TextStyle(color: AppColors.error)),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: busy ? null : () => Navigator.pop(context, false),
+          child: const Text('Batal'),
+        ),
+        FilledButton(
+          onPressed: busy
+              ? null
+              : () async {
+                  setState(() {
+                    busy = true;
+                    error = null;
+                  });
+                  final args = <String, dynamic>{};
+                  if (product) {
+                    for (final entry in fields.entries) {
+                      final text = entry.value.text.trim();
+                      if (entry.key == 'barcode' && text.isEmpty) continue;
+                      args[entry.key] =
+                          {
+                            'sale_price',
+                            'cost_price',
+                            'stock',
+                          }.contains(entry.key)
+                          ? int.tryParse(text)
+                          : text;
+                    }
+                  } else {
+                    final items = widget.action.arguments['items'] as List;
+                    args['items'] = [
+                      for (var i = 0; i < items.length; i++)
+                        {
+                          'product_id': items[i]['product_id'],
+                          'quantity': int.tryParse(
+                            fields['qty_$i']!.text.trim(),
+                          ),
+                        },
+                    ];
+                    args['discount'] = int.tryParse(
+                      fields['discount']!.text.trim(),
+                    );
+                    if (fields['cash_received']!.text.trim().isNotEmpty) {
+                      args['cash_received'] = int.tryParse(
+                        fields['cash_received']!.text.trim(),
+                      );
+                    }
+                  }
+                  final old = widget.action.arguments;
+                  widget.action.arguments = args;
+                  try {
+                    await widget.viewModel.validateAction(widget.action);
+                    widget.viewModel.refreshDraft();
+                    if (context.mounted) Navigator.pop(context, true);
+                  } catch (e) {
+                    widget.action.arguments = old;
+                    if (mounted) {
+                      setState(() {
+                        error = e is FormatException
+                            ? e.message
+                            : 'Data lokal gagal dimuat. Coba lagi.';
+                        busy = false;
+                      });
+                    }
+                  }
+                },
+          child: const Text('Terapkan draft'),
+        ),
+      ],
     );
   }
 }
@@ -346,7 +754,7 @@ class _InputBar extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: isLoading
                     ? 'Menunggu balasan…'
-                    : 'Tanya stok, harga, atau tata letak…',
+                    : 'Tambah produk atau catat penjualan…',
                 isDense: true,
               ),
             ),

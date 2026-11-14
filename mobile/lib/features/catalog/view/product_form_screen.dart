@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../core/session/app_session.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -13,6 +15,7 @@ import '../sample/catalog_sample.dart';
 class ProductFormScreen extends StatefulWidget {
   const ProductFormScreen({
     this.initialProduct,
+    this.initialBarcode,
     this.existingProducts = const [],
     this.isLocal = false,
     this.onSave,
@@ -20,6 +23,7 @@ class ProductFormScreen extends StatefulWidget {
   });
 
   final CatalogProduct? initialProduct;
+  final String? initialBarcode;
   final List<CatalogProduct> existingProducts;
   final bool isLocal;
   final ValueChanged<CatalogProduct>? onSave;
@@ -75,7 +79,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _thresholdController = TextEditingController(
       text: p != null ? p.lowStockThreshold.toString() : '5',
     );
-    _barcodeController = TextEditingController(text: p?.barcode ?? '');
+    _barcodeController = TextEditingController(
+      text: p?.barcode ?? widget.initialBarcode ?? '',
+    );
     _hasSamplePhoto = p?.hasSamplePhoto ?? false;
     if (p != null) {
       _selectedUnit = p.unit;
@@ -96,7 +102,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   }
 
   void _saveProduct() {
-    if (!_formKey.currentState!.validate()) return;
+    if (!AppSessionScope.of(context).role.canManageProducts) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final product = CatalogProduct(
       id:
@@ -124,6 +131,17 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.initialProduct != null;
+    if (!AppSessionScope.of(context).role.canManageProducts) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Akses terbatas')),
+        body: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(AppSpacing.screen),
+            child: Text('Hanya pemilik boleh menambah atau mengubah produk.'),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(

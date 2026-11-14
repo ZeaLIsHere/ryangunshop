@@ -36,15 +36,19 @@ void main() {
 
       expect(find.byType(AppShell), findsOneWidget);
 
-      // 3. Verifikasi Beranda: Hero Omzet awal & Aksi Cepat
+      // Beranda pemilik menyediakan pengelolaan; Kasir tetap lewat navigasi.
       expect(find.text('Beranda'), findsWidgets);
-      expect(find.text('Omzet Hari Ini'), findsOneWidget);
-      expect(find.text('Rp 0'), findsNWidgets(2));
-      expect(find.text('0 Nota'), findsOneWidget);
-      expect(find.text('Pindai Barcode'), findsOneWidget);
-      expect(find.text('Buka Kasir'), findsOneWidget);
-      expect(find.text('Stok'), findsOneWidget);
-      expect(find.text('Riwayat Nota'), findsOneWidget);
+      expect(find.text('Kelola warung'), findsOneWidget);
+      expect(find.text('Tambah Produk'), findsOneWidget);
+      expect(find.text('Kelola Stok'), findsOneWidget);
+      expect(find.text('Label Barcode'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('0 nota'),
+        180,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Penjualan bersih: Rp 0'), findsOneWidget);
+      expect(find.text('Rata-rata per nota: Rp 0'), findsOneWidget);
 
       session.cart.addProduct(
         const CatalogProduct(
@@ -59,11 +63,8 @@ void main() {
         ),
       );
 
-      // 4. Buka alur Kasir via tombol Buka Kasir di Aksi Cepat
-      final bukaKasirBtn = find.text('Buka Kasir');
-      await tester.ensureVisible(bukaKasirBtn);
-      await tester.pumpAndSettle();
-      await tester.tap(bukaKasirBtn);
+      // Buka Kasir tanpa mengubah keranjang yang sudah terisi.
+      await tester.tap(find.byTooltip(ShellDestination.cashier.label));
       await tester.pumpAndSettle();
 
       // Verifikasi layar kasir & keranjang terisi
@@ -119,9 +120,18 @@ void main() {
       await tester.tap(find.text(ShellDestination.home.label));
       await tester.pumpAndSettle();
 
-      expect(find.text('1 Nota'), findsOneWidget);
-      expect(find.text('Rp 16.000'), findsWidgets);
-      expect(find.text('Aktivitas Transaksi Terbaru'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('1 nota'),
+        180,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Penjualan bersih: Rp 16.000'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Nota terbaru'),
+        180,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Nota terbaru'), findsOneWidget);
     },
   );
 

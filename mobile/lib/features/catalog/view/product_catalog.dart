@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/data/product_repository.dart';
+import '../../../core/session/app_session.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -55,7 +57,11 @@ class _ProductCatalogState extends State<ProductCatalog> {
     super.dispose();
   }
 
+  bool get _canManageProducts =>
+      mounted && AppSessionScope.of(context).role.canManageProducts;
+
   void _openProductForm([CatalogProduct? product]) async {
+    if (!_canManageProducts) return;
     final result = await Navigator.of(context).push<CatalogProduct>(
       MaterialPageRoute(
         builder: (_) => ProductFormScreen(
@@ -72,6 +78,7 @@ class _ProductCatalogState extends State<ProductCatalog> {
   }
 
   Future<void> _deleteProduct(CatalogProduct product) async {
+    if (!_canManageProducts) return;
     try {
       await _viewModel.deleteProduct(product.id);
       if (!mounted) return;
@@ -90,6 +97,7 @@ class _ProductCatalogState extends State<ProductCatalog> {
   }
 
   Future<void> _persistProduct(CatalogProduct product) async {
+    if (!_canManageProducts) return;
     try {
       await _viewModel.persistProduct(product);
     } catch (_) {
@@ -307,16 +315,17 @@ class _ProductCatalogState extends State<ProductCatalog> {
           ),
 
           // FAB overlay
-          Positioned(
-            right: AppSpacing.screen,
-            bottom: AppSpacing.screen,
-            child: FloatingActionButton.extended(
-              heroTag: 'add-product-fab',
-              icon: const Icon(Icons.add),
-              label: const Text('Tambah Produk'),
-              onPressed: () => _openProductForm(),
+          if (_canManageProducts)
+            Positioned(
+              right: AppSpacing.screen,
+              bottom: AppSpacing.screen,
+              child: FloatingActionButton.extended(
+                heroTag: 'add-product-fab',
+                icon: const Icon(Icons.add),
+                label: const Text('Tambah Produk'),
+                onPressed: () => _openProductForm(),
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -348,18 +357,28 @@ class _ProductCatalogState extends State<ProductCatalog> {
         ];
       case CatalogScenario.empty:
         return [
-          const _CatalogMessage(
+          _CatalogMessage(
             icon: Icons.inventory_2_outlined,
             color: AppColors.muted,
             title: 'Belum ada produk',
-            description: 'Katalog produk warung masih kosong. Tambahkan produk baru sekarang.',
+            description: _canManageProducts
+                ? 'Katalog produk warung masih kosong. Tambahkan produk baru sekarang.'
+                : 'Minta pemilik menambahkan produk, lalu muat ulang katalog.',
           ),
           const SizedBox(height: AppSpacing.md),
-          PrimaryAction(
-            label: 'Tambah Produk',
-            icon: Icons.add,
-            onPressed: () => _openProductForm(),
-          ),
+          if (_canManageProducts)
+            PrimaryAction(
+              label: 'Tambah Produk',
+              icon: Icons.add,
+              onPressed: () => _openProductForm(),
+            )
+          else
+            PrimaryAction(
+              label: 'Muat Ulang',
+              onPressed: _viewModel.isLocal
+                  ? _viewModel.loadProducts
+                  : _viewModel.showCachedProducts,
+            ),
         ];
       case CatalogScenario.failure:
         return [

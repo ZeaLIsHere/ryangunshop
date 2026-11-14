@@ -10,7 +10,7 @@ abstract final class SettingsSample {
 
   static const String rolesSectionTitle = 'Peran Pengguna';
   static const String rolesSectionNote =
-      'Hak akses fitur aplikasi disesuaikan dengan peran pengguna yang aktif.';
+      'Mode demo: peran dapat dipilih bebas, bukan autentikasi. Hanya pemilik dapat mengelola produk.';
 
   static const String floorPlanAccessTitle = 'Mode Edit Denah';
   static const String floorPlanAccessAllowed = 'Tersedia untuk peran Pemilik.';

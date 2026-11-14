@@ -175,6 +175,7 @@ class AppDatabase extends _$AppDatabase {
     int? cashReceived,
     int? changeAmount,
     Future<void> Function()? afterWrite,
+    bool clearCartDraft = true,
   }) {
     if (transactionId.trim().isEmpty || lines.isEmpty) {
       throw ArgumentError('Nomor nota dan barang wajib diisi');
@@ -261,8 +262,10 @@ class AppDatabase extends _$AppDatabase {
       // Antrean sinkronisasi ditulis di dalam transaksi yang sama supaya nota
       // tidak pernah tercatat lokal tanpa rencana pengiriman ke Firestore.
       await afterWrite?.call();
-      await delete(cartDraftItems).go();
-      await delete(cartDrafts).go();
+      if (clearCartDraft) {
+        await delete(cartDraftItems).go();
+        await delete(cartDrafts).go();
+      }
     });
   }
 }

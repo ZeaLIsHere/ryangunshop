@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/format/rupiah.dart';
 import '../../../core/session/app_session.dart';
-import '../../../core/session/user_role.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -132,7 +132,7 @@ class ProductDetailSheet extends StatelessWidget {
                   ],
                 ),
               ),
-              if (session.role == UserRole.owner && onProductDeleted != null)
+              if (session.role.canManageProducts && onProductDeleted != null)
                 IconButton(
                   icon: const Icon(
                     Icons.delete_outline,
@@ -237,29 +237,32 @@ class ProductDetailSheet extends StatelessWidget {
           // Actions
           Row(
             children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.edit_outlined),
-                  label: const Text('Edit Produk'),
-                  onPressed: () async {
-                    final navigator = Navigator.of(context);
-                    navigator.pop();
-                    final updated = await navigator.push<CatalogProduct>(
-                      MaterialPageRoute(
-                        builder: (_) => ProductFormScreen(
-                          initialProduct: product,
-                          existingProducts: existingProducts,
-                          isLocal: isLocal,
+              if (session.role.canManageProducts) ...[
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.edit_outlined),
+                    label: const Text('Edit Produk'),
+                    onPressed: () async {
+                      if (!session.role.canManageProducts) return;
+                      final navigator = Navigator.of(context);
+                      navigator.pop();
+                      final updated = await navigator.push<CatalogProduct>(
+                        MaterialPageRoute(
+                          builder: (_) => ProductFormScreen(
+                            initialProduct: product,
+                            existingProducts: existingProducts,
+                            isLocal: isLocal,
+                          ),
                         ),
-                      ),
-                    );
-                    if (updated != null) {
-                      onProductUpdated?.call(updated);
-                    }
-                  },
+                      );
+                      if (updated != null && session.role.canManageProducts) {
+                        onProductUpdated?.call(updated);
+                      }
+                    },
+                  ),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
+                const SizedBox(width: AppSpacing.sm),
+              ],
               Expanded(
                 child: PrimaryAction(
                   label: '+ Kasir',
@@ -288,6 +291,8 @@ class ProductDetailSheet extends StatelessWidget {
   }
 
   void _confirmDelete(BuildContext context) {
+    final session = AppSessionScope.of(context);
+    if (!session.role.canManageProducts) return;
     showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -306,7 +311,9 @@ class ProductDetailSheet extends StatelessWidget {
         ],
       ),
     ).then((confirmed) {
-      if (confirmed == true && context.mounted) {
+      if (confirmed == true &&
+          context.mounted &&
+          session.role.canManageProducts) {
         Navigator.of(context).pop();
         onProductDeleted?.call(product);
       }

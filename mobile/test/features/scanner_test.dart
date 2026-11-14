@@ -24,7 +24,9 @@ void main() {
     await tester.pump();
 
     expect(find.byTooltip('Cari Produk Manual'), findsOneWidget);
-    expect(find.byTooltip('Nyalakan Lampu Simulasi'), findsOneWidget);
+    expect(find.byTooltip('Nyalakan Lampu Simulasi'), findsNothing);
+    expect(find.text('Kamera Android tidak tersedia'), findsOneWidget);
+    expect(find.text('Data contoh'), findsNothing);
 
     await tester.tap(find.byTooltip('Cari Produk Manual'));
     await tester.pump();

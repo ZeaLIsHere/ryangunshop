@@ -30,6 +30,50 @@ void main() {
     viewModel.dispose();
   });
 
+  test(
+    'fallback tambah produk mendahului kata stok, jual, barcode, dan sapaan',
+    () async {
+      final vm = ChatbotViewModel();
+      addTearDown(vm.dispose);
+      AppEnv.hardcodedApiKey = '';
+      AppEnv.clearRuntimeApiKey();
+      for (final message in [
+        'Halo, tambah produk Kopi Senja harga jual 5000 modal 3000 stok 10 barcode 123',
+        'Produk baru Kopi Senja stok 10',
+        'Terjual Kopi Senja 2 tetapi belum terdaftar',
+      ]) {
+        await vm.send(message);
+        final reply = vm.messages.last.text;
+        expect(reply, contains('"Tambah produk" di obrolan ini'));
+        expect(reply, contains('tidak menafsirkan atau menyimpan'));
+        expect(reply, contains('modal'));
+        expect(reply, contains('kategori'));
+        expect(reply, contains('satuan'));
+        expect(reply, contains('"Simpan produk"'));
+        expect(reply, isNot(contains('Buka tab Katalog')));
+        expect(vm.actions, isEmpty);
+      }
+    },
+  );
+
+  test(
+    'API gagal tetap menawarkan tambah dalam chat tanpa klaim simpan',
+    () async {
+      AppEnv.setRuntimeApiKey('test');
+      final vm = ChatbotViewModel(
+        service: GroqService(
+          client: MockClient((_) async => http.Response('private error', 503)),
+        ),
+      );
+      addTearDown(vm.dispose);
+      await vm.send('Tambah produk Kopi Senja harga jual 5000 stok 10');
+      expect(vm.lastError, isNotNull);
+      expect(vm.messages.last.text, contains('"Tambah produk" di obrolan ini'));
+      expect(vm.messages.last.text, isNot(contains('private error')));
+      expect(vm.actions, isEmpty);
+    },
+  );
+
   test('konfigurasi API key mengaktifkan mode AI', () {
     final viewModel = ChatbotViewModel();
     expect(viewModel.isAiActive, isFalse);
@@ -82,8 +126,9 @@ void main() {
 
     final systemPrompt =
         (messages.first as Map<String, dynamic>)['content'] as String;
-    expect(systemPrompt, contains('Belum ada produk tersimpan di katalog.'));
-    expect(systemPrompt, contains('Omzet hari ini: belum tersedia.'));
+    expect(systemPrompt, contains('bukan berarti kosong'));
+    expect(body['parallel_tool_calls'], false);
+    expect((body['tools'] as List).length, 4);
     expect(systemPrompt, isNot(contains('Deterjen bubuk')));
     expect(systemPrompt, isNot(contains('Beras pandan')));
   });
@@ -107,6 +152,11 @@ void main() {
     await tester.tap(find.byTooltip('Kirim'));
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.text('stok'),
+      150,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('stok'), findsOneWidget);
     expect(find.textContaining('Katalog'), findsOneWidget);
     expect(find.textContaining('Minyak goreng'), findsNothing);

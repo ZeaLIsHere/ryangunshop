@@ -9,13 +9,27 @@ import '../sample/reports_sample.dart';
 /// Status pemuatan riwayat.
 enum ReportsStatus { loading, ready, failure }
 
+DateTime _localDay(DateTime day) {
+  final local = day.toLocal();
+  return DateTime(local.year, local.month, local.day);
+}
+
+String reportPaymentLabel(String method) => switch (method) {
+  'cash' => 'Tunai',
+  'qris' => 'QRIS',
+  '' => 'Tidak tercatat',
+  _ => method,
+};
+
 /// Keadaan layar riwayat dan laporan transaksi.
 class ReportsViewModel extends ChangeNotifier {
   ReportsViewModel({
     this.repository,
     this.initialRecords,
     this.loadDelay = const Duration(milliseconds: 350),
-  }) : _scenario = initialRecords != null
+    DateTime? day,
+  }) : selectedDay = _localDay(day ?? DateTime.now()),
+       _scenario = initialRecords != null
            ? ReportScenario.withData
            : ReportScenario.empty;
 
@@ -26,6 +40,52 @@ class ReportsViewModel extends ChangeNotifier {
   final Duration loadDelay;
 
   bool get isLocal => repository != null;
+
+  DateTime selectedDay;
+  List<db.TransactionRecord> dailyRecords = const [];
+
+  int get discountAmount =>
+      dailyRecords.fold(0, (sum, r) => sum + r.discountAmount);
+  int get grossAmount => totalAmount + discountAmount;
+  double get averageAmount =>
+      records.isEmpty ? 0 : totalAmount / records.length;
+
+  Map<String, ({int count, int total})> get paymentBreakdown {
+    final result = <String, ({int count, int total})>{};
+    for (final record in dailyRecords) {
+      final old = result[record.paymentMethod] ?? (count: 0, total: 0);
+      result[record.paymentMethod] = (
+        count: old.count + 1,
+        total: old.total + record.totalAmount,
+      );
+    }
+    return result;
+  }
+
+  List<({String id, String name, int quantity, int gross})> get soldProducts {
+    final grouped =
+        <String, ({String id, String name, int quantity, int gross})>{};
+    for (final record in dailyRecords) {
+      for (final item in record.items) {
+        final old = grouped[item.productId];
+        grouped[item.productId] = (
+          id: item.productId,
+          name: old?.name ?? item.productName,
+          quantity: (old?.quantity ?? 0) + item.quantity,
+          gross: (old?.gross ?? 0) + item.subtotal,
+        );
+      }
+    }
+    return grouped.values.toList()..sort((a, b) {
+      final quantity = b.quantity.compareTo(a.quantity);
+      return quantity != 0 ? quantity : a.id.compareTo(b.id);
+    });
+  }
+
+  Future<void> selectDay(DateTime day) {
+    selectedDay = _localDay(day);
+    return load();
+  }
 
   ReportScenario _scenario;
   ReportsStatus _status = ReportsStatus.loading;
@@ -52,6 +112,9 @@ class ReportsViewModel extends ChangeNotifier {
 
   /// Memuat ulang riwayat, atau mengganti skenario contoh bila dioper.
   Future<void> load({ReportScenario? scenario}) async {
+    if (_disposed) return;
+    final version = ++_loadVersion;
+    dailyRecords = const [];
     final explicitScenario = scenario;
     _scenario = scenario ?? _scenario;
     _status = ReportsStatus.loading;
@@ -60,13 +123,13 @@ class ReportsViewModel extends ChangeNotifier {
 
     final source = repository;
     if (source != null && explicitScenario == null) {
-      final version = ++_loadVersion;
       try {
-        final localRecords = await source.listRecent(limit: 50);
+        final localRecords = await source.listForDay(selectedDay);
         if (_disposed || version != _loadVersion) return;
+        dailyRecords = List.unmodifiable(localRecords);
         _records = localRecords.map((r) {
           final timeStr =
-              '${r.createdAt.hour.toString().padLeft(2, '0')}:${r.createdAt.minute.toString().padLeft(2, '0')} WIB';
+              '${r.createdAt.toLocal().hour.toString().padLeft(2, '0')}:${r.createdAt.toLocal().minute.toString().padLeft(2, '0')}';
           final method = r.paymentMethod == 'cash'
               ? ReportPaymentMethod.cash
               : ReportPaymentMethod.qris;
@@ -89,7 +152,7 @@ class ReportsViewModel extends ChangeNotifier {
     }
 
     await Future<void>.delayed(loadDelay);
-    if (_disposed) {
+    if (_disposed || version != _loadVersion) {
       return;
     }
 

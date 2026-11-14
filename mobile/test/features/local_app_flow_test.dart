@@ -34,8 +34,13 @@ void main() {
     await tester.tap(find.text('Lewati'));
     await tester.pumpAndSettle();
 
-    expect(find.text('0 Nota'), findsOneWidget);
-    await tester.tap(find.text('Buka Kasir'));
+    await tester.scrollUntilVisible(
+      find.text('0 nota'),
+      180,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('0 nota'), findsOneWidget);
+    await tester.tap(find.byTooltip('Kasir'));
     await tester.pumpAndSettle();
     expect(find.text('Keranjang lokal'), findsOneWidget);
     expect(find.text('Keranjang Masih Kosong'), findsOneWidget);

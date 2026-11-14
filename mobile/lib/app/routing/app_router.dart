@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/session/app_session.dart';
+import '../../core/session/user_role.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/widgets/primary_action.dart';
@@ -66,7 +68,12 @@ abstract final class AppRouter {
       case AppRoutes.productForm:
         return const ProductFormScreen();
       case AppRoutes.statistics:
-        return const StatisticsScreen();
+        return Builder(
+          builder: (context) =>
+              AppSessionScope.maybeOf(context)?.role == UserRole.cashier
+              ? const ReportsScreen()
+              : const StatisticsScreen(),
+        );
       case AppRoutes.chatbot:
         return const ChatbotScreen();
       default:

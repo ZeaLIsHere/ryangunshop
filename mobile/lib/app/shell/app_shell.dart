@@ -31,12 +31,16 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _selectedIndex = 0;
+  int _dashboardRevision = 0;
 
   void _selectDestination(int index) {
     if (index == _selectedIndex) {
       return;
     }
-    setState(() => _selectedIndex = index);
+    setState(() {
+      _selectedIndex = index;
+      if (index == ShellDestination.floorPlan.index) _dashboardRevision++;
+    });
   }
 
   void _selectShortcut(DashboardShortcut shortcut) {
@@ -67,6 +71,7 @@ class _AppShellState extends State<AppShell> {
     switch (destination) {
       case ShellDestination.floorPlan:
         return DashboardScreen(
+          key: ValueKey(_dashboardRevision),
           onShortcutSelected: _selectShortcut,
           onStartScan: _openScanner,
         );
