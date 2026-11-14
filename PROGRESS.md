@@ -51,6 +51,129 @@ berkas checklist terpisah.
 
 ## Catatan per tugas
 
+**Blessly / Tim — Pembatasan kelola produk berdasarkan peran (2026-11-14), review.**
+
+- `UserRole.canManageProducts` membatasi tambah/edit/hapus untuk pemilik.
+  Kasir tanpa FAB/CTA tambah di katalog, edit/hapus detail, CTA barcode asing,
+  serta shortcut dan kontrol draft produk chatbot. Pencarian, pindai, keranjang,
+  dan pencatatan penjualan tetap tersedia; katalog kosong memberi arahan pemilik
+  dan tindakan muat ulang.
+- Formulir termasuk rute langsung menolak kasir. Izin dibaca ulang saat simpan,
+  menerima hasil formulir di katalog/scanner/detail, konfirmasi hapus, serta
+  setelah lookup async scanner sebelum persistensi. Pemeriksaan prepare/save
+  chatbot dipertahankan dengan getter izin yang sama.
+- Pemilihan peran tetap mode demo, bukan autentikasi; catatan Pengaturan diperjelas.
+  Default pemilik tidak diubah. Dashboard pemilik, generator angka barcode,
+  render label/PDF, autentikasi, dependensi, branch, dan commit tidak ditambahkan.
+  Perubahan belum commit yang sudah ada dipertahankan.
+- Validasi: `flutter analyze` tanpa isu; `flutter test --reporter expanded`
+  185/185 lulus (batas 240 detik, selesai sekitar 29 detik). Delapan test baru
+  mencakup kasir tanpa kontrol tambah, katalog kosong/pencarian/keranjang, rute
+  langsung, perubahan peran sebelum simpan/hasil form/hapus, dan fallback scanner;
+  test chatbot diperluas untuk kontrol tersembunyi serta penolakan simpan.
+  APK dan emulator/perangkat Android tidak dijalankan pada tugas ini.
+
+**Blessly — Pemindai barcode kamera Android nyata (2026-11-14), review.**
+
+- Persetujuan eksplisit pengguna membuka integrasi kamera nyata. `mobile_scanner`
+  7.5.0 memakai CameraX/ML Kit bundled, deteksi offline tanpa unggah bingkai.
+  Preview, izin/retry/panduan Pengaturan Android, torch sesuai perangkat, fallback
+  manual non-Android, dan pause/resume lifecycle/rute menggantikan simulasi.
+- Lookup repository sesi, barcode terlihat, hasil terkunci sampai tindakan pengguna,
+  konfirmasi eksplisit/jumlah/stok segar termasuk isi keranjang, error DB berbeda
+  dari tidak ditemukan. Pemilik dapat membuka formulir dengan barcode terisi,
+  menyimpan produk ke repository sesi, lalu mengonfirmasi ke keranjang. Detail
+  baca-saja; checkout memakai layar Kasir. Tidak memakai ScannerSample produksi.
+- Validasi: `flutter analyze` bersih; `flutter test --reporter expanded` 177/177
+  lulus, termasuk 10 test scanner (kamera terinjeksi, DB kosong, lookup/error/retry,
+  stok/harga/jumlah/dedup, simpan produk, izin, lifecycle/rute, 360 dp/skala 1,3).
+  APK debug berhasil (102,2 detik; batas 240 detik) dengan
+  `JAVA_TOOL_OPTIONS=-Dorg.gradle.project.kotlin.incremental=false flutter build apk --debug --dart-define-from-file=../.env`.
+- APK tidak dipasang; scan fisik/izin/torch perangkat belum diverifikasi.
+  Plugin tidak menyediakan pembeda penolakan permanen maupun pembuka Pengaturan;
+  panduan OS diberikan. Pergantian kamera opsional tidak ditambahkan. Peringatan
+  KGP Firebase lama tetap ada; konfigurasi Gradle/Firebase dan pekerjaan lain
+  dipertahankan. Tidak membuat branch/commit atau membaca `.env`.
+
+**Tim — Tambah produk baru lewat chat (2026-11-14), review.**
+
+- Sapaan/contoh pesan, hint input, dan shortcut `Tambah produk` memperjelas
+  pembuatan produk belum terdaftar. Prompt meminta enam nilai wajib yang kurang,
+  memakai jawaban lanjutan dari riwayat terstruktur, dan tidak otomatis membuat
+  produk dari barang terjual yang tidak ditemukan. Validasi/izin/duplikat dan
+  konfirmasi simpan yang sudah ada dipertahankan.
+- Fallback tanpa API atau saat API gagal menawarkan formulir dalam obrolan,
+  bukan pengalihan Katalog atau klaim penafsiran/penyimpanan pesan.
+- Lima tes baru: klarifikasi lintas pesan dan riwayat tool, simpan hanya setelah
+  konfirmasi, penjualan produk tak dikenal, shortcut editor/izin kasir pada
+  360 dp/skala 1,3, serta fallback tanpa API dan HTTP gagal.
+- Validasi: `flutter analyze` bersih; `flutter test --reporter expanded`
+  173/173 lulus. APK debug berhasil (60,5 detik) dengan
+  `JAVA_TOOL_OPTIONS=-Dorg.gradle.project.kotlin.incremental=false flutter build apk --debug --dart-define-from-file=../.env`
+  (batas 240 detik). Peringatan KGP plugin Firebase tetap ada. APK tidak dipasang;
+  Groq nyata/perangkat Android belum diuji. Tidak mengubah konfigurasi Android,
+  dependensi, pencatatan penjualan langsung, laporan, ekspor, atau startup.
+
+**Tim — Aksi chatbot lokal disetujui pengguna (2026-11-14), review.**
+
+- Groq Chat Completions memakai empat tool allowlist: pencarian terbatas,
+  ringkasan lokal segar, draft produk, dan draft penjualan. Tidak mengirim seluruh
+  katalog; ID tool dan riwayat turn utuh, batas ukuran/putaran, timeout HTTP,
+  `parallel_tool_calls: false`, validasi argumen dan error tanpa body rahasia.
+- Produk: modal wajib dicatat, lokasi/ambang default terlihat, izin pemilik dibaca
+  ulang saat konfirmasi, barcode/nama serupa ditolak tanpa overwrite. ID operasi
+  tetap, konfirmasi terkunci, edit/batal/gagal/retry dan status simpan lokal terpisah
+  dari cloud. Penjualan: pilihan produk ambigu eksplisit, harga/stok segar,
+  total deterministik, tombol `Catat Transaksi` menyimpan penjualan tunai langsung
+  lewat repository atomik tanpa masuk/bergabung ke keranjang atau navigasi checkout.
+  Default terlihat `Tunai uang pas` (uang diterima = total bersih, kembalian 0);
+  nominal tunai valid yang diberikan tetap dipakai. Keranjang aktif ditolak tanpa
+  diubah; `clearCartDraft: false` melindungi draft disk. Harga berubah perlu
+  konfirmasi ulang. ID tetap, readback nota, dan kunci konfirmasi mencegah duplikasi
+  saat retry/double tap. Refresh ringkasan gagal tidak membatalkan status nota sukses.
+  Status perangkat SQLite dibedakan dari fallback memori; tidak mengklaim QRIS lunas.
+- Ringkasan tanpa model membaca repository produk dan nota tanggal perangkat,
+  bukan cache sesi; kegagalan tidak dianggap kosong. Profil: Belum diatur,
+  tanpa klaim laba. Formulir lokal dan Kasir tersedia ketika AI tidak tersambung.
+- Validasi akhir pencatatan langsung: `flutter analyze` bersih;
+  `flutter test` 168/168 lulus.
+  Test chatbot mencakup HTTP mock/ID/riwayat, tool
+  tidak dikenal/JSON rusak/parallel/loop, izin berubah, nilai wajib, duplikat,
+  retry simpan/double tap, ambiguitas/jumlah wajib/stok/total/diskon, harga berubah,
+  rollback SQLite, hasil commit/readback hilang, refresh ringkasan gagal sesudah
+  commit, keranjang aktif tetap utuh, penolakan QRIS, serta kartu pencatatan
+  tanpa input tunai ulang pada 360 dp/skala teks 1,3.
+- APK debug berhasil dengan `JAVA_TOOL_OPTIONS=-Dorg.gradle.project.kotlin.incremental=false`
+  dan `--dart-define-from-file=../.env`; `.env` tidak dibaca agen. Peringatan KGP
+  plugin Firebase lama tetap ada; konfigurasi Android tidak diubah.
+- Batas produksi: kunci Groq dalam APK dapat diekstrak; perlu pemindahan ke layanan
+  tepercaya sebelum distribusi produksi, tidak menambah server pada tugas ini.
+  Data hasil pencarian/agregat yang diminta dikirim ke Groq. Belum diuji dengan
+  Groq nyata/perangkat Android. Pencatatan tunai adalah konfirmasi pengguna atas
+  barang terjual, bukan verifikasi gateway. Draft/ID retry hanya hidup dalam sesi
+  obrolan; belum ada pemulihan draft chat setelah aplikasi ditutup. Tidak mengubah nota historis,
+  menambahkan layanan cloud, dependensi, branch, atau commit.
+
+
+**Tariq — Ekspor Excel laporan harian (2026-11-14), review.**
+
+- CSV diganti workbook `.xlsx` lokal: Ringkasan (kotor, diskon, bersih, jumlah,
+  rata-rata, pembayaran, tanggal, waktu pembuatan, cakupan perangkat), Transaksi
+  (satu baris per nota), dan Barang Terjual (semua produk, kotor sebelum diskon nota).
+  Sel nominal/jumlah berupa angka, format rupiah, header tebal, lebar kolom praktis;
+  teks tidak dipercaya tetap sel teks, bukan formula. PDF tidak diubah.
+- Dependensi langsung `excel_plus 2.29.3`: `excel 4.0.6` tidak kompatibel dengan
+  `xml ^7.0.1` milik PDF; tanpa override, downgrade PDF, atau OOXML buatan sendiri.
+  Nama berkas mengikuti tanggal terpilih; MIME `.xlsx` dan berbagi native Android.
+- Verifikasi: `flutter analyze` bersih; `flutter test` 149/149 lulus, termasuk decode
+  workbook nyata, 250 nota/700 produk tanpa pemotongan, Unicode/teks bukan formula,
+  angka/rata-rata pecahan/pembayaran, kosong, PDF multipage, dan widget gagal/retry.
+  APK debug berhasil dibangun dengan Kotlin incremental dinonaktifkan:
+  `mobile/build/app/outputs/flutter-apk/app-debug.apk`. Peringatan plugin Firebase
+  terkait KGP dan unchecked operations tetap ada; konfigurasi Android tidak diubah.
+- Belum: uji ekspor/tujuan berbagi pada perangkat Android dan membuka workbook di
+  Excel/LibreOffice; tinjauan PR. Status tetap `review`.
+
 Catatan umum: Fase 0–4 Tariq sudah di-merge ke `main`, dan aplikasi sudah dipasang serta
 dijalankan pada perangkat Android SM A366B. Sisa poin definisi selesai adalah tinjauan
 silang anggota lain dan verifikasi text scale 1.3 yang masuk audit Fase 5. Karena itu
@@ -277,17 +400,50 @@ masuk keranjang. Lampu dan keyakinan hasil diberi label simulasi.
 
 ### Fase 4 — Pembayaran, panorama, dan laporan
 
-**Tariq — review (2026-09-25)**
+**Tariq — review (2026-11-14)**
 
-- Lingkup: layar riwayat dan laporan transaksi dengan data contoh, lengkap dengan
-  state memuat, kosong, dan gagal yang dapat dicoba lewat pemilih skenario contoh.
-- Berkas penting: `mobile/lib/features/reports/view/reports_screen.dart`,
-  `mobile/lib/core/format/rupiah.dart`, `mobile/lib/core/widgets/sample_badge.dart`.
-- Verifikasi: `flutter analyze` bersih, `flutter test` 33/33 lulus.
-- Belum: tampilan belum dijalankan di emulator Android dan PR belum ditinjau.
-- Catatan: layar dibuka dari pintasan "Riwayat transaksi" di dashboard lewat rute
-  `/riwayat`. Metode pembayaran pada riwayat masih model lokal, dan disatukan dengan
-  fitur pembayaran Blessly setelah fitur itu ada.
+- Lingkup disetujui pengguna: laporan harian SQLite lokal, pemilih tanggal awal hari
+  ini, seluruh nota pada rentang waktu lokal `[tengah malam, tengah malam berikutnya)`
+  tanpa batas 50 nota. Ringkasan kotor/diskon/bersih, jumlah dan rata-rata nota,
+  rincian metode pembayaran sesuai nilai tersimpan, 5 produk terlaris berdasarkan
+  kuantitas dengan aksi lihat semua, dan detail nota dari snapshot barang tersimpan.
+- Cakupan perangkat dan waktu lokal dijelaskan tanpa WIB tetap; dapat dibuka offline.
+  State memuat, gagal dengan coba lagi, kosong dengan pilih tanggal/beranda tersedia.
+- Berkas penting: `mobile/lib/features/reports/`,
+  `mobile/lib/core/data/transaction_repository.dart`,
+  `mobile/lib/core/data/in_memory_transaction_repository.dart`,
+  `mobile/test/features/reports_test.dart`.
+- Verifikasi: `flutter analyze --no-pub` bersih;
+  `flutter test --no-pub test/features/reports_test.dart` 6/6 lulus;
+  `flutter test --no-pub` 144/144 lulus. Meliputi batas hari, 62 nota, aritmetika,
+  metode pembayaran, snapshot, permintaan usang, retry, pemilih tanggal, layout
+  360 dp/skala teks 1,3, detail nota dan target tombol minimal 48 dp.
+- Belum: verifikasi emulator/perangkat Android dan tinjauan PR. Tidak menambahkan
+  laba, retur, printer native, sinkronisasi cloud, atau dependensi.
+- Catatan: akses tetap melalui rute `/riwayat` yang sudah ada; perubahan app shell,
+  startup test, Gradle, dan pengaturan milik pengguna dipertahankan.
+- Ekspor disetujui pengguna (2026-11-14): PDF A4 multipage berisi cakupan perangkat,
+  tanggal/jam lokal, kotor/diskon/bersih, jumlah/rata-rata nota, metode pembayaran,
+  dan seluruh ringkasan produk sebelum diskon nota. Font memakai aset lokal.
+  CSV UTF-8 BOM memakai satu baris per nota, angka rupiah utuh, seluruh snapshot
+  barang dalam kolom JSON, escaping CSV dan perlindungan formula spreadsheet.
+  Nama berkas `laporan-harian-YYYY-MM-DD.pdf` / `.csv` mengikuti tanggal terpilih.
+- Tombol `Bagikan PDF` / `Bagikan CSV` membuka tujuan berbagi native Android lewat
+  `share_plus`; tidak mengklaim cache sebagai berkas tersimpan. Penyimpanan permanen
+  bergantung tujuan yang dipilih pengguna. PDF dibuat dengan `pdf`; tanpa encoder
+  buatan sendiri, dependensi CSV, atau layanan jaringan ekspor.
+- Ekspor memblokir aksi tanggal/muat ulang/ekspor lain, menangani gagal dan retry,
+  memakai snapshot laporan; hari kosong menghasilkan PDF kosong berlabel dan CSV
+  header saja. Data contoh tanpa snapshot lokal tidak diekspor.
+- Verifikasi ekspor: `flutter analyze --no-pub` bersih; `flutter test --no-pub`
+  148/148 lulus. Uji meliputi CSV 250 nota, Unicode, koma/kutip/CRLF, formula,
+  aritmetika, tanggal/nama berkas, PDF A4 700 produk/71 halaman, laporan kosong,
+  berbagi terinjeksi tanpa platform, gagal/retry, serta 360 dp/skala teks 1,3.
+- Build `flutter build apk --debug --no-pub` gagal pada cache inkremental Kotlin
+  lintas drive (`firebase_core` dan `share_plus`). Percobaan
+  `./gradlew.bat assembleDebug -Pkotlin.incremental=false --no-daemon` dari
+  `mobile/android` berhasil tanpa mengubah Gradle. Belum menguji lembar berbagi,
+  pilihan tujuan simpan, dan tampilan PDF secara manual pada perangkat Android.
 
 **Farel — review (2026-10-02)**
 

@@ -5,10 +5,10 @@ import 'package:ryangunshop/app/shell/app_shell.dart';
 import 'package:ryangunshop/app/shell/shell_destination.dart';
 import 'package:ryangunshop/app/shell/shell_placeholder_view.dart';
 import 'package:ryangunshop/core/session/app_session.dart';
+import 'package:ryangunshop/core/session/user_role.dart';
 import 'package:ryangunshop/core/theme/app_theme.dart';
 import 'package:ryangunshop/features/catalog/view/product_catalog.dart';
 import 'package:ryangunshop/features/checkout/view/cart_checkout_screen.dart';
-import 'package:ryangunshop/features/dashboard/model/dashboard_shortcut.dart';
 
 void main() {
   testWidgets('kerangka utama menampilkan navigasi bawah dan pengaturan', (
@@ -46,15 +46,14 @@ void main() {
     expect(stack.index, ShellDestination.catalog.index);
   });
 
-  testWidgets('pintasan dashboard berpindah ke pengaturan', (tester) async {
+  testWidgets('tombol pengaturan tetap dapat diakses dari beranda', (
+    tester,
+  ) async {
     _usePhoneViewport(tester);
     await tester.pumpWidget(_host(const AppShell()));
     await tester.pumpAndSettle();
 
-    final tile = find.text(DashboardShortcut.settings.description);
-    await tester.ensureVisible(tile);
-    await tester.pumpAndSettle();
-    await tester.tap(tile);
+    await tester.tap(find.byTooltip('Pengaturan'));
     await tester.pumpAndSettle();
 
     final stack = tester.widget<IndexedStack>(find.byKey(AppShell.tabsKey));
@@ -80,6 +79,26 @@ void main() {
     expect(find.byType(ProductCatalog), findsNothing);
     expect(find.byType(CartCheckoutScreen), findsOneWidget);
     expect(find.byType(ShellPlaceholderView), findsNothing);
+  });
+
+  testWidgets('rute laporan dan statistik kasir hanya membuka riwayat', (
+    tester,
+  ) async {
+    final session = AppSession()..selectRole(UserRole.cashier);
+    addTearDown(session.dispose);
+    for (final route in [AppRoutes.reports, AppRoutes.statistics]) {
+      await tester.pumpWidget(
+        AppSessionScope(
+          session: session,
+          child: MaterialApp(home: AppRouter.pageFor(route)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Riwayat Nota'), findsOneWidget);
+      expect(find.text('Ringkasan harian'), findsNothing);
+      expect(find.text('Bagikan PDF'), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+    }
   });
 
   testWidgets('rute yang belum terdaftar menyediakan jalan kembali', (

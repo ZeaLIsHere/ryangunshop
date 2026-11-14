@@ -1,691 +1,375 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/data/product_record.dart';
+import '../../../core/data/transaction_repository.dart' as db;
 import '../../../core/format/rupiah.dart';
 import '../../../core/session/app_session.dart';
-import '../../../core/session/completed_transaction.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radius.dart';
+import '../../../core/session/user_role.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../catalog/model/catalog_product.dart';
+import '../../catalog/view/barcode_labels_screen.dart';
+import '../../catalog/view/product_catalog.dart';
+import '../../catalog/view/product_form_screen.dart';
 import '../model/dashboard_shortcut.dart';
-import '../sample/dashboard_sample.dart';
 
-/// Beranda utama: Hero Omzet harian, 4 modul bento Aksi Cepat,
-/// riwayat transaksi terkini, dan pintasan menu.
-class DashboardScreen extends StatelessWidget {
+typedef _DashboardData = ({
+  List<ProductRecord> products,
+  List<db.TransactionRecord> daily,
+  List<db.TransactionRecord> recent,
+});
+
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({
     required this.onShortcutSelected,
     this.onStartScan,
     super.key,
   });
 
-  /// Dipanggil saat pengguna memilih salah satu pintasan.
   final ValueChanged<DashboardShortcut> onShortcutSelected;
-
-  /// Aksi utama "Mulai pindai". Bila tidak diisi, membuka tab kasir.
   final VoidCallback? onStartScan;
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final shortcuts = DashboardSample.shortcuts;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.screen),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _HeroOmzetCard(
-            onPressed:
-                onStartScan ??
-                () => onShortcutSelected(DashboardShortcut.cashier),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          _QuickPrintCard(
-            onTap: () => onShortcutSelected(DashboardShortcut.reports),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            'Aksi Cepat',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          _QuickActionBento(
-            onStartScan:
-                onStartScan ??
-                () => onShortcutSelected(DashboardShortcut.cashier),
-            onOpenCashier: () => onShortcutSelected(DashboardShortcut.cashier),
-            onOpenCatalog: () => onShortcutSelected(DashboardShortcut.catalog),
-            onOpenReports: () => onShortcutSelected(DashboardShortcut.reports),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          _RecentTransactionsSection(
-            onViewAll: () => onShortcutSelected(DashboardShortcut.reports),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Text(
-            DashboardSample.shortcutsSectionTitle,
-            style: theme.textTheme.headlineSmall,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          for (var index = 0; index < shortcuts.length; index += 2) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: _ShortcutTile(
-                    shortcut: shortcuts[index],
-                    onTap: () => onShortcutSelected(shortcuts[index]),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: index + 1 < shortcuts.length
-                      ? _ShortcutTile(
-                          shortcut: shortcuts[index + 1],
-                          onTap: () => onShortcutSelected(shortcuts[index + 1]),
-                        )
-                      : const SizedBox.shrink(),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-          ],
-        ],
-      ),
-    );
-  }
+  State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-/// Kartu Hero Omzet & Kasir utama bertema Violet Gradient (sesuai desain/home_denah_warung).
-class _HeroOmzetCard extends StatelessWidget {
-  const _HeroOmzetCard({required this.onPressed});
+class _DashboardScreenState extends State<DashboardScreen> {
+  Future<_DashboardData>? _data;
+  int? _transactionCount;
+  bool _adding = false;
 
-  final VoidCallback onPressed;
+  bool get _owner =>
+      mounted && AppSessionScope.maybeOf(context)?.role == UserRole.owner;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final count = AppSessionScope.maybeOf(context)?.todayTransactionCount;
+    if (_data == null || count != _transactionCount) {
+      _transactionCount = count;
+      _data = _load();
+    }
+  }
+
+  Future<_DashboardData> _load() async {
+    final session = AppSessionScope.maybeOf(context);
+    if (session == null) throw StateError('Sesi belum tersedia');
+    final products = await session.productRepository.listProducts();
+    final daily = await session.transactionRepository.listForDay(
+      DateTime.now(),
+    );
+    final recent = await session.transactionRepository.listRecent(limit: 5);
+    return (products: products, daily: daily, recent: recent);
+  }
+
+  void _reload() => setState(() {
+    _data = _load();
+  });
+
+  Future<void> _addProduct() async {
+    if (!_owner || _adding) return;
+    setState(() => _adding = true);
+    CatalogProduct? pending;
+    try {
+      final session = AppSessionScope.of(context);
+      final products = await session.productRepository.listProducts();
+      if (!mounted || !_owner) return;
+      pending = await Navigator.of(context).push<CatalogProduct>(
+        MaterialPageRoute(
+          builder: (_) => ProductFormScreen(
+            isLocal: true,
+            existingProducts: products.map(CatalogProduct.fromRecord).toList(),
+          ),
+        ),
+      );
+      if (!mounted || !_owner || pending == null) return;
+      await session.productRepository.save(pending.toRecord());
+      if (!mounted) return;
+      _reload();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            pending == null
+                ? 'Produk gagal dimuat. Coba lagi.'
+                : 'Produk belum tersimpan. Coba simpan lagi.',
+          ),
+          action: pending == null
+              ? null
+              : SnackBarAction(
+                  label: 'Coba lagi',
+                  onPressed: () => _retrySave(pending!),
+                ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _adding = false);
+    }
+  }
+
+  Future<void> _retrySave(CatalogProduct product) async {
+    if (!_owner) return;
+    try {
+      await AppSessionScope.of(context).productRepository
+          .save(product.toRecord());
+      if (mounted) _reload();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Produk belum tersimpan. Coba lagi.'),
+          action: SnackBarAction(
+            label: 'Coba lagi',
+            onPressed: () => _retrySave(product),
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _openManagement(Widget page) async {
+    if (!_owner) return;
+    await Navigator.of(context)
+        .push<void>(MaterialPageRoute(builder: (_) => page));
+    if (mounted) _reload();
+  }
+
+  Widget _action(String label, IconData icon, VoidCallback? action) =>
+      OutlinedButton.icon(
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(
+            AppSpacing.minTouchTarget,
+            AppSpacing.minTouchTarget,
+          ),
+          padding: const EdgeInsets.all(AppSpacing.sm),
+        ),
+        onPressed: action,
+        icon: Icon(icon),
+        label: Text(label),
+      );
+
+  Widget _heading(String title) => Padding(
+    padding: const EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.sm),
+    child: Text(title, style: Theme.of(context).textTheme.headlineSmall),
+  );
+
+  void _shortcut(DashboardShortcut shortcut) =>
+      widget.onShortcutSelected(shortcut);
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final session = AppSessionScope.maybeOf(context);
-    final todayRevenue = session?.todayRevenue ?? 0;
-    final todayTransactionCount = session?.todayTransactionCount ?? 0;
-    final todayAverageRevenue = session?.todayAverageRevenue ?? 0;
-
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.primary, AppColors.primaryDark, Color(0xFF4C1D95)],
+    final owner = _owner;
+    return ListView(
+      padding: const EdgeInsets.all(AppSpacing.screen),
+      children: [
+        Text(
+          owner ? 'Kelola warung' : 'Siap melayani',
+          style: Theme.of(context).textTheme.headlineMedium,
         ),
-        borderRadius: AppRadius.panelBorder,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.35),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Omzet Hari Ini',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: AppColors.surface.withValues(alpha: 0.9),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xxs),
-          FittedBox(
-            alignment: Alignment.centerLeft,
-            fit: BoxFit.scaleDown,
-            child: Text(
-              formatRupiah(todayRevenue),
-              style: theme.textTheme.displayMedium?.copyWith(
-                color: AppColors.surface,
-                fontWeight: FontWeight.bold,
-                letterSpacing: -1.0,
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Container(
-            padding: const EdgeInsets.only(top: AppSpacing.xs),
-            decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(
-                  color: AppColors.surface.withValues(alpha: 0.2),
+        const SizedBox(height: AppSpacing.sm),
+        const Row(
+          children: [
+            Icon(Icons.phone_android_outlined),
+            SizedBox(width: AppSpacing.xs),
+            Expanded(child: Text('Data perangkat ini · dapat dibuka offline')),
+          ],
+        ),
+        const Text('Peran dari Pengaturan adalah mode UI, bukan autentikasi.'),
+        _heading('Aksi Cepat'),
+        if (owner) ...[
+          _action('Tambah Produk', Icons.add, _adding ? null : _addProduct),
+          _action(
+            'Kelola Stok',
+            Icons.inventory_2_outlined,
+            () => _openManagement(
+              Scaffold(
+                appBar: AppBar(title: const Text('Kelola Stok')),
+                body: SafeArea(
+                  child: ProductCatalog(
+                    repository: AppSessionScope.of(context).productRepository,
+                  ),
                 ),
               ),
             ),
-            child: Column(
+          ),
+          _action(
+            'Label Barcode',
+            Icons.barcode_reader,
+            () => _openManagement(const BarcodeLabelsScreen()),
+          ),
+          _action('Laporan', Icons.assessment_outlined, () {
+            if (_owner) _shortcut(DashboardShortcut.reports);
+          }),
+        ] else ...[
+          _action(
+            'Pindai Barcode',
+            Icons.qr_code_scanner,
+            widget.onStartScan ?? () => _shortcut(DashboardShortcut.cashier),
+          ),
+          _action(
+            'Buka Kasir',
+            Icons.point_of_sale,
+            () => _shortcut(DashboardShortcut.cashier),
+          ),
+          _action(
+            'Stok',
+            Icons.inventory_2_outlined,
+            () => _shortcut(DashboardShortcut.catalog),
+          ),
+          _action(
+            'Riwayat Nota',
+            Icons.receipt_long_outlined,
+            () => _shortcut(DashboardShortcut.reports),
+          ),
+        ],
+        _action('Muat ulang', Icons.refresh, _reload),
+        FutureBuilder<_DashboardData>(
+          future: _data,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return const Center(
+                child: CircularProgressIndicator(
+                  semanticsLabel: 'Memuat beranda',
+                ),
+              );
+            }
+            if (snapshot.hasError || !snapshot.hasData) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Icon(Icons.error_outline),
+                  const Text(
+                    'Data beranda gagal dimuat. Angka belum tersedia.',
+                  ),
+                  _action('Coba lagi', Icons.refresh, _reload),
+                ],
+              );
+            }
+            final data = snapshot.data!;
+            final total = data.daily.fold(
+              0,
+              (sum, record) => sum + record.totalAmount,
+            );
+            final sold = <String, ({String name, int quantity, DateTime at})>{};
+            for (final record in data.daily) {
+              for (final item in record.items) {
+                final old = sold[item.productId];
+                sold[item.productId] = (
+                  name: old == null || record.createdAt.isAfter(old.at)
+                      ? item.productName
+                      : old.name,
+                  quantity: (old?.quantity ?? 0) + item.quantity,
+                  at: old == null || record.createdAt.isAfter(old.at)
+                      ? record.createdAt
+                      : old.at,
+                );
+              }
+            }
+            final top = sold.entries.toList()
+              ..sort((a, b) {
+                final quantity = b.value.quantity.compareTo(a.value.quantity);
+                return quantity != 0 ? quantity : a.key.compareTo(b.key);
+              });
+            return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
+                if (owner) ...[
+                  _heading('Hari ini'),
+                  AppCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        Text('Penjualan bersih: ${formatRupiah(total)}'),
+                        Text('${data.daily.length} nota'),
                         Text(
-                          'Transaksi',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: AppColors.surface.withValues(alpha: 0.75),
-                            fontSize: 10,
-                          ),
-                        ),
-                        Text(
-                          '$todayTransactionCount Nota',
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            color: AppColors.surface,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          'Rata-rata per nota: ${formatRupiah(data.daily.isEmpty ? 0 : (total / data.daily.length).round())}',
                         ),
                       ],
                     ),
-                    Container(
-                      width: 1,
-                      height: 22,
-                      color: AppColors.surface.withValues(alpha: 0.25),
+                  ),
+                  if (data.daily.isEmpty)
+                    const Text(
+                      'Belum ada penjualan hari ini. Nota tersimpan akan muncul di sini.',
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
+                  _heading('Perlu perhatian'),
+                  AppCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          'Rata-rata',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: AppColors.surface.withValues(alpha: 0.75),
-                            fontSize: 10,
-                          ),
+                          'Stok kosong: ${data.products.where((p) => p.stock == 0).length} produk',
                         ),
                         Text(
-                          formatRupiah(todayAverageRevenue),
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            color: AppColors.surface,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          'Stok menipis: ${data.products.where((p) => p.stock > 0 && p.stock <= p.lowStockThreshold).length} produk',
+                        ),
+                        Text(
+                          'Tanpa barcode: ${data.products.where((p) => p.barcode == null || p.barcode!.trim().isEmpty).length} produk',
                         ),
                       ],
+                    ),
+                  ),
+                  if (data.products.isEmpty) ...[
+                    const Text('Katalog kosong. Tambahkan produk pertama.'),
+                    _action(
+                      'Tambah Produk pertama',
+                      Icons.add,
+                      _adding ? null : _addProduct,
                     ),
                   ],
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.surface,
-                    foregroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.md,
-                      vertical: AppSpacing.xs,
+                  _heading('Produk terlaris hari ini'),
+                  const Text(
+                    'Jumlah dari snapshot barang pada nota, bukan stok saat ini.',
+                  ),
+                  if (top.isEmpty)
+                    const Text('Belum ada rincian barang terjual.'),
+                  for (final item in top.take(5))
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.xs,
+                      ),
+                      child: Text(
+                        '${item.value.name} · ${item.value.quantity} barang',
+                      ),
                     ),
-                    minimumSize: const Size(48, 42),
-                    shape: const StadiumBorder(),
-                    elevation: 0,
+                ],
+                _heading('Nota terbaru'),
+                if (data.recent.isEmpty)
+                  const Text(
+                    'Belum ada nota. Buka Kasir untuk mencatat penjualan.',
                   ),
-                  onPressed: onPressed,
-                  icon: const Icon(Icons.qr_code_scanner, size: 18),
-                  label: Text(
-                    DashboardSample.mainActionLabel,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
+                for (final record in data.recent)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                    child: AppCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(record.summaryTitle),
+                          Text(record.id),
+                          Text(
+                            '${TimeOfDay.fromDateTime(record.createdAt.toLocal()).format(context)} · ${formatRupiah(record.totalAmount)}',
+                          ),
+                        ],
+                      ),
                     ),
                   ),
+                _action(
+                  'Lihat semua nota',
+                  Icons.receipt_long_outlined,
+                  () => _shortcut(DashboardShortcut.reports),
                 ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Modul cetak struk cepat printer Bluetooth (sesuai desain/home_denah_warung).
-class _QuickPrintCard extends StatelessWidget {
-  const _QuickPrintCard({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return AppCard(
-      onTap: onTap,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppColors.primarySubtle,
-              borderRadius: BorderRadius.circular(AppRadius.squircle),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.xxs),
-              child: Image.asset(
-                'assets/icon/10_printer_bluetooth.png',
-                fit: BoxFit.contain,
-                errorBuilder: (_, _, _) => const Icon(
-                  Icons.print_outlined,
-                  color: AppColors.primary,
-                  size: 22,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Cetak Laporan Harian',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
+                if (data.recent.isEmpty)
+                  _action(
+                    'Buka Kasir',
+                    Icons.point_of_sale,
+                    () => _shortcut(DashboardShortcut.cashier),
                   ),
-                ),
-                Text(
-                  'Printer Bluetooth Siap',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.muted,
-                  ),
-                ),
               ],
-            ),
-          ),
-          const Icon(Icons.chevron_right, color: AppColors.muted, size: 20),
-        ],
-      ),
-    );
-  }
-}
-
-/// Baris 4-up bento Aksi Cepat dengan squircle pod pastel (sesuai desain/home_denah_warung).
-class _QuickActionBento extends StatelessWidget {
-  const _QuickActionBento({
-    required this.onStartScan,
-    required this.onOpenCashier,
-    required this.onOpenCatalog,
-    required this.onOpenReports,
-  });
-
-  final VoidCallback onStartScan;
-  final VoidCallback onOpenCashier;
-  final VoidCallback onOpenCatalog;
-  final VoidCallback onOpenReports;
-
-  @override
-  Widget build(BuildContext context) {
-    final session = AppSessionScope.maybeOf(context);
-    final lowStock = session?.lowStockCount ?? 0;
-    return Row(
-      children: [
-        Expanded(
-          child: _QuickActionPod(
-            assetPath: 'assets/icon/08_pindai_barcode.png',
-            icon: Icons.qr_code_scanner,
-            label: 'Pindai Barcode',
-            bgColor: const Color(0xFFF5F3FF),
-            iconColor: const Color(0xFF7C3AED),
-            onTap: onStartScan,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.xs),
-        Expanded(
-          child: _QuickActionPod(
-            assetPath: 'assets/icon/02_keranjang.png',
-            icon: Icons.point_of_sale,
-            label: 'Buka Kasir',
-            bgColor: const Color(0xFFECFDF5),
-            iconColor: const Color(0xFF059669),
-            onTap: onOpenCashier,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.xs),
-        Expanded(
-          child: _QuickActionPod(
-            assetPath: 'assets/icon/09_stok_produk.png',
-            icon: Icons.inventory_2_outlined,
-            label: 'Stok',
-            badgeText: lowStock > 0 ? '$lowStock' : null,
-            bgColor: const Color(0xFFFFF7ED),
-            iconColor: const Color(0xFFEA580C),
-            onTap: onOpenCatalog,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.xs),
-        Expanded(
-          child: _QuickActionPod(
-            assetPath: 'assets/icon/03_riwayat_transaksi.png',
-            icon: Icons.receipt_long_outlined,
-            label: 'Riwayat Nota',
-            bgColor: const Color(0xFFF3E8FF),
-            iconColor: const Color(0xFF7E22CE),
-            onTap: onOpenReports,
-          ),
+            );
+          },
         ),
       ],
-    );
-  }
-}
-
-class _QuickActionPod extends StatelessWidget {
-  const _QuickActionPod({
-    required this.icon,
-    required this.label,
-    required this.bgColor,
-    required this.iconColor,
-    required this.onTap,
-    this.assetPath,
-    this.badgeText,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color bgColor;
-  final Color iconColor;
-  final VoidCallback onTap;
-  final String? assetPath;
-  final String? badgeText;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return AppCard(
-      onTap: onTap,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 2,
-        vertical: AppSpacing.sm,
-      ),
-      child: Stack(
-        clipBehavior: Clip.none,
-        alignment: Alignment.center,
-        children: [
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: bgColor,
-                  borderRadius: BorderRadius.circular(AppRadius.squircle),
-                ),
-                child: assetPath != null
-                    ? Padding(
-                        padding: const EdgeInsets.all(AppSpacing.xxs),
-                        child: Image.asset(
-                          assetPath!,
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, _, _) =>
-                              Icon(icon, color: iconColor, size: 22),
-                        ),
-                      )
-                    : Icon(icon, color: iconColor, size: 22),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 10.5,
-                  color: AppColors.ink,
-                ),
-              ),
-            ],
-          ),
-          if (badgeText != null)
-            Positioned(
-              top: -2,
-              right: 6,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: Color(0xFFEA580C),
-                  shape: BoxShape.circle,
-                ),
-                child: Text(
-                  badgeText!,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    height: 1,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Bagian Aktivitas Transaksi Terbaru sesuai desain/home_denah_warung.
-class _RecentTransactionsSection extends StatelessWidget {
-  const _RecentTransactionsSection({required this.onViewAll});
-
-  final VoidCallback onViewAll;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final session = AppSessionScope.maybeOf(context);
-    final transactions = session?.recentTransactions ?? const [];
-
-    return AppCard(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  'Aktivitas Transaksi Terbaru',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 4),
-              TextButton(
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xs,
-                  ),
-                  minimumSize: const Size(
-                    AppSpacing.minTouchTarget,
-                    AppSpacing.minTouchTarget,
-                  ),
-                ),
-                onPressed: onViewAll,
-                child: Text(
-                  'Semua',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          if (transactions.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-              child: Center(
-                child: Text(
-                  'Belum ada transaksi hari ini',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.muted,
-                  ),
-                ),
-              ),
-            )
-          else
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: transactions.length.clamp(0, 5),
-              separatorBuilder: (_, _) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final trx = transactions[index];
-                return _TransactionItemRow(transaction: trx);
-              },
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TransactionItemRow extends StatelessWidget {
-  const _TransactionItemRow({required this.transaction});
-
-  final CompletedTransaction transaction;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(11),
-              child:
-                  transaction.imageUrl != null &&
-                      transaction.imageUrl!.isNotEmpty
-                  ? Image.network(
-                      transaction.imageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => const Icon(
-                        Icons.image_outlined,
-                        color: Color(0xFF94A3B8),
-                        size: 22,
-                      ),
-                    )
-                  : const Icon(
-                      Icons.image_outlined,
-                      color: Color(0xFF94A3B8),
-                      size: 22,
-                    ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  transaction.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  transaction.timeLabel,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontSize: 11,
-                    color: AppColors.muted,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            formatRupiah(transaction.amount),
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
-              fontFeatures: AppTypography.tabularFigures,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Pintasan ringkas menuju fitur lain.
-class _ShortcutTile extends StatelessWidget {
-  const _ShortcutTile({required this.shortcut, required this.onTap});
-
-  final DashboardShortcut shortcut;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return AppCard(
-      onTap: onTap,
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            padding: const EdgeInsets.all(AppSpacing.xxs),
-            decoration: const BoxDecoration(
-              color: AppColors.primaryLight,
-              borderRadius: AppRadius.controlCompactBorder,
-            ),
-            child: Image.asset(
-              shortcut.assetPath,
-              fit: BoxFit.contain,
-              errorBuilder: (_, _, _) =>
-                  Icon(shortcut.icon, size: 20, color: AppColors.primaryDark),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(shortcut.label, style: theme.textTheme.titleMedium),
-          const SizedBox(height: AppSpacing.xxs),
-          Text(
-            shortcut.description,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodySmall,
-          ),
-        ],
-      ),
     );
   }
 }

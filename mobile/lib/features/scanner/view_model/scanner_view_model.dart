@@ -1,100 +1,147 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 
+import '../../../core/data/product_repository.dart';
 import '../../catalog/model/catalog_product.dart';
+import '../../checkout/view_model/cart_view_model.dart';
 import '../model/scanner_scenario.dart';
 
-/// Mengelola state simulasi pemindaian dan pencarian produk.
 class ScannerViewModel extends ChangeNotifier {
-  ScannerViewModel({List<CatalogProduct> products = const <CatalogProduct>[]})
-    : _products = List.unmodifiable(products);
+  ScannerViewModel({required this.repository});
 
-  final List<CatalogProduct> _products;
-  Timer? _scanTimer;
+  final ProductRepository repository;
+  ScannerScenario scenario = ScannerScenario.ready;
+  CatalogProduct? detectedProduct;
+  String? code;
+  String? error;
+  int quantity = 1;
+  bool confirming = false;
   bool _disposed = false;
-  ScannerScenario _scenario = ScannerScenario.ready;
-  CatalogProduct? _detectedProduct;
-  bool _isSimulated = false;
-  bool _isTorchOn = false;
+  int _revision = 0;
 
-  ScannerScenario get scenario => _scenario;
-  CatalogProduct? get detectedProduct => _detectedProduct;
-  bool get isSimulated => _isSimulated;
-  bool get isTorchOn => _isTorchOn;
+  bool get scanning => scenario == ScannerScenario.ready;
 
-  List<CatalogProduct> searchProducts(String query) {
-    final normalized = query.trim().toLowerCase();
-    if (normalized.isEmpty) return _products;
-    return _products.where((product) {
-      return product.name.toLowerCase().contains(normalized) ||
-          (product.barcode?.toLowerCase().contains(normalized) ?? false);
-    }).toList();
+  Future<List<CatalogProduct>> loadProducts() async =>
+      (await repository.listProducts()).map(CatalogProduct.fromRecord).toList();
+
+  Future<void> detect(String raw) async {
+    if (!scanning || raw.trim().isEmpty || raw.length > 4096) return;
+    code = raw.trim();
+    await retryLookup();
   }
 
-  void simulateScan() {
-    _scanTimer?.cancel();
-    _detectedProduct = null;
-    _isSimulated = false;
-    _scenario = ScannerScenario.loading;
+  Future<void> retryLookup() async {
+    if (code == null || scenario == ScannerScenario.loading || confirming) {
+      return;
+    }
+    final revision = ++_revision;
+    scenario = ScannerScenario.loading;
+    error = null;
+    detectedProduct = null;
     notifyListeners();
-
-    _scanTimer = Timer(const Duration(milliseconds: 900), () {
-      if (_disposed) return;
-      if (_products.isNotEmpty) {
-        _detectedProduct = _products.firstWhere(
-          (p) => p.stock > 0,
-          orElse: () => _products.first,
-        );
-      } else {
-        _detectedProduct = null;
-      }
-      _isSimulated = _detectedProduct != null;
-      _scenario = _detectedProduct == null
+    try {
+      final record = await repository.findByBarcode(code!);
+      if (_disposed || revision != _revision) return;
+      detectedProduct = record == null
+          ? null
+          : CatalogProduct.fromRecord(record);
+      quantity = 1;
+      scenario = record == null
           ? ScannerScenario.empty
           : ScannerScenario.result;
-      notifyListeners();
-    });
+    } catch (_) {
+      if (_disposed || revision != _revision) return;
+      scenario = ScannerScenario.failure;
+      error = 'Katalog gagal dibaca. Barcode tetap tersimpan; coba lagi.';
+    }
+    notifyListeners();
   }
 
   void selectManualProduct(CatalogProduct product) {
-    _scanTimer?.cancel();
-    _detectedProduct = product;
-    _isSimulated = false;
-    _scenario = ScannerScenario.result;
+    if (confirming) return;
+    _revision++;
+    code = product.barcode;
+    detectedProduct = product;
+    quantity = 1;
+    error = null;
+    scenario = ScannerScenario.result;
     notifyListeners();
   }
 
-  void markAdded() {
-    if (_scenario != ScannerScenario.result || _detectedProduct == null) return;
-    _scenario = ScannerScenario.added;
-    notifyListeners();
-  }
-
-  void selectScenario(ScannerScenario scenario) {
-    if (scenario == ScannerScenario.loading) {
-      simulateScan();
+  void changeQuantity(int value) {
+    if (confirming || value < 1 || value > (detectedProduct?.stock ?? 0)) {
       return;
     }
-    _scanTimer?.cancel();
-    _detectedProduct = null;
-    _isSimulated = false;
-    _isTorchOn = false;
-    _scenario = scenario;
+    quantity = value;
     notifyListeners();
   }
 
-  void reset() => selectScenario(ScannerScenario.ready);
+  Future<void> confirm(CartViewModel cart) async {
+    final product = detectedProduct;
+    if (confirming || scenario != ScannerScenario.result || product == null) {
+      return;
+    }
+    confirming = true;
+    error = null;
+    notifyListeners();
+    try {
+      final records = await repository.listProducts();
+      if (_disposed) return;
+      final matches = records.where((p) => p.id == product.id);
+      if (matches.isEmpty) {
+        detectedProduct = null;
+        scenario = ScannerScenario.empty;
+        error = 'Produk sudah dihapus dari katalog.';
+        return;
+      }
+      final fresh = CatalogProduct.fromRecord(matches.single);
+      detectedProduct = fresh;
+      final inCart = cart.items
+          .where((p) => p.productId == fresh.id)
+          .fold(0, (sum, p) => sum + p.quantity);
+      if (quantity > fresh.stock - inCart) {
+        error = 'Stok tidak cukup. Stok ${fresh.stock}, di keranjang $inCart.';
+        quantity = (fresh.stock - inCart).clamp(
+          1,
+          fresh.stock > 0 ? fresh.stock : 1,
+        );
+        return;
+      }
+      if (fresh.price != product.price) {
+        error = 'Harga berubah. Periksa harga terbaru lalu konfirmasi ulang.';
+        return;
+      }
+      final oldLines = cart.items.where((p) => p.productId == fresh.id);
+      if (oldLines.any((p) => p.unitPrice != fresh.price)) {
+        error = 'Harga di keranjang berbeda. Periksa produk di Kasir dahulu.';
+        return;
+      }
+      cart.addProduct(fresh, quantity: quantity);
+      scenario = ScannerScenario.added;
+    } catch (_) {
+      if (!_disposed) {
+        error = 'Produk gagal diperiksa. Belum ditambahkan; coba lagi.';
+      }
+    } finally {
+      confirming = false;
+      if (!_disposed) notifyListeners();
+    }
+  }
 
-  void toggleTorch() {
-    _isTorchOn = !_isTorchOn;
+  void reset() {
+    if (confirming) return;
+    _revision++;
+    scenario = ScannerScenario.ready;
+    detectedProduct = null;
+    code = null;
+    error = null;
+    quantity = 1;
     notifyListeners();
   }
 
   @override
   void dispose() {
     _disposed = true;
-    _scanTimer?.cancel();
+    _revision++;
     super.dispose();
   }
 }

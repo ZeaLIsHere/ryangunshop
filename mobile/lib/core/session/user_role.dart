@@ -18,6 +18,9 @@ enum UserRole {
   final String label;
   final String description;
 
+  /// Hanya pemilik yang boleh menambah, mengubah, dan menghapus produk.
+  bool get canManageProducts => this == UserRole.owner;
+
   /// Hanya pemilik yang boleh membuka mode edit denah.
   bool get canEditFloorPlan => this == UserRole.owner;
 }

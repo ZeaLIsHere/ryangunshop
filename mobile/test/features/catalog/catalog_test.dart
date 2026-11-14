@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ryangunshop/core/session/app_session.dart';
+import 'package:ryangunshop/core/session/user_role.dart';
+import 'package:ryangunshop/features/catalog/view/product_form_screen.dart';
 import 'package:ryangunshop/core/theme/app_theme.dart';
 import 'package:ryangunshop/core/widgets/brand_spinner.dart';
 import 'package:ryangunshop/features/catalog/model/catalog_scenario.dart';
@@ -10,6 +12,82 @@ import 'package:ryangunshop/features/catalog/view/product_catalog.dart';
 import 'package:ryangunshop/features/catalog/view_model/catalog_view_model.dart';
 
 void main() {
+  testWidgets(
+    'kasir tanpa tambah pada katalog kosong dan tetap bisa muat ulang',
+    (tester) async {
+      final session = AppSession()..selectRole(UserRole.cashier);
+      addTearDown(session.dispose);
+      await _showCatalog(tester, session: session);
+      expect(find.text('Tambah Produk'), findsNothing);
+      expect(find.byType(FloatingActionButton), findsNothing);
+      expect(
+        find.text('Minta pemilik menambahkan produk, lalu muat ulang katalog.'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Muat Ulang'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('kasir dapat mencari dan masuk keranjang tanpa edit atau hapus', (
+    tester,
+  ) async {
+    final session = AppSession()..selectRole(UserRole.cashier);
+    addTearDown(session.dispose);
+    await _showCatalog(
+      tester,
+      session: session,
+      viewModel: CatalogViewModel(initialProducts: CatalogSample.products),
+    );
+    await tester.enterText(find.byType(TextField).first, 'Beras');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Beras pandan wangi 1 kg'));
+    await tester.pumpAndSettle();
+    expect(find.text('Edit Produk'), findsNothing);
+    expect(find.byTooltip('Hapus Produk'), findsNothing);
+    await tester.tap(find.text('+ Kasir'));
+    await tester.pumpAndSettle();
+    expect(session.cart.totalItems, 1);
+  });
+
+  testWidgets('hasil form lama tidak tersimpan setelah beralih ke kasir', (
+    tester,
+  ) async {
+    final session = AppSession();
+    addTearDown(session.dispose);
+    final vm = CatalogViewModel();
+    addTearDown(vm.dispose);
+    await _showCatalog(tester, session: session, viewModel: vm);
+    await tester.tap(find.text('Tambah Produk').last);
+    await tester.pumpAndSettle();
+    final formContext = tester.element(find.byType(ProductFormScreen));
+    session.selectRole(UserRole.cashier);
+    Navigator.of(formContext).pop(CatalogSample.products.first);
+    await tester.pumpAndSettle();
+    expect(vm.allProducts, isEmpty);
+    expect(find.text('Tambah Produk'), findsNothing);
+  });
+
+  testWidgets('hapus menolak konfirmasi setelah peran berubah', (tester) async {
+    final session = AppSession();
+    addTearDown(session.dispose);
+    final vm = CatalogViewModel(initialProducts: CatalogSample.products);
+    addTearDown(vm.dispose);
+    await _showCatalog(tester, session: session, viewModel: vm);
+    await tester.ensureVisible(find.text('Beras pandan wangi 1 kg'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Beras pandan wangi 1 kg'));
+    await tester.pumpAndSettle();
+    expect(find.text('Edit Produk'), findsOneWidget);
+    await tester.tap(find.byTooltip('Hapus Produk'));
+    await tester.pumpAndSettle();
+    session.selectRole(UserRole.cashier);
+    await tester.tap(find.text('Hapus'));
+    await tester.pumpAndSettle();
+    expect(vm.allProducts.length, CatalogSample.products.length);
+    expect(find.text('Edit Produk'), findsNothing);
+  });
   testWidgets('katalog terbaca pada 360 dp dan skala teks 1,3', (tester) async {
     await _showCatalog(
       tester,
@@ -178,13 +256,14 @@ Future<void> _showCatalog(
   WidgetTester tester, {
   bool disableAnimations = false,
   CatalogViewModel? viewModel,
+  AppSession? session,
 }) async {
   tester.view.physicalSize = const Size(360, 800);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
     AppSessionScope(
-      session: AppSession(),
+      session: session ?? AppSession(),
       child: MaterialApp(
         theme: AppTheme.light(),
         builder: (context, child) => MediaQuery(

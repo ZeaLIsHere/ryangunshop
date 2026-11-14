@@ -1,10 +1,13 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../core/config/firebase_bootstrap.dart';
 import '../core/data/app_database.dart';
 import '../core/data/sync/drift_sync_queue.dart';
+import '../core/data/sync/firestore_sync_target.dart';
+import '../core/data/sync/sync_engine.dart';
 import '../core/data/sync/sync_queue.dart';
 import '../core/session/app_session.dart';
 import '../core/theme/app_colors.dart';
@@ -34,23 +37,44 @@ class _RyanGunshopAppState extends State<RyanGunshopApp> {
       _database == null || !FirebaseBootstrap.enabled
       ? null
       : DriftSyncQueue(_database);
+  late final SyncEngine? _syncEngine =
+      _syncQueue == null || !FirebaseBootstrap.isReady
+      ? null
+      : SyncEngine(
+          queue: _syncQueue,
+          target: FirestoreSyncTarget(
+            firestore: FirebaseFirestore.instance,
+            storeId: FirebaseBootstrap.storeId,
+          ),
+        );
   late final AppSession _session =
       widget.session ?? AppSession(database: _database, syncQueue: _syncQueue);
   late final bool _ownsSession = widget.session == null;
+  Timer? _syncTimer;
 
   @override
   void initState() {
     super.initState();
     _session.addListener(_refreshStartup);
     _session.loadLocalSummary();
+    if (_syncEngine != null) {
+      unawaited(_syncEngine.flush());
+      _syncTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+        unawaited(_syncEngine.flush());
+      });
+    }
   }
 
   void _refreshStartup() {
     if (mounted) setState(() {});
+    if (_syncEngine != null) {
+      unawaited(_syncEngine.flush());
+    }
   }
 
   @override
   void dispose() {
+    _syncTimer?.cancel();
     _session.removeListener(_refreshStartup);
     final database = _database;
     final pendingWrites = database == null
@@ -73,6 +97,7 @@ class _RyanGunshopAppState extends State<RyanGunshopApp> {
       return AppSessionScope(
         session: _session,
         child: MaterialApp(
+          key: const ValueKey('local-storage-startup'),
           title: 'RyanGunshop',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light(),
@@ -112,6 +137,7 @@ class _RyanGunshopAppState extends State<RyanGunshopApp> {
     return AppSessionScope(
       session: _session,
       child: MaterialApp(
+        key: const ValueKey('main-app'),
         title: 'RyanGunshop',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(),

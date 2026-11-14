@@ -9,6 +9,18 @@ class InMemoryProductRepository implements ProductRepository {
 
   final Map<String, ProductRecord> _products;
 
+  List<ProductRecord> get snapshot => _products.values.toList();
+
+  // Mutasi sinkron agar nota dan seluruh pengurangan stok tidak tersela await.
+  void deductStock(Map<String, int> quantities) {
+    for (final entry in quantities.entries) {
+      final product = _products[entry.key]!;
+      _products[entry.key] = product.copyWith(
+        stock: product.stock - entry.value,
+      );
+    }
+  }
+
   @override
   Future<List<ProductRecord>> listProducts() async => _products.values.toList();
 
