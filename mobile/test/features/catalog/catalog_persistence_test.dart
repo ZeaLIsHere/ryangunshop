@@ -76,7 +76,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Air mineral lokal'), findsOneWidget);
-    expect(find.text('Tersimpan di perangkat'), findsOneWidget);
+    expect(find.text('Tersimpan di perangkat'), findsNothing);
   });
 
   testWidgets('form katalog menambah dan mengedit produk lokal', (
