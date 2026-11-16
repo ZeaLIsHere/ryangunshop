@@ -130,12 +130,18 @@ Hierarki utama:
 - `ProductScanner`: Kamera native nyata melalui `mobile_scanner`, dengan fallback
   manual dan konfirmasi hasil sebelum masuk keranjang. Kamera dilepas selama
   checkout dan disiapkan ulang saat pemindaian berikutnya.
-- `ReportsAnalytics`: Data repository nyata; laporan mengikuti tanggal kalender
-  lokal yang dipilih, ekspor PDF dan Excel `.xlsx` nyata melalui berbagi Android.
+- `ReportsAnalytics`: Urutan pilih tanggal, ringkasan penjualan bersih, rincian
+  kotor/diskon, pembayaran/produk/nota, lalu panel Bagikan laporan. Pemilih tanggal
+  berikon setinggi minimal 48 dp, Hari ini dan muat ulang dikelompokkan; status
+  perangkat ini/offline/waktu lokal selalu terlihat. Penjelasan lengkap tersedia
+  lewat disclosure. Empty/error memakai kartu dengan satu aksi pemulihan utama.
+  Konten tablet dibatasi 768 dp agar tetap mudah dipindai. Data repository nyata;
+  laporan mengikuti tanggal kalender lokal yang dipilih, ekspor PDF dan Excel
+  `.xlsx` nyata melalui berbagi Android.
   Berbagi bukan jaminan penyimpanan otomatis ke Downloads. Laba historis belum
   dihitung karena nota belum menyimpan snapshot harga modal. Cetak thermal/
   Bluetooth fisik belum terverifikasi; jangan menampilkannya sebagai kemampuan teruji.
-- `FloatingBottomNav`: Navigasi bawah melayang bersudut atas 24 dp dengan bayangan violet lembut, menampilkan tab Beranda (ikon `beranda.png`), Katalog, tombol Kasir tengah (`02_keranjang.png`), dan Pengaturan.
+- `FloatingBottomNav`: Navigasi bawah berbayang violet lembut dengan urutan Beranda (ikon `beranda.png`), Chatbot, tombol Kasir terangkat di tengah (`02_keranjang.png`), Produk, dan Statistik. Chatbot/Statistik membuka rute yang sudah ada dan kembali ke tab sebelumnya; Statistik kasir tetap diarahkan ke Riwayat Nota. Pengaturan tersedia melalui app bar.
 - `StoreFloorPlan (Arsip)`: Komponen kanvas tata letak 2D berbasis matriks titik (*grid-matrix*) dan panorama 360 zona diarsipkan dari antarmuka utama demi kecepatan alur kasir.
 
 ## Aturan interaksi

@@ -161,12 +161,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           'Ringkasan warung',
                           style: theme.textTheme.headlineSmall,
                         ),
-                        const SizedBox(height: 2),
-                        SampleBadge(
-                          label: isLocal
-                              ? 'Tersimpan di perangkat'
-                              : 'Belum ada data',
-                        ),
+                        if (!isLocal) ...[
+                          const SizedBox(height: 2),
+                          const SampleBadge(label: 'Belum ada data'),
+                        ],
                       ],
                     ),
                   ),

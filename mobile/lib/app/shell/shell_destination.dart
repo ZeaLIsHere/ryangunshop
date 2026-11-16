@@ -12,7 +12,7 @@ enum ShellDestination {
     unavailableMessage: 'Halaman beranda belum tersedia.',
   ),
   catalog(
-    label: 'Katalog',
+    label: 'Produk',
     icon: Icons.inventory_2_outlined,
     selectedIcon: Icons.inventory_2,
     assetPath: 'assets/icon/01_katalog_produk.png',

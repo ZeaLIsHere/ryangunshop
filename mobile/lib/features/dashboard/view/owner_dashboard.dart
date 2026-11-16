@@ -175,23 +175,6 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Kelola warung',
-            style: theme.textTheme.headlineMedium?.copyWith(
-              color: AppColors.primaryDark,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          const Row(
-            children: [
-              Icon(Icons.phone_android_outlined, color: AppColors.primary),
-              SizedBox(width: AppSpacing.xs),
-              Expanded(
-                child: Text('Data perangkat ini · dapat dibuka offline'),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
           Wrap(
             spacing: AppSpacing.xs,
             children: [
@@ -257,11 +240,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: AppSpacing.md),
-                  Text(
-                    '${_date(data.period.start)} – ${_date(DateTime(data.period.end.year, data.period.end.month, data.period.end.day - 1))} · waktu lokal perangkat',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
+
                   DashboardHeroCard(
                     daily: data.daily,
                     title: 'Penjualan Bersih',
@@ -274,19 +253,8 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                   ),
                   _heading('Penjualan harian'),
                   _SalesChart(points: data.period.dailyTotals(data.daily)),
-                  if (data.daily.isEmpty) ...[
-                    const Text('Belum ada penjualan pada periode ini.'),
-                    _action(
-                      'Buka Kasir',
-                      Icons.point_of_sale,
-                      () => _shortcut(DashboardShortcut.cashier),
-                    ),
-                  ],
-                  _heading('Perlu perhatian'),
-                  const Text(
-                    'Kondisi stok saat ini · tidak mengikuti periode penjualan',
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
+
+                  _heading('Status Stok'),
                   AppCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,

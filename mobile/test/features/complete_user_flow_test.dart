@@ -38,7 +38,7 @@ void main() {
 
       // Beranda pemilik menyediakan pengelolaan; Kasir tetap lewat navigasi.
       expect(find.text('Beranda'), findsWidgets);
-      expect(find.text('Kelola warung'), findsOneWidget);
+      expect(find.text('Kelola warung'), findsNothing);
       expect(find.text('Tambah Produk'), findsOneWidget);
       expect(find.text('Kelola Stok'), findsOneWidget);
       expect(find.text('Label Barcode'), findsOneWidget);

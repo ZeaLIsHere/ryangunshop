@@ -267,16 +267,43 @@ void main() {
     );
     TextButton button(String label) =>
         tester.widget<TextButton>(find.widgetWithText(TextButton, label));
+    await tester.scrollUntilVisible(
+      find.text('Bagikan Excel'),
+      180,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(button('Bagikan Excel').onPressed, isNull);
     repository.pending!.complete(repository.records);
     await tester.pumpAndSettle();
+    await tester.dragUntilVisible(
+      find.text('Bagikan Excel').hitTestable(),
+      find.byType(ListView).first,
+      const Offset(0, -180),
+    );
     await tester.tap(find.text('Bagikan Excel'));
     await tester.pump();
     expect(shared.single, endsWith('.xlsx|${DailyReportExport.xlsxMimeType}'));
     expect(button('Bagikan PDF').onPressed, isNull);
-    expect(button('Muat ulang').onPressed, isNull);
+    await tester.drag(find.byType(ListView).first, const Offset(0, 2000));
+    await tester.pump();
+    expect(
+      tester
+          .widget<IconButton>(
+            find.ancestor(
+              of: find.byTooltip('Muat ulang'),
+              matching: find.byType(IconButton),
+            ),
+          )
+          .onPressed,
+      isNull,
+    );
     pending.completeError(StateError('share gagal'));
     await tester.pumpAndSettle();
+    await tester.dragUntilVisible(
+      find.text('Bagikan PDF').hitTestable(),
+      find.byType(ListView).first,
+      const Offset(0, -180),
+    );
     expect(
       find.text('Ekspor gagal. Coba lagi lewat tombol bagikan.'),
       findsOneWidget,

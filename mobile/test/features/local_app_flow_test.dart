@@ -44,9 +44,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Keranjang lokal'), findsOneWidget);
     expect(find.text('Keranjang Masih Kosong'), findsOneWidget);
-    await tester.tap(find.text('Katalog'));
+    await tester.tap(find.byTooltip('Produk'));
     await tester.pumpAndSettle();
     expect(find.text('Teh lokal'), findsOneWidget);
-    expect(find.text('Produk'), findsOneWidget);
+    expect(find.text('Produk'), findsWidgets);
   });
 }
