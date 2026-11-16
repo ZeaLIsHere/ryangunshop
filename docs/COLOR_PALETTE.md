@@ -1,6 +1,7 @@
 # RyanGunshop — Palet Warna (Violet Commerce POS)
 
-Dokumen ini adalah rujukan token warna yang dipakai `DESIGN.md`. Nilai di sini
+Status: **15 November 2026**. Identitas violet tetap dikunci; bukan perubahan
+palet. Dokumen ini adalah rujukan token warna yang dipakai `DESIGN.md`. Nilai di sini
 dipasang sebagai token di `mobile/lib/core/theme/app_colors.dart`. Widget tidak
 boleh menulis nilai heksadesimal secara langsung.
 
@@ -49,16 +50,25 @@ boleh menulis nilai heksadesimal secara langsung.
 
 ## Aturan kontras
 
-Perhitungan formula kontras WCAG 2.1 memastikan keterbacaan tinggi di bawah lampu warung:
+Rasio berikut dihitung ulang dengan luminansi relatif sRGB WCAG, dibulatkan
+dua desimal, untuk warna solid tanpa opacity. Ini bukan audit seluruh UI atau
+bukti keterbacaan pada perangkat fisik. Ambang teks normal 4.5:1:
 
 | Pasangan | Pemakaian | Rasio | Ambang WCAG |
 |---|---|---|---|
-| Ink di atas Canvas | Teks utama pada latar aplikasi | ≥ 17.5:1 | 4.5:1 |
-| Ink di atas Surface | Teks utama pada kartu & sheet | ≥ 18.2:1 | 4.5:1 |
-| Muted di atas Surface | Teks pendukung pada kartu | ≥ 5.2:1 | 4.5:1 |
-| Muted di atas Canvas | Metadata pada latar | ≥ 5.0:1 | 4.5:1 |
-| Surface di atas Primary | Label tombol utama (Putih di atas Violet-600) | ≥ 4.8:1 | 4.5:1 |
-| PrimaryDark di atas PrimaryLight | Teks pada pill lavender | ≥ 7.2:1 | 4.5:1 |
-| Error di atas Surface | Pesan gagal (Rose di atas Putih) | ≥ 4.6:1 | 4.5:1 |
-| Success di atas Surface | Pesan sukses (Emerald di atas Putih) | ≥ 4.6:1 | 4.5:1 |
-| Warning di atas Surface | Peringatan stok (Amber di atas Putih) | ≥ 4.5:1 | 4.5:1 |
+| Ink di atas Canvas | Teks utama pada latar aplikasi | 16.94:1 | Lulus 4.5:1 |
+| Ink di atas Surface | Teks utama pada kartu & sheet | 17.85:1 | Lulus 4.5:1 |
+| Muted di atas Surface | Teks pendukung pada kartu | 4.76:1 | Lulus 4.5:1 |
+| Muted di atas Canvas | Metadata pada latar | 4.51:1 | Lulus 4.5:1, margin tipis |
+| Surface di atas Primary | Label tombol utama | 5.70:1 | Lulus 4.5:1 |
+| PrimaryDark di atas PrimaryLight | Teks pada pill lavender | 5.98:1 | Lulus 4.5:1 |
+| Error di atas Surface | Warna status dasar, bukan teks normal | 3.76:1 | Tidak lulus 4.5:1 |
+| Success di atas Surface | Warna status dasar, bukan teks normal | 2.54:1 | Tidak lulus 4.5:1 |
+| Warning di atas Surface | Warna status dasar, bukan teks normal | 2.15:1 | Tidak lulus 4.5:1 |
+
+Warna dasar status tetap boleh menyampaikan aksen, tetapi label teks membutuhkan
+pasangan foreground/background yang memenuhi ambang. Jangan mengklaim seluruh
+badge atau ikon memenuhi kontras hanya dari tabel ini; batas nonteks juga perlu
+pemeriksaan tersendiri. Pertahankan ikon dan teks untuk makna status, serta
+verifikasi gradien, opacity, dan state aktual. Dokumentasi tidak mengubah kode
+tema atau menyatakan audit perangkat sudah lulus.

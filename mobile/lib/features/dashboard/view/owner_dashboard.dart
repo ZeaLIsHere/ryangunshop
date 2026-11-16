@@ -15,6 +15,8 @@ import '../../catalog/view/barcode_labels_screen.dart';
 import '../../catalog/view/product_catalog.dart';
 import '../../catalog/view/product_form_screen.dart';
 import '../model/dashboard_shortcut.dart';
+import '../../../core/session/completed_transaction.dart';
+import 'dashboard_components.dart';
 
 typedef _DashboardData = ({
   List<ProductRecord> products,
@@ -156,7 +158,11 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
 
   Widget _heading(String title) => Padding(
     padding: const EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.sm),
-    child: Text(title, style: Theme.of(context).textTheme.headlineSmall),
+    child: Text(
+      title,
+      style: Theme.of(context).textTheme.titleMedium
+          ?.copyWith(fontWeight: FontWeight.bold),
+    ),
   );
 
   void _shortcut(DashboardShortcut shortcut) =>
@@ -169,23 +175,6 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Kelola warung',
-            style: theme.textTheme.headlineMedium?.copyWith(
-              color: AppColors.primaryDark,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          const Row(
-            children: [
-              Icon(Icons.phone_android_outlined, color: AppColors.primary),
-              SizedBox(width: AppSpacing.xs),
-              Expanded(
-                child: Text('Data perangkat ini · dapat dibuka offline'),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
           Wrap(
             spacing: AppSpacing.xs,
             children: [
@@ -230,10 +219,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                 );
               }
               final data = snapshot.data!;
-              final total = data.daily.fold(
-                0,
-                (sum, row) => sum + row.totalAmount,
-              );
+
               final sold = <String, ({String name, int quantity, int gross})>{};
               for (final row in data.daily) {
                 for (final item in row.items) {
@@ -254,56 +240,21 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: AppSpacing.md),
-                  Text(
-                    '${_date(data.period.start)} – ${_date(DateTime(data.period.end.year, data.period.end.month, data.period.end.day - 1))} · waktu lokal perangkat',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Container(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    decoration: const BoxDecoration(
-                      color: AppColors.primarySubtle,
-                      borderRadius: AppRadius.panelBorder,
-                      border: Border(
-                        left: BorderSide(
-                          color: AppColors.primary,
-                          width: AppSpacing.xxs,
-                        ),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          'Penjualan bersih: ${formatRupiah(total)}',
-                          style: theme.textTheme.headlineSmall,
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Text(
-                          '${data.daily.length} nota',
-                          style: theme.textTheme.titleMedium,
-                        ),
-                        Text(
-                          'Rata-rata per nota: ${formatRupiah(data.daily.isEmpty ? 0 : (total / data.daily.length).round())}',
-                        ),
-                      ],
-                    ),
+
+                  DashboardHeroCard(
+                    daily: data.daily,
+                    title: 'Penjualan Bersih',
+
+                    actionLabel: 'Lihat laporan',
+                    actionIcon: Icons.assessment_outlined,
+                    onPressed: () {
+                      if (_owner) _shortcut(DashboardShortcut.reports);
+                    },
                   ),
                   _heading('Penjualan harian'),
                   _SalesChart(points: data.period.dailyTotals(data.daily)),
-                  if (data.daily.isEmpty) ...[
-                    const Text('Belum ada penjualan pada periode ini.'),
-                    _action(
-                      'Buka Kasir',
-                      Icons.point_of_sale,
-                      () => _shortcut(DashboardShortcut.cashier),
-                    ),
-                  ],
-                  _heading('Perlu perhatian'),
-                  const Text(
-                    'Kondisi stok saat ini · tidak mengikuti periode penjualan',
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
+
+                  _heading('Status Stok'),
                   AppCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -332,39 +283,49 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                     ),
                   ],
                   const SizedBox(height: AppSpacing.sm),
-                  Wrap(
-                    spacing: AppSpacing.xs,
-                    runSpacing: AppSpacing.xs,
-                    children: [
-                      _action(
-                        'Tambah Produk',
-                        Icons.add,
-                        _adding ? null : _addProduct,
-                      ),
-                      _action(
-                        'Kelola Stok',
-                        Icons.inventory_2_outlined,
-                        () => _openManagement(
-                          Scaffold(
-                            appBar: AppBar(title: const Text('Kelola Stok')),
-                            body: SafeArea(
-                              child: ProductCatalog(
-                                repository: AppSessionScope.of(context)
-                                    .productRepository,
+                  LayoutBuilder(
+                    builder: (context, constraints) => Wrap(
+                      spacing: AppSpacing.xs,
+                      runSpacing: AppSpacing.xs,
+                      children: [
+                        _managementPod(
+                          constraints,
+                          'Tambah Produk',
+                          Icons.add,
+                          _adding ? null : _addProduct,
+                        ),
+                        _managementPod(
+                          constraints,
+                          'Kelola Stok',
+                          Icons.inventory_2_outlined,
+                          () => _openManagement(
+                            Scaffold(
+                              appBar: AppBar(title: const Text('Kelola Stok')),
+                              body: SafeArea(
+                                child: ProductCatalog(
+                                  repository: AppSessionScope.of(context)
+                                      .productRepository,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                      _action(
-                        'Label Barcode',
-                        Icons.barcode_reader,
-                        () => _openManagement(const BarcodeLabelsScreen()),
-                      ),
-                      _action('Laporan', Icons.assessment_outlined, () {
-                        if (_owner) _shortcut(DashboardShortcut.reports);
-                      }),
-                    ],
+                        _managementPod(
+                          constraints,
+                          'Label Barcode',
+                          Icons.barcode_reader,
+                          () => _openManagement(const BarcodeLabelsScreen()),
+                        ),
+                        _managementPod(
+                          constraints,
+                          'Laporan',
+                          Icons.assessment_outlined,
+                          () {
+                            if (_owner) _shortcut(DashboardShortcut.reports);
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                   _heading('Produk terlaris'),
                   const Text(
@@ -390,35 +351,42 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                     ),
                   _heading('Nota terbaru'),
                   const Text('Nota dalam periode terpilih'),
-                  if (data.daily.isEmpty)
-                    const Text('Belum ada nota pada periode ini.'),
-                  for (final row in data.daily.take(5))
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.xs,
-                      ),
-                      child: AppCard(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              row.summaryTitle,
-                              style: theme.textTheme.titleMedium,
+                  const SizedBox(height: AppSpacing.sm),
+                  AppCard(
+                    child: Column(
+                      children: [
+                        if (data.daily.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(
+                              vertical: AppSpacing.md,
                             ),
-                            Text(row.id),
-                            Text(
-                              '${_date(row.createdAt.toLocal())} · ${TimeOfDay.fromDateTime(row.createdAt.toLocal()).format(context)}',
+                            child: Text('Belum ada nota pada periode ini.'),
+                          ),
+                        for (final row in data.daily.take(5)) ...[
+                          DashboardTransactionRow(
+                            receiptId: row.id,
+                            transaction: CompletedTransaction(
+                              id: row.id,
+                              title: row.summaryTitle,
+                              amount: row.totalAmount,
+                              timeLabel:
+                                  '${_date(row.createdAt.toLocal())} · ${TimeOfDay.fromDateTime(row.createdAt.toLocal()).format(context)}',
+                              itemCount: row.itemCount,
+                              paymentMethod: row.paymentMethod,
                             ),
-                            Text(formatRupiah(row.totalAmount)),
-                          ],
-                        ),
-                      ),
+                          ),
+                          if (row != data.daily.take(5).last)
+                            const Divider(height: 1),
+                        ],
+                      ],
                     ),
+                  ),
                   _action(
                     'Lihat semua nota',
                     Icons.receipt_long_outlined,
                     () => _shortcut(DashboardShortcut.reports),
                   ),
+                  DashboardShortcutsSection(onShortcutSelected: _shortcut),
                 ],
               );
             },
@@ -430,11 +398,35 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     );
   }
 
+  Widget _managementPod(
+    BoxConstraints constraints,
+    String label,
+    IconData icon,
+    VoidCallback? action,
+  ) => SizedBox(
+    width: (constraints.maxWidth - AppSpacing.xs) / 2,
+    child: DashboardActionPod(
+      icon: icon,
+      label: label,
+      bgColor: AppColors.primarySubtle,
+      iconColor: AppColors.primary,
+      onTap: action,
+    ),
+  );
+
   Widget _stockLine(IconData icon, String text) => Padding(
     padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
     child: Row(
       children: [
-        Icon(icon, color: AppColors.muted),
+        Container(
+          width: AppSpacing.minTouchTarget,
+          height: AppSpacing.minTouchTarget,
+          decoration: const BoxDecoration(
+            color: AppColors.primarySubtle,
+            borderRadius: AppRadius.controlBorder,
+          ),
+          child: Icon(icon, color: AppColors.primary),
+        ),
         const SizedBox(width: AppSpacing.xs),
         Expanded(child: Text(text)),
       ],

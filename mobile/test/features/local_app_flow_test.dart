@@ -35,18 +35,18 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
-      find.text('0 nota'),
+      find.text('0 Nota'),
       180,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.text('0 nota'), findsOneWidget);
+    expect(find.text('0 Nota'), findsOneWidget);
     await tester.tap(find.byTooltip('Kasir'));
     await tester.pumpAndSettle();
     expect(find.text('Keranjang lokal'), findsOneWidget);
     expect(find.text('Keranjang Masih Kosong'), findsOneWidget);
-    await tester.tap(find.text('Katalog'));
+    await tester.tap(find.byTooltip('Produk'));
     await tester.pumpAndSettle();
     expect(find.text('Teh lokal'), findsOneWidget);
-    expect(find.text('Tersimpan di perangkat'), findsOneWidget);
+    expect(find.text('Produk'), findsWidgets);
   });
 }

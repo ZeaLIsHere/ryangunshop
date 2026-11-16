@@ -188,6 +188,116 @@ void main() {
     expect(model.selectedDay, DateTime(2026, 11, 15));
   });
 
+  for (final width in [360.0, 600.0, 1024.0]) {
+    testWidgets(
+      'laporan $width dp skala 1,3: tanggal, kosong, bantuan dan ekspor',
+      (tester) async {
+        tester.view.physicalSize = Size(width, 900);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final fake = _ControlledRepository();
+        await tester.pumpWidget(_host(fake));
+        fake.requests.single.complete([]);
+        await tester.pumpAndSettle();
+        expect(find.textContaining('Perangkat ini saja'), findsNothing);
+        final date = find.byType(OutlinedButton).first;
+        expect(tester.getSize(date).height, greaterThanOrEqualTo(48));
+        await tester.tap(date);
+        await tester.pumpAndSettle();
+        expect(find.byType(DatePickerDialog), findsOneWidget);
+        await tester.tap(find.text('Batal'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Hari ini'));
+        await tester.pump();
+        fake.requests.last.complete([]);
+        await tester.pumpAndSettle();
+        expect(
+          fake.days.last,
+          DateTime(
+            DateTime.now().year,
+            DateTime.now().month,
+            DateTime.now().day,
+          ),
+        );
+        await tester.dragUntilVisible(
+          find.text('Pilih tanggal lain').hitTestable(),
+          find.byType(ListView),
+          const Offset(0, -160),
+        );
+        expect(
+          tester.getSize(find.byType(FilledButton).first).height,
+          greaterThanOrEqualTo(48),
+        );
+        await tester.dragUntilVisible(
+          find.text('Bagikan Excel').hitTestable(),
+          find.byType(ListView),
+          const Offset(0, -160),
+        );
+        expect(
+          find.text('Tidak otomatis tersimpan ke Downloads.'),
+          findsNothing,
+        );
+        expect(
+          find.textContaining('Tidak otomatis tersimpan ke Downloads.'),
+          findsOneWidget,
+        );
+        await tester.dragUntilVisible(
+          find.text('Isi berkas dan cara menyimpan').hitTestable(),
+          find.byType(ListView),
+          const Offset(0, -160),
+        );
+        await tester.tap(find.text('Isi berkas dan cara menyimpan'));
+        await tester.pumpAndSettle();
+        expect(find.textContaining('lembar Ringkasan'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  for (final width in [600.0, 1024.0]) {
+    testWidgets('laporan terisi $width dp skala 1,3 tetap terbaca', (
+      tester,
+    ) async {
+      tester.view.physicalSize = Size(width, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final fake = _ControlledRepository();
+      await tester.pumpWidget(_host(fake));
+      fake.requests.single.complete([
+        TransactionRecord(
+          id: 'nota-panjang',
+          createdAt: DateTime.now(),
+          totalAmount: 123456789,
+          discountAmount: 1000,
+          paymentMethod: 'cash',
+          itemCount: 2,
+          items: const [
+            TransactionItemSnapshot(
+              productId: 'p',
+              productName:
+                  'Produk dengan nama panjang saat penjualan untuk keluarga',
+              quantity: 2,
+              unitPrice: 61728894,
+              subtotal: 123457789,
+            ),
+          ],
+        ),
+      ]);
+      await tester.pumpAndSettle();
+      expect(find.text('Penjualan bersih'), findsOneWidget);
+      expect(find.text('1 transaksi'), findsOneWidget);
+      await tester.dragUntilVisible(
+        find.text('Lihat nota').hitTestable(),
+        find.byType(ListView),
+        const Offset(0, -180),
+      );
+      await tester.tap(find.text('Lihat nota'));
+      await tester.pumpAndSettle();
+      expect(find.text('Detail nota'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets('memuat, gagal, coba lagi, kosong dan pemilih tanggal', (
     tester,
   ) async {
@@ -208,6 +318,11 @@ void main() {
     await tester.pump();
     fake.requests.last.complete([]);
     await tester.pumpAndSettle();
+    await tester.dragUntilVisible(
+      find.text('Pilih tanggal lain').hitTestable(),
+      find.byType(ListView),
+      const Offset(0, -150),
+    );
     expect(find.text('Pilih tanggal lain'), findsOneWidget);
     final today = DateTime.now();
     expect(fake.days.first, DateTime(today.year, today.month, today.day));
@@ -244,7 +359,7 @@ void main() {
       });
       await tester.pumpAndSettle();
       expect(find.text('6 transaksi'), findsOneWidget);
-      expect(find.textContaining('waktu lokal perangkat'), findsOneWidget);
+      expect(find.textContaining('waktu lokal perangkat'), findsNothing);
       expect(find.textContaining('WIB'), findsNothing);
       await tester.dragUntilVisible(
         find.text('Lihat semua produk').hitTestable(),

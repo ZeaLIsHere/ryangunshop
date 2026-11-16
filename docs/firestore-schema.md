@@ -1,16 +1,22 @@
 # Skema Firestore RyanGunshop
 
-Kontrak data cloud untuk migrasi dari SQLite lokal ke Firestore. Bentuk dokumen
-didefinisikan di `mobile/lib/core/data/sync/firestore_schema.dart` dan diuji di
-`mobile/test/core/data/sync_test.dart`.
+Status: **15 November 2026**. Kontrak payload dan jalur target tulis yang sudah
+ada di kode, bukan bukti skema/aturan sudah dideploy atau unggah cloud berhasil.
+SQLite/Drift tetap sumber POS lokal. Bentuk dokumen didefinisikan di
+`mobile/lib/core/data/sync/firestore_schema.dart` dan diuji di
+`mobile/test/core/data/sync_test.dart`. Target aktual diperiksa pada
+`mobile/lib/core/data/sync/firestore_sync_target.dart`.
+
+Autentikasi Firestore, isolasi tenant, deployment aturan, dan pemulihan cloud
+belum terverifikasi. Peran pemilik/kasir dari Pengaturan bukan login keamanan.
 
 ## Prinsip
 
 1. **Lokal tetap sumber kebenaran saat kasir berjalan.** Nota ditulis ke SQLite
    lebih dahulu. Firestore menerima salinan, bukan sebaliknya.
-2. **Satu cabang per toko.** Semua data berada di `stores/{storeId}` agar aturan
-   keamanan cukup memeriksa satu lokasi dan beberapa warung dapat berbagi satu
-   proyek Firebase.
+2. **Jalur target per toko.** Target menulis di `stores/{storeId}`. Struktur
+   jalur ini bukan jaminan isolasi tenant; autentikasi dan aturan akses masih
+   perlu diuji. `storeId` berasal dari konfigurasi, bukan identitas terverifikasi.
 3. **Nominal berupa bilangan bulat rupiah.** Tidak ada `double`, sehingga tidak
    ada pembulatan yang bergeser antarperangkat.
 4. **ID ditentukan perangkat.** ID produk dan nomor nota (`TRX-...`) dibuat
@@ -25,8 +31,8 @@ didefinisikan di `mobile/lib/core/data/sync/firestore_schema.dart` dan diuji di
 stores/{storeId}
 ├── products/{productId}
 ├── transactions/{transactionId}
-├── meta/sync
-└── members/{uid}                 # hanya bila memakai aturan berbasis dokumen
+├── meta/sync                     # cadangan kontrak, belum dipakai
+└── members/{uid}                 # usulan akses anggota, bukan bukti deployment
 ```
 
 `cartDrafts` **tidak** disinkronkan. Draft keranjang hanya berarti pada perangkat
@@ -50,9 +56,10 @@ yang sedang dipakai dan sudah tersimpan di SQLite.
 | `updatedAt` | timestamp | ya | Waktu perubahan terakhir |
 | `deletedAt` | timestamp \| null | ya | *Soft delete*; `null` berarti aktif |
 
-Produk dihapus dengan mengisi `deletedAt`, bukan menghapus dokumen, agar
-perangkat lain ikut membuang salinannya dan data lama tidak muncul kembali.
-Semua pembacaan menyaring `deletedAt == null`.
+Target mengirim penghapusan sebagai `deletedAt` dengan merge, bukan menghapus
+dokumen. Helper `fetchProductsFromFirestore()` menyaring `deletedAt == null`.
+Belum ada sinkronisasi dua arah yang terbukti menerapkan penghapusan ke perangkat
+lain; tombstone hanya menyediakan kontrak untuk alur tersebut.
 
 ### `transactions/{transactionId}`
 
@@ -84,8 +91,9 @@ puluhan baris, sehingga nota dapat dibaca dengan satu permintaan:
 }
 ```
 
-Harga dan nama dibekukan saat transaksi. Perubahan harga produk tidak boleh
-mengubah nota lama.
+Harga jual dan nama dibekukan saat transaksi. Perubahan harga produk tidak boleh
+mengubah nota lama. Baris nota tidak menyimpan snapshot harga modal; laba
+historis belum dihitung. `costPrice` produk saat ini bukan modal historis nota.
 
 ### `meta/sync`
 
@@ -100,7 +108,9 @@ dan waktu pemeriksaan terakhir. Belum dipakai pada tahap ini.
 | Cari barcode | Komposit `deletedAt` ASC, `barcode` ASC |
 | Nota terbaru per toko | Otomatis pada `createdAt` DESC |
 
-Definisi lengkap ada di `firebase/firestore.indexes.json`.
+Indeks di atas adalah kebutuhan/usulan kueri, bukan bukti indeks aktif pada
+server. Rujukan konfigurasi repositori: `firebase/firestore.indexes.json`;
+deployment dan kesesuaiannya dengan aturan akses perlu diverifikasi terpisah.
 
 ## Alur sinkronisasi
 
@@ -114,7 +124,7 @@ Definisi lengkap ada di `firebase/firestore.indexes.json`.
    └─ tulis entri sync_outbox_entries (payload JSON dokumen)
         │
         ▼
-[SyncEngine.flush()]  ← dipanggil saat online / setelah checkout
+[SyncEngine.flush()]  ← startup / perubahan sesi / timer 15 detik
    ├─ ambil entri terlama (batch 20)
    ├─ FirestoreSyncTarget.apply()
    │     ├─ products/{id}     set(merge: true)
@@ -131,22 +141,25 @@ Aturan antrean:
 - Entri diproses berurutan. Bila satu entri gagal, putaran berhenti agar
   perubahan berikutnya tidak mendahului perubahan yang gagal.
 - Entri gagal **tidak dibuang**, hanya menambah `attempts` dan `lastError`.
-  Pemanggil yang mengatur jeda percobaan berikutnya (*exponential backoff*).
-- Status yang boleh ditampilkan: `offline`, `pending`, `synced`. Jangan
-  menampilkan `synced` sebelum `flush()` mengembalikan `SyncStatus.synced`.
+  Pemanggil saat ini memakai timer tetap 15 detik; belum exponential backoff.
+- Status mesin: `offline`, `pending`, `synced`. Hasil `synced` berarti antrean
+  saat itu kosong; bukan bukti produk lama sudah diunggah. SDK siap bukan bukti
+  tulis berhasil. Jangan mengubah status UI menjadi klaim cloud tanpa bukti.
+- Queue dibuat pada native bila database tersedia dan Firebase diaktifkan;
+  engine hanya dibuat bila SDK siap. Pemicu berada di `mobile/lib/app/app.dart`.
+  Tidak ada jaminan Android background service atau pengiriman saat aplikasi tutup.
+- Produk lama tidak otomatis di-backfill. Web tanpa SQLite, queue, atau sync native.
 
-## Memulihkan data di perangkat baru
+## Pemulihan cloud: usulan, belum terverifikasi
 
-1. Masuk dengan akun yang terdaftar sebagai anggota toko.
-2. Unduh produk:
-   `fetchProductsFromFirestore()` di
-   `mobile/lib/core/data/sync/firestore_sync_target.dart`.
-3. Tulis ke SQLite melalui `DriftProductRepository.save()`.
-4. Unduh nota terbaru untuk laporan, lalu simpan ke tabel `transactions` dan
-   `transaction_items`.
+Helper `fetchProductsFromFirestore()` tersedia untuk membaca produk aktif.
+Keberadaan helper bukan alur restore produk dan nota yang sudah terintegrasi.
+Belum ada jaminan pemulihan otomatis atau tombol pemulihan siap pakai.
 
-Pemulihan belum dijalankan otomatis; tombol "Pulihkan dari cloud" di layar
-Pengaturan adalah langkah berikutnya.
+Rancangan berikut masih memerlukan implementasi dan pengujian: autentikasi
+anggota toko, unduh produk/nota yang berhak diakses, validasi payload, tulis ke
+SQLite, serta penanganan konflik dan retry tanpa menggandakan outbox. Jangan
+menjalankannya sebagai prosedur pemulihan produksi berdasarkan dokumen ini.
 
 ## Rencana migrasi bertahap
 
@@ -154,7 +167,7 @@ Pengaturan adalah langkah berikutnya.
 |---|---|---|
 | 1 | Skema dokumen, outbox, mesin sinkronisasi, konfigurasi Firebase | selesai (lapisan) |
 | 2 | Layanan autentikasi + layar masuk, aturan keamanan diuji | belum |
-| 3 | Penjadwalan `flush()` saat aplikasi dibuka dan koneksi kembali | belum |
+| 3 | `flush()` startup, perubahan sesi, timer 15 detik selama aplikasi berjalan | terpasang; unggah nyata belum terverifikasi |
 | 4 | Pemulihan produk dan nota di perangkat baru | belum |
 | 5 | Sinkronisasi dua arah untuk produk (konflik stok) | belum |
 | 6 | QRIS, foto produk, dan laporan berbasis cloud | belum |
@@ -169,20 +182,20 @@ Pengaturan adalah langkah berikutnya.
   perangkat lain.
 - **QRIS belum tercatat** karena pembayaran QRIS masih simulasi.
 - **Peran pengguna** masih lokal (`AppSession`), belum menjadi klaim Firebase.
-- **Hapus produk** memakai *soft delete*; jangan menambah kueri yang
-  mengabaikan `deletedAt`.
-- **Kuota Spark** (20.000 tulis/hari) cukup untuk satu warung, tetapi retry
-  tanpa batas dapat menghabiskan kuota. Batasi percobaan dan tampilkan status
-  kepada kasir.
+- **Hapus produk** mengirim tombstone; penerapan lintas perangkat belum teruji.
+- **Kuota dan biaya:** periksa paket/kuota aktual sebelum operasi cloud. Retry
+  dapat menambah pemakaian; kapasitas aman satu warung belum dibuktikan.
 
 ## Rollback
 
 Matikan integrasi tanpa menyentuh data:
 
 ```bash
-flutter run                      # tanpa FIREBASE_ENABLED
+flutter run --dart-define-from-file=../.env --dart-define=FIREBASE_ENABLED=false
 ```
 
-Aplikasi kembali 100% lokal. Data yang sudah terkirim tetap ada di Firestore
-sebagai cadangan, dan outbox berhenti bertambah karena antrean hanya diisi saat
-`AppSession` menerima `SyncQueue`.
+Override diperlukan bila konfigurasi privat mengaktifkan Firebase. Queue/engine
+tidak dibuat saat flag mati; SQLite tetap berjalan. Outbox lama dan data server
+tidak dihapus. Penulisan baru tanpa queue tidak otomatis di-backfill saat flag
+kembali aktif. Data server tidak boleh disebut cadangan yang dapat dipulihkan
+sebelum uji restore lulus. Konfigurasi privat tidak dibaca dalam pembaruan ini.

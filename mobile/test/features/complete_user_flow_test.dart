@@ -38,17 +38,18 @@ void main() {
 
       // Beranda pemilik menyediakan pengelolaan; Kasir tetap lewat navigasi.
       expect(find.text('Beranda'), findsWidgets);
-      expect(find.text('Kelola warung'), findsOneWidget);
+      expect(find.text('Kelola warung'), findsNothing);
       expect(find.text('Tambah Produk'), findsOneWidget);
       expect(find.text('Kelola Stok'), findsOneWidget);
       expect(find.text('Label Barcode'), findsOneWidget);
       await tester.scrollUntilVisible(
-        find.text('0 nota'),
+        find.text('0 Nota'),
         180,
         scrollable: find.byType(Scrollable).first,
       );
-      expect(find.text('Penjualan bersih: Rp 0'), findsOneWidget);
-      expect(find.text('Rata-rata per nota: Rp 0'), findsOneWidget);
+      expect(find.text('Penjualan Bersih'), findsOneWidget);
+      expect(find.text('Rata-rata'), findsOneWidget);
+      expect(find.text('Rp 0'), findsWidgets);
 
       session.cart.addProduct(
         const CatalogProduct(
@@ -121,11 +122,12 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.scrollUntilVisible(
-        find.text('1 nota'),
+        find.text('1 Nota'),
         180,
         scrollable: find.byType(Scrollable).first,
       );
-      expect(find.text('Penjualan bersih: Rp 16.000'), findsOneWidget);
+      expect(find.text('Penjualan Bersih'), findsOneWidget);
+      expect(find.text('Rp 16.000'), findsWidgets);
       await tester.scrollUntilVisible(
         find.text('Nota terbaru'),
         180,

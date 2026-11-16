@@ -16,8 +16,8 @@ import 'shell_destination.dart';
 
 /// Kerangka utama aplikasi: app bar, isi tab, dan navigasi bawah.
 ///
-/// Navigasi bawah menampilkan Denah (kiri), Kasir sebagai tombol waterdrop di
-/// tengah, dan Katalog (kanan). Pengaturan dipindahkan ke app bar paling kanan.
+/// Navigasi bawah: Beranda, Chatbot, Kasir terangkat, Produk, Statistik.
+/// Chatbot/Statistik membuka rute yang sudah ada; Pengaturan tetap di app bar.
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
@@ -142,6 +142,8 @@ class _AppShellState extends State<AppShell> {
       bottomNavigationBar: _AppBottomBar(
         selectedIndex: _selectedIndex,
         onSelect: _selectDestination,
+        onChatbot: () => _selectShortcut(DashboardShortcut.chatbot),
+        onStatistics: () => _selectShortcut(DashboardShortcut.statistics),
       ),
     );
   }
@@ -149,10 +151,17 @@ class _AppShellState extends State<AppShell> {
 
 /// Navigasi bawah dengan tombol Kasir berbentuk waterdrop di tengah.
 class _AppBottomBar extends StatelessWidget {
-  const _AppBottomBar({required this.selectedIndex, required this.onSelect});
+  const _AppBottomBar({
+    required this.selectedIndex,
+    required this.onSelect,
+    required this.onChatbot,
+    required this.onStatistics,
+  });
 
   final int selectedIndex;
   final ValueChanged<int> onSelect;
+  final VoidCallback onChatbot;
+  final VoidCallback onStatistics;
 
   static const double _barHeight = 64;
   static const double _cashierSize = 60;
@@ -195,19 +204,41 @@ class _AppBottomBar extends StatelessWidget {
                   children: [
                     Expanded(
                       child: _BottomBarItem(
-                        destination: ShellDestination.floorPlan,
+                        label: ShellDestination.floorPlan.label,
+                        assetPath: ShellDestination.floorPlan.assetPath,
+                        icon: ShellDestination.floorPlan.icon,
                         selected:
                             selectedIndex == ShellDestination.floorPlan.index,
                         onTap: () => onSelect(ShellDestination.floorPlan.index),
                       ),
                     ),
-                    const SizedBox(width: _cashierSize + AppSpacing.md),
                     Expanded(
                       child: _BottomBarItem(
-                        destination: ShellDestination.catalog,
+                        label: DashboardShortcut.chatbot.label,
+                        assetPath: DashboardShortcut.chatbot.assetPath,
+                        icon: DashboardShortcut.chatbot.icon,
+                        selected: false,
+                        onTap: onChatbot,
+                      ),
+                    ),
+                    const Expanded(child: SizedBox()),
+                    Expanded(
+                      child: _BottomBarItem(
+                        label: ShellDestination.catalog.label,
+                        assetPath: ShellDestination.catalog.assetPath,
+                        icon: ShellDestination.catalog.icon,
                         selected:
                             selectedIndex == ShellDestination.catalog.index,
                         onTap: () => onSelect(ShellDestination.catalog.index),
+                      ),
+                    ),
+                    Expanded(
+                      child: _BottomBarItem(
+                        label: DashboardShortcut.statistics.label,
+                        assetPath: DashboardShortcut.statistics.assetPath,
+                        icon: DashboardShortcut.statistics.icon,
+                        selected: false,
+                        onTap: onStatistics,
                       ),
                     ),
                   ],
@@ -235,12 +266,16 @@ class _AppBottomBar extends StatelessWidget {
 /// Satu tujuan navigasi berbentuk ikon dan label.
 class _BottomBarItem extends StatelessWidget {
   const _BottomBarItem({
-    required this.destination,
+    required this.label,
+    required this.assetPath,
+    required this.icon,
     required this.selected,
     required this.onTap,
   });
 
-  final ShellDestination destination;
+  final String label;
+  final String assetPath;
+  final IconData icon;
   final bool selected;
   final VoidCallback onTap;
 
@@ -251,37 +286,42 @@ class _BottomBarItem extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      label: destination.label,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: AppRadius.controlBorder,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SizedBox(
-              width: 24,
-              height: 24,
-              child: Image.asset(
-                destination.assetPath,
-                fit: BoxFit.contain,
-                errorBuilder: (_, _, _) => Icon(
-                  selected ? destination.selectedIcon : destination.icon,
-                  size: 24,
-                  color: color,
+      label: label,
+      onTap: onTap,
+      excludeSemantics: true,
+      child: Tooltip(
+        message: label,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: AppRadius.controlBorder,
+          child: SizedBox(
+            height: _AppBottomBar._barHeight,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Image.asset(
+                    assetPath,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, _, _) =>
+                        Icon(icon, size: 24, color: color),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: color,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 2),
-            Text(
-              destination.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: color,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

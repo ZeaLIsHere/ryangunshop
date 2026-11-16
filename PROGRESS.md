@@ -15,6 +15,30 @@ berjalan tanpa harus menebak dari riwayat commit.
   pengujian sudah selesai tetapi verifikasi emulator atau tinjauan PR belum ada, dan
   `selesai` hanya bila seluruh poin "Definisi selesai" di `TEAM.md` terpenuhi.
 
+## Kondisi terkini — 15 November 2026
+
+- Beranda kasir dan pemilik terpisah menurut peran Pengaturan, tanpa login/PIN.
+  Hero, pod aksi, baris nota, serta Pintasan Menu memakai komponen bersama.
+  Pemilik memantau periode Hari ini/7 hari/30 hari, stok, dan produk terlaris;
+  kasir mempertahankan susunan operasional semula.
+- Halaman Produk memakai grid lazy responsif: 2 kolom pada 360 dp, 3 pada
+  600 dp, 5 pada 1024 dp. Tag “Tersimpan di perangkat” dihapus; penghapusan
+  tag tidak mengubah persistensi SQLite maupun membuktikan unggah cloud.
+- Kamera barcode native, label Code128 pemilik, transaksi lokal, serta ekspor
+  PDF/XLSX tersedia. Berbagi Android bukan penyimpanan otomatis ke Downloads.
+  Firebase memakai outbox dan pengurasan selama aplikasi berjalan; hasil unggah
+  cloud belum diverifikasi. Uji API chatbot langsung tetap dijeda.
+- Validasi ulang: `flutter analyze --no-pub` bersih (3,7 detik);
+  `flutter test --no-pub --reporter expanded` 212/212 lulus (27 detik).
+- APK terbaru berhasil dibangun (51 detik), diperbarui melalui `adb install -r`
+  dan diluncurkan pada Samsung SM A366B. Tidak uninstall atau hapus data.
+  Build memberi peringatan migrasi KGP plugin Firebase. Pemasangan dan launch
+  bukan bukti verifikasi visual/alur lengkap, pemindaian fisik, cetak label,
+  pembayaran QRIS nyata, API Groq, atau sinkronisasi cloud.
+- Dokumen operasional diselaraskan dengan implementasi. `contoh-desain/` dan
+  `.agents/skills/` tetap referensi desain/panduan, bukan status fitur produksi.
+  Catatan per tugas di bawah adalah riwayat validasi pada saat tugas dikerjakan.
+
 ## Ringkasan fase
 
 | Fase | Tariq | Farel | Blessly |
@@ -50,6 +74,125 @@ berkas checklist terpisah.
 | Analitik & statistik penjualan | `mobile/lib/features/statistics/` | Tim | review |
 
 ## Catatan per tugas
+
+**Tariq / lingkup lintas fitur disetujui pengguna — Perapian antarmuka (2026-11-16), review.**
+
+- Navbar: Beranda, Chatbot, Kasir, Produk, Statistik. Dashboard pemilik tanpa
+  header Kelola warung, keterangan perangkat, rentang tanggal, serta teks kosong
+  dan tombol Buka Kasir di bawah grafik. Judul perhatian stok menjadi Status Stok.
+- Laporan harian memakai hierarki UI baru; keterangan perangkat di bawah panel
+  tanggal dihapus sesuai permintaan. Cakupan lokal tetap dijelaskan lewat bantuan
+  dan berkas ekspor; penanda data contoh tetap. Tag lokal Statistik dihapus.
+- Teks panduan tambah produk di atas chat dan contoh panjang pada sapaan awal
+  dihapus. Fungsi chatbot, konfirmasi, dan pembatasan peran tidak diubah.
+- Validasi ulang sebelum commit: `flutter analyze --no-pub` bersih (3,7 detik);
+  `flutter test --no-pub --reporter expanded` 220/220 lulus (28 detik).
+  APK belum dibangun/dipasang ulang untuk perubahan ini. Konfigurasi model agent
+  Zed berada di luar repository dan tidak masuk commit aplikasi.
+
+**Tariq — Penyempurnaan UI laporan harian berbasis HCI (2026-11-16), review.**
+
+- Hierarki tanggal → ringkasan penjualan → rincian → ekspor mengikuti prinsip
+  status terlihat, pengenalan alih-alih mengingat, konsistensi, minimalisme dan
+  pemulihan dari heuristik NN/g (`https://www.nngroup.com/articles/ten-usability-heuristics/`).
+  Ini penerapan pedoman, bukan hasil usability testing pengguna.
+- Tanggal menjadi tombol berikon minimal 48 dp dalam satu panel dengan Hari ini
+  dan muat ulang bertooltip. Scope perangkat ini/offline/waktu lokal tetap terlihat;
+  penjelasan lengkap lewat disclosure. Ringkasan bersih memakai panel violet tonal,
+  angka kotor/diskon, pembayaran, produk dan nota dikelompokkan. Empty/error
+  berkartu dengan satu CTA utama. Ekspor PDF/Excel dalam panel khusus, proses/gagal
+  tetap terlihat, penjelasan Downloads dan berbagi tetap jujur. Laporan kosong
+  tetap dapat diekspor. Konten tablet dibatasi 768 dp. Date picker lebar ≥768 dp
+  memakai input native awal untuk menghindari assertion pembulatan PageView Flutter
+  pada rentang 1970–9999; toggle kalender dan rentang tanggal tidak dihapus.
+- Query harian, repository, pembentukan/berbagi PDF/XLSX, pemeriksaan peran
+  sebelum/sesudah async tetap; kasir hanya riwayat/detail. Tidak menambah dependensi.
+- Validasi: `flutter analyze --no-pub` bersih (3,8 detik);
+  `flutter test --no-pub --reporter expanded` 220/220 lulus (27 detik).
+  Lima test UI baru mencakup 360/600/1024 dp skala 1,3, tanggal, Hari ini,
+  empty/help/export dan laporan terisi/detail. Test ekspor/izin lama tetap
+  memeriksa PDF/XLSX nyata, penguncian, error/retry dan perubahan peran.
+  Capture PNG widget sementara timeout 90 detik dan dibuang; gambar/render
+  langsung serta perangkat Android belum diverifikasi. Tidak build/install,
+  commit/push, atau mengubah pekerjaan navigasi/dashboard pengguna.
+
+**Tariq — Lima tombol navigasi bawah (2026-11-16), review.**
+
+- Urutan akhir sesuai koreksi pengguna: Beranda, Chatbot, Kasir terangkat
+  di tengah, Produk, Statistik. Label tab Katalog diganti Produk; rute tetap.
+  Validasi ulang setelah koreksi: analyzer bersih, 215/215 test lulus.
+  Aset Chatbot/Statistik dan callback rute lama dipakai tanpa menambah tab enum
+  atau halaman baru. Kembali dari rute mempertahankan tab sebelumnya;
+  Pengaturan tetap melalui app bar. Statistik kasir tetap Riwayat Nota melalui
+  guard router lama, bukan analitik/laporan pemilik.
+- Lima slot seimbang, tooltip, semantik tombol/state aktif dan aksi aksesibilitas;
+  target minimal 48 dp. Blueprint `FloatingBottomNav` pada `DESIGN.md`
+  diselaraskan. Perubahan pengguna pada header/empty state pemilik dipertahankan.
+- Validasi: `flutter analyze --no-pub` bersih (3,8 detik); sembilan test shell
+  lulus termasuk tiga regresi baru pada 360/1024 dp skala 1,3, urutan/posisi
+  Kasir/target, navigasi asli, kembali, Pengaturan dan pembatasan kasir.
+  Suite `flutter test --no-pub --reporter expanded` selesai sekitar 26 detik:
+  215/215 lulus setelah ekspektasi `Kelola warung` pada test alur lengkap
+  diselaraskan dengan penghapusan header yang diminta pengguna.
+  Header tidak dikembalikan. Tanpa dependensi
+  baru, commit/push, build/install APK; visual perangkat belum diperiksa.
+
+**Tariq — Pulihkan Pintasan Menu kedua dashboard (2026-11-14), review.**
+
+- Blok pintasan hilang saat dashboard dipisah. Tata letak dua kolom dan kartu
+  `_ShortcutTile` dari `origin/main` (juga tersedia sebelum `cce1409`) dipulihkan
+  melalui `DashboardShortcutsSection`, dipakai kasir dan pemilik setelah nota.
+  Isi asli: Katalog produk, Keranjang, Riwayat transaksi, Pengaturan, Statistik,
+  Chatbot; label/deskripsi/aset dari `DashboardSample.shortcuts` dipertahankan.
+- Navigasi tetap callback/router lama. Kasir tidak memperoleh aksi kelola produk;
+  laporan tetap mengikuti izin layar tujuan. Hero, bento, monitoring/periode,
+  query dan perubahan katalog yang belum commit tidak diubah. Deskripsi kartu
+  boleh membungkus penuh, ikon memakai footprint 48 dp dan token tema lama.
+- Validasi: `flutter analyze --no-pub` bersih;
+  `flutter test --no-pub --reporter expanded` 212/212 lulus (sekitar 31 detik).
+  Dua regresi baru menggulir dan menekan semua item pada kedua peran di 360 dp,
+  skala 1,3, memeriksa callback, aset, label, dan ukuran target. Ekspektasi test
+  alur lokal yang masih mencari badge katalog lama diselaraskan dengan judul
+  Produk; penghapusan badge pengguna tidak dibatalkan. Tidak ada commit/push,
+  build/install APK atau verifikasi visual langsung perangkat Android.
+
+**Tariq / lingkup katalog disetujui pengguna — Grid Produk responsif (2026-11-14), review.**
+
+- Hanya judul halaman `Katalog Produk` diganti `Produk`; istilah katalog lain
+  tetap. Kartu memakai permukaan tema violet, ikon kategori tonal, nama,
+  kategori/lokasi, barcode bila ada, harga, status stok berikon, dan tombol Kasir.
+- `CustomScrollView`/`SliverList.builder` membangun baris sesuai viewport secara
+  lazy. Dua kolom pada ponsel 360 dp, tiga pada 600 dp, lima pada 1024 dp;
+  jumlah mengikuti lebar tersedia. Tinggi kartu alami, tanpa aspect ratio atau
+  pemotongan teks. Tidak menambah dependensi. Pencarian/filter/urutan, detail,
+  formulir/izin, dan state kosong/loading/error/offline dipertahankan. Tombol
+  tambah membaca perubahan keranjang dan berhenti pada jumlah stok kartu.
+- Validasi: `flutter analyze --no-pub` bersih;
+  `flutter test --no-pub --reporter expanded` 210/210 lulus (sekitar 30 detik).
+  Empat test baru mencakup 360/600/1024 dp skala 1,3, nama/barcode/harga panjang,
+  kolom sejajar, lazy build, target 48 dp, batas stok, pencarian/detail dan izin.
+  Perubahan dashboard belum commit dipertahankan tanpa disentuh. Tidak membuat
+  commit/push, build APK, atau pemasangan. Visual Android fisik belum diperiksa.
+
+**Tariq — Penyelarasan komponen Beranda pemilik dan kasir (2026-11-14), review.**
+
+- `dashboard_components.dart` mengekstrak Hero, pod aksi, dan baris transaksi
+  asli kasir. Kasir memakai nilai bawaan yang sama; tata letak, aset, CTA pindai,
+  query, serta state tetap. Nilai rata-rata dibatasi secara fleksibel agar
+  membungkus saat ruang sempit, tanpa mengubah ukuran huruf.
+- Pemilik memakai Hero gradien yang sama untuk Penjualan Bersih, jumlah nota,
+  rata-rata, dan CTA Lihat laporan. Aksi kelola memakai pod dua kolom, daftar
+  nota memakai baris bersama dalam satu kartu, ikon perhatian stok memakai
+  wadah tonal. Mengikuti geometri, tipografi, dan ritme kedua `DESIGN.md`, dengan
+  identitas violet proyek tetap mengalahkan contoh palet biru. Hierarki monitoring
+  dan periode Hari ini/7 hari/30 hari, data lokal, izin, serta query tidak diubah.
+- Validasi: `flutter analyze --no-pub` tanpa isu;
+  `flutter test --no-pub --reporter expanded` 206/206 lulus (sekitar 25 detik).
+  Test memastikan Hero/desain bersama, CTA menurut peran, nilai periode,
+  target tombol 48 dp, dan layout 360 dp/skala 1,3. Ekspektasi integrasi Beranda
+  diselaraskan dengan label Hero baru. Tidak menambah dependensi/backend/login.
+  Tidak menjalankan build APK, emulator/perangkat, pemasangan, commit, atau push;
+  pemeriksaan visual Android langsung masih diperlukan.
 
 **Tariq — Koreksi dua permukaan Beranda menurut peran (2026-11-14), review.**
 

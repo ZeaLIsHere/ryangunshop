@@ -8,7 +8,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/brand_spinner.dart';
 import '../../../core/widgets/primary_action.dart';
-import '../../../core/widgets/sample_badge.dart';
+
 import '../model/catalog_product.dart';
 import '../model/catalog_scenario.dart';
 import '../model/catalog_sort.dart';
@@ -185,132 +185,192 @@ class _ProductCatalogState extends State<ProductCatalog> {
       listenable: _viewModel,
       builder: (context, _) => Stack(
         children: [
-          ListView(
-            padding: const EdgeInsets.only(
-              left: AppSpacing.screen,
-              right: AppSpacing.screen,
-              top: AppSpacing.screen,
-              bottom: 80, // ruang untuk FAB
-            ),
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    margin: const EdgeInsets.only(right: AppSpacing.sm),
-                    padding: const EdgeInsets.all(AppSpacing.xxs),
-                    decoration: const BoxDecoration(
-                      color: AppColors.primaryLight,
-                      borderRadius: AppRadius.controlCompactBorder,
-                    ),
-                    child: Image.asset(
-                      'assets/icon/01_katalog_produk.png',
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, _, _) => const Icon(
-                        Icons.inventory_2_outlined,
-                        color: AppColors.primaryDark,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Katalog Produk',
-                          style: theme.textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
+          CustomScrollView(
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.all(AppSpacing.screen),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            margin: const EdgeInsets.only(right: AppSpacing.sm),
+                            padding: const EdgeInsets.all(AppSpacing.xxs),
+                            decoration: const BoxDecoration(
+                              color: AppColors.primaryLight,
+                              borderRadius: AppRadius.controlCompactBorder,
+                            ),
+                            child: Image.asset(
+                              'assets/icon/01_katalog_produk.png',
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, _, _) => const Icon(
+                                Icons.inventory_2_outlined,
+                                color: AppColors.primaryDark,
+                              ),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Harga, stok, dan posisi rak barang warung.',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: AppColors.muted,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Produk',
+                                  style: theme.textTheme.headlineMedium
+                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Harga, stok, dan posisi rak barang warung.',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: AppColors.muted,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.md),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.md),
 
-              const SampleBadge(label: 'Tersimpan di perangkat'),
-              const SizedBox(height: AppSpacing.xs),
-
-              // Search Bar dan kontrol urutkan
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: _viewModel.setSearchQuery,
-                      decoration: InputDecoration(
-                        hintText: 'Cari nama produk, barcode, atau rak...',
-                        prefixIcon: const Icon(Icons.search),
-                        suffixIcon: _searchController.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear),
-                                tooltip: 'Bersihkan pencarian',
-                                onPressed: () {
-                                  _searchController.clear();
-                                  _viewModel.setSearchQuery('');
-                                },
-                              )
-                            : null,
-                        isDense: true,
-                        border: OutlineInputBorder(
-                          borderRadius: AppRadius.controlBorder,
-                          borderSide: const BorderSide(
-                            color: AppColors.primaryLight,
+                      // Search Bar dan kontrol urutkan
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _searchController,
+                              onChanged: _viewModel.setSearchQuery,
+                              decoration: InputDecoration(
+                                hintText:
+                                    'Cari nama produk, barcode, atau rak...',
+                                prefixIcon: const Icon(Icons.search),
+                                suffixIcon: _searchController.text.isNotEmpty
+                                    ? IconButton(
+                                        icon: const Icon(Icons.clear),
+                                        tooltip: 'Bersihkan pencarian',
+                                        onPressed: () {
+                                          _searchController.clear();
+                                          _viewModel.setSearchQuery('');
+                                        },
+                                      )
+                                    : null,
+                                isDense: true,
+                                border: OutlineInputBorder(
+                                  borderRadius: AppRadius.controlBorder,
+                                  borderSide: const BorderSide(
+                                    color: AppColors.primaryLight,
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
+                          const SizedBox(width: AppSpacing.xs),
+                          IconButton.filledTonal(
+                            icon: const Icon(Icons.swap_vert),
+                            tooltip: 'Urutkan: ${_viewModel.sort.label}',
+                            onPressed: _openSortSheet,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+
+                      // Filter Chips
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            for (final cat in _viewModel.categories)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: FilterChip(
+                                  label: Text(cat),
+                                  selected: _viewModel.selectedCategory == cat,
+                                  onSelected: (selected) {
+                                    if (selected) {
+                                      _viewModel.setSelectedCategory(cat);
+                                    }
+                                  },
+                                ),
+                              ),
+                            FilterChip(
+                              avatar: const Icon(
+                                Icons.warning_amber_rounded,
+                                size: 16,
+                              ),
+                              label: const Text('Stok Menipis'),
+                              selected: _viewModel.filterLowStockOnly,
+                              selectedColor: AppColors.warning.withValues(
+                                alpha: 0.2,
+                              ),
+                              onSelected: (_) =>
+                                  _viewModel.toggleLowStockFilter(),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.xs),
-                  IconButton.filledTonal(
-                    icon: const Icon(Icons.swap_vert),
-                    tooltip: 'Urutkan: ${_viewModel.sort.label}',
-                    onPressed: _openSortSheet,
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.sm),
+                      const SizedBox(height: AppSpacing.md),
 
-              // Filter Chips
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    for (final cat in _viewModel.categories)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: FilterChip(
-                          label: Text(cat),
-                          selected: _viewModel.selectedCategory == cat,
-                          onSelected: (selected) {
-                            if (selected) _viewModel.setSelectedCategory(cat);
-                          },
-                        ),
-                      ),
-                    FilterChip(
-                      avatar: const Icon(Icons.warning_amber_rounded, size: 16),
-                      label: const Text('Stok Menipis'),
-                      selected: _viewModel.filterLowStockOnly,
-                      selectedColor: AppColors.warning.withValues(alpha: 0.2),
-                      onSelected: (_) => _viewModel.toggleLowStockFilter(),
-                    ),
-                  ],
+                      // Content
+                      ..._buildContent(),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: AppSpacing.md),
-
-              // Content
-              ..._buildContent(),
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.screen,
+                ),
+                sliver: SliverLayoutBuilder(
+                  builder: (context, constraints) {
+                    final products = _viewModel.products;
+                    final columns =
+                        ((constraints.crossAxisExtent + AppSpacing.sm) /
+                                (AppSpacing.minTouchTarget * 4))
+                            .floor()
+                            .clamp(2, 8);
+                    // Tinggi alami per baris menjaga teks besar tanpa memuat seluruh katalog.
+                    return SliverList.builder(
+                      itemCount: (products.length / columns).ceil(),
+                      itemBuilder: (context, row) => Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            for (
+                              var column = 0;
+                              column < columns;
+                              column++
+                            ) ...[
+                              if (column > 0)
+                                const SizedBox(width: AppSpacing.sm),
+                              Expanded(
+                                child: row * columns + column < products.length
+                                    ? CatalogProductCard(
+                                        product:
+                                            products[row * columns + column],
+                                        onTap: () => _openProductDetail(
+                                          products[row * columns + column],
+                                        ),
+                                      )
+                                    : const SizedBox.shrink(),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SliverToBoxAdapter(
+                child: SizedBox(
+                  height: AppSpacing.minTouchTarget + AppSpacing.xl,
+                ),
+              ),
             ],
           ),
 
@@ -443,15 +503,7 @@ class _ProductCatalogState extends State<ProductCatalog> {
                   style: TextStyle(color: AppColors.muted),
                 ),
               ),
-            )
-          else
-            for (final product in products) ...[
-              CatalogProductCard(
-                product: product,
-                onTap: () => _openProductDetail(product),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-            ],
+            ),
         ];
     }
   }

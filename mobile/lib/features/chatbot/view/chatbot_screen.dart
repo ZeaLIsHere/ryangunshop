@@ -160,13 +160,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 ],
               ),
             ),
-            if (_viewModel.session?.role.canManageProducts ?? false)
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: AppSpacing.screen),
-                child: Text(
-                  'Tambah produk: ketik data saat AI tersambung, atau buka formulir lewat tombol di atas. Khusus pemilik; simpan setelah konfirmasi.',
-                ),
-              ),
+
             ListenableBuilder(
               listenable: _viewModel,
               builder: (context, _) => _viewModel.choices.isEmpty

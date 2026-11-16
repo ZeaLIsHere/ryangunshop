@@ -455,11 +455,7 @@ class ChatbotViewModel extends ChangeNotifier {
 
   static const String greeting =
       'Halo! Saya IyanBoT. Tambah produk baru lewat chat, catat penjualan, '
-      'atau cek Ringkasan toko.\n\n'
-      'Contoh: Tambah produk Kopi Senja, harga jual 5000, modal 3000, '
-      'stok 10, kategori Minuman, satuan sachet. '
-      'AI menanyakan data yang kurang. Tanpa AI, tekan Tambah produk. '
-      'Simpan hanya setelah konfirmasi pemilik.';
+      'atau cek Ringkasan toko.';
 
   final List<ChatMessage> _messages = <ChatMessage>[];
   bool _isLoading = false;

@@ -3,9 +3,17 @@
 Dokumen ini menetapkan peran, kepemilikan berkas, dan urutan pekerjaan tiga anggota
 tim agar porsi kerja seimbang dan jejak kontribusinya terlihat jelas di GitHub.
 
-**Cakupan tahap ini adalah seluruh UI aplikasi (frontend).** Pekerjaan backend,
-sinkronisasi, dan integrasi pembayaran nyata ditunda sampai UI selesai. Semua layar
-memakai data contoh lokal agar dapat dipreview tanpa layanan eksternal.
+**Cakupan berjalan — 15 November 2026:** tahap UI-only sudah dilewati. POS Android
+memakai SQLite/Drift, kamera `mobile_scanner`, kelola produk pemilik dan label
+Code128, laporan PDF/XLSX berbagi Android, serta analitik repository nyata.
+Firebase native/outbox bersakelar dan IyanBoT/Groq sudah terintegrasi; kesiapan
+kode bukan bukti unggah cloud atau panggilan API langsung berhasil. Pengujian
+live Groq dijeda atas permintaan pengguna. QRIS nyata belum terverifikasi.
+
+Branch `feat/ui-shell-owner-barcode` membantu Tariq. Pengguna menyetujui integrasi
+lintas fitur pada branch ini; kepemilikan dan review PR tetap berlaku, bukan izin
+umum mengubah berkas di luar tugas aktif. Pemilik/kasir dipilih di Pengaturan
+tanpa login: pembatasan kelola produk bukan batas keamanan produksi.
 
 `TEAM.md` adalah peta **siapa mengerjakan apa**, sedangkan papan status pengerjaan ada
 di `PROGRESS.md`. Berkas itu mencatat tugas yang sudah selesai, yang sedang jalan,
@@ -22,7 +30,9 @@ serta peta fitur beserta statusnya.
 ## Peta kepemilikan berkas
 
 Satu berkas hanya boleh dimiliki satu orang. Perubahan pada berkas milik orang lain
-dilakukan lewat pull request, bukan commit langsung.
+memerlukan persetujuan eksplisit dan review lewat pull request. Persetujuan
+integrasi pengguna tidak memindahkan kepemilikan permanen. Cakupan yang belum
+tercantum harus disepakati sebelum diubah, bukan dianggap bebas dimiliki agen.
 
 | Cakupan berkas | Pemilik |
 |---|---|
@@ -47,6 +57,13 @@ folder bersama, agar tidak ada berkas yang dipakai dua orang.
 dependensi. Perubahan dependensi baru atau pendaftaran aset (misalnya `assets/branding/`
 dan `assets/models/`) diajukan lewat pull request agar tidak berbenturan.
 
+Lapisan `core/config/**`, `core/data/**`, `core/session/**`, `core/format/**`,
+fitur baru di luar tabel, pengujian terkait, serta dokumen `AGENTS.md`, `TEAM.md`,
+dan `instruksi.md` harus ditetapkan penanggung jawabnya dalam tugas/PR integrasi;
+tabel lama tidak otomatis memberi kepemilikan baru. Tugas penyelarasan dokumen
+ini secara eksplisit mengizinkan `AGENTS.md`, `PRODUCT.md`, `README.md`,
+`TEAM.md`, dan `instruksi.md`, tanpa mengubah pemilik permanen atau cakupan lain.
+
 `PROGRESS.md` dikecualikan dari aturan satu pengubah: setiap anggota hanya menyunting
 baris tugasnya sendiri, dan pembaruan itu dilakukan pada pull request tugas tersebut.
 
@@ -57,7 +74,10 @@ volume setara, bukan satu akun yang mengerjakan semuanya.
 
 - `main` selalu dapat dijalankan. Setiap orang bekerja di branch sendiri:
   `feat/ui-shell-<topik>` (Tariq), `feat/ui-spatial-<topik>` (Farel),
-  `feat/ui-commerce-<topik>` (Blessly).
+  `feat/ui-commerce-<topik>` (Blessly); fondasi backend memakai `feat/backend-*`
+  dengan penanggung jawab yang disepakati pada tugas/PR.
+- Commit dan push hanya atas permintaan tugas aktif. Jangan sertakan perubahan
+  pengguna atau pekerjaan lain tanpa pemeriksaan cakupan.
 - Setiap anggota melakukan commit dengan akun Git masing-masing
   (`git config user.name` / `user.email` pada perangkat masing-masing).
 - Satu pull request untuk satu tugas pada tabel fase di bawah, sehingga setiap orang
@@ -72,7 +92,11 @@ volume setara, bukan satu akun yang mengerjakan semuanya.
 - Setiap tugas yang selesai memperbarui `PROGRESS.md` pada pull request yang sama, agar
   anggota lain dan agen AI mereka tahu kemajuan tanpa menunggu akhir fase.
 
-## Pembagian tugas per fase
+## Riwayat pembagian tugas UI — Fase 0–5
+
+Tabel fase berikut menyimpan pembagian awal tahap UI, bukan larangan integrasi
+nyata saat ini dan bukan daftar pekerjaan baru. Kata data contoh/simulasi pada
+tabel merujuk tahap tersebut. Status mutakhir dan bukti kerja ada di `PROGRESS.md`.
 
 Setiap fase menyediakan satu tugas utama per anggota, sehingga porsi dan jumlah PR
 tetap seimbang sampai akhir. Penyeimbangnya adalah besar usaha, bukan jumlah berkas,
@@ -87,15 +111,26 @@ dahulu, lalu Farel dan Blessly bercabang dari `main`. Urutan ini tidak mengubah 
 kontribusi karena setiap fase tetap satu PR per orang. Pekerjaan murni dokumen
 (`docs/a11y.md`, `docs/ui-flow.md`) boleh berjalan paralel tanpa menunggu bootstrap.
 
-### Tugas integrasi berjalan
+### Integrasi berjalan setelah tahap UI
 
 Selain tugas fasenya, Tariq memegang `mobile/lib/app/**`, jadi ia yang menyambungkan
 fitur anggota lain ke kerangka aplikasi begitu fiturnya di-merge. Tugas ini tidak muncul
 di tabel fase padahal nyata, dan itulah sebabnya jumlah tugas fase Tariq lebih sedikit.
 
-Yang sudah disambungkan: tab Beranda memakai dashboard POS, tab Pengaturan memakai halaman
-pengaturan, tab Katalog memakai `ProductCatalog` milik Blessly, dan tab Kasir memakai
-`CartCheckoutScreen` dengan alur pembayaran tunai/QRIS lengkap.
+Beranda kasir mempertahankan Hero Omzet, empat bento, laporan, dan nota; Beranda
+pemilik menampilkan analitik Hari ini/7 hari/30 hari, perhatian stok, produk
+terlaris, serta aksi kelola. Hero/aksi/nota dibagi lewat komponen bersama.
+Pintasan Menu katalog/keranjang/riwayat/pengaturan/statistik/chatbot dipulihkan
+pada keduanya. `ProductCatalog` berjudul Produk memakai grid lazy responsif
+2/3/5 kolom pada 360/600/1024 dp, text scale 1.3; badge lokal judul dihapus.
+`CartCheckoutScreen` mencatat tunai ke SQLite; QRIS tetap simulasi.
+
+Laporan harian PDF/XLSX berasal dari repository dan dibagikan Android, bukan
+auto Downloads; laba historis belum tersedia tanpa snapshot modal. Firebase
+menguras outbox saat startup/perubahan sesi dan tiap 15 detik selama aplikasi
+berjalan, bukan layanan latar belakang. Produk lama tidak otomatis di-backfill;
+SDK siap bukan bukti cloud tersimpan. Web tanpa SQLite/sinkronisasi native.
+Draft IyanBoT perlu konfirmasi dan produk hanya pemilik; live API belum diuji.
 
 ### Fase 0 — Fondasi UI dan aset
 
@@ -152,31 +187,41 @@ Sebuah tugas dianggap selesai bila seluruh poin berikut terpenuhi:
 1. Layar dapat dipreview di emulator atau perangkat Android dan tidak menimbulkan
    error analyzer.
 2. Semua state terlihat, bukan hanya jalur bahagia: kosong, memuat, error, dan status
-   offline memakai state lokal atau data contoh.
+   offline. Data nyata dibaca dari repository; hanya pratinjau/simulasi diberi
+   label contoh, bukan seluruh data SQLite.
 3. Layout aman pada text scale 1.3 dan lebar 360 dp, target sentuh minimal 48 dp, dan
    status memakai kombinasi ikon, teks, serta warna.
 4. Tidak ada layar yang menampilkan pembayaran berhasil atau data tersinkron seolah
    nyata, sesuai prinsip "data nyata atau status jujur".
-5. Pull request sudah ditinjau minimal satu anggota lain dan di-merge ke `main`.
+5. `flutter analyze` dan `flutter test` lulus; hasil, cakupan perangkat, serta
+   pemeriksaan yang belum dijalankan dicatat tanpa klaim integrasi palsu.
+6. Pull request sudah ditinjau minimal satu anggota lain dan di-merge ke `main`.
 
-## Di luar cakupan tahap ini
+## Pekerjaan lanjutan dan batas verifikasi
 
-Pekerjaan berikut sengaja ditunda dan tidak dihitung dalam pembagian tugas UI:
+SQLite, kamera, laporan nyata, Firebase native/outbox, dan tool/draft Groq bukan
+lagi pekerjaan yang dilarang. Perluasan layanan/dependensi tetap perlu persetujuan.
+Pekerjaan produksi berikut belum selesai atau belum terverifikasi:
 
-- Drift/SQLite, Firestore, outbox, serta sinkronisasi dan penanganan konflik.
-- `backend-agent` (WhatsApp, Ollama, tool registry) dan webhook QRIS yang tervalidasi.
-- Firebase Authentication, rules, index, Storage, dan App Check.
-- Foto koreksi privat, dataset AI, dan klasifikasi TFLite nyata.
-- Perhitungan rencana restok dan laporan berbasis data nyata.
+- Login/PIN, identitas/keanggotaan toko tepercaya, isolasi tenant, dan aturan
+  Firestore yang teruji; konfigurasi/rules/index tersedia bukan bukti keamanan.
+- Unggah cloud langsung, backfill produk lama, konflik dan pemulihan perangkat
+  baru, serta layanan sinkronisasi latar belakang bila disetujui.
+- QRIS provider resmi/webhook tervalidasi, cetak fisik label/struk, snapshot
+  harga modal untuk laba historis, dan perhitungan restok.
+- Foto koreksi privat, dataset AI, TFLite, serta WhatsApp/Ollama `backend-agent`.
 
-Komponen yang bergantung pada pekerjaan di atas tetap dibangun sekarang, tetapi hanya
-sebatas tampilan dan state UI dengan data contoh.
+Validasi terakhir yang dilaporkan: analyzer bersih dan 212 test lulus. Pada
+15 November 2026 APK debug dibangun sekitar 51 detik, dipasang ulang `-r` dan
+diluncurkan pada Samsung SM_A366B tanpa menghapus data. Ini bukan audit UI
+fisik, pemindaian penuh, cetak, atau bukti live cloud/Groq; semuanya masih
+memerlukan verifikasi tersendiri.
 
-## Catatan penyelarasan dokumen
+## Riwayat penyelarasan dokumen tahap UI
 
-Temuan berikut muncul saat menyamakan `PRODUCT.md`, `DESIGN.md`, dan `README.md`, lalu
-disepakati sebagai keputusan bersama. Karena tahap ini berfokus UI, hanya temuan yang
-menyentuh tampilan yang ditutup sekarang.
+Temuan berikut dicatat pada tahap UI awal. Penyebutan pekerjaan mendatang di
+bagian historis ini mengikuti waktu tersebut; status berjalan mengikuti bagian
+integrasi dan batas verifikasi di atas.
 
 - **Alur transaksi kurang terwakili di `PRODUCT.md`.** `DESIGN.md` memuat katalog,
   formulir, pemindai, keranjang, dan pembayaran secara rinci, sedangkan Core Experience

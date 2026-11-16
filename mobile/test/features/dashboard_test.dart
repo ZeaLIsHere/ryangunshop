@@ -16,6 +16,9 @@ import 'package:ryangunshop/features/catalog/model/catalog_product.dart';
 import 'package:ryangunshop/features/catalog/view/product_form_screen.dart';
 import 'package:ryangunshop/features/dashboard/model/dashboard_shortcut.dart';
 import 'package:ryangunshop/features/dashboard/view/dashboard_screen.dart';
+import 'package:ryangunshop/features/dashboard/view/dashboard_components.dart';
+import 'package:ryangunshop/features/dashboard/sample/dashboard_sample.dart';
+import 'package:ryangunshop/core/widgets/app_card.dart';
 
 void main() {
   late AppSession session;
@@ -58,6 +61,52 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  for (final role in UserRole.values) {
+    testWidgets(
+      'Pintasan Menu lengkap dan navigasi ${role.name} pada 360 dp skala 1,3',
+      (tester) async {
+        session.selectRole(role);
+        final selected = <DashboardShortcut>[];
+        await host(tester, select: selected.add);
+        await reveal(tester, DashboardSample.shortcutsSectionTitle);
+        final section = find.byType(DashboardShortcutsSection);
+        expect(section, findsOneWidget);
+        for (final shortcut in DashboardSample.shortcuts) {
+          final label = find.descendant(
+            of: section,
+            matching: find.text(shortcut.label),
+          );
+          await tester.ensureVisible(label);
+          await tester.pumpAndSettle();
+          final card = find.ancestor(of: label, matching: find.byType(AppCard));
+          expect(tester.getSize(card).width, greaterThanOrEqualTo(48));
+          expect(tester.getSize(card).height, greaterThanOrEqualTo(48));
+          await tester.tap(label);
+          await tester.pumpAndSettle();
+          expect(selected.last, shortcut);
+          expect(
+            find.descendant(
+              of: section,
+              matching: find.text(shortcut.description),
+            ),
+            findsOneWidget,
+          );
+          final image = tester.widget<Image>(
+            find.descendant(of: card, matching: find.byType(Image)),
+          );
+          expect((image.image as AssetImage).assetName, shortcut.assetPath);
+          expect(tester.takeException(), isNull);
+        }
+        expect(selected, DashboardSample.shortcuts);
+        if (role == UserRole.cashier) {
+          expect(find.text('Tambah Produk'), findsNothing);
+          expect(find.text('Kelola Stok'), findsNothing);
+          expect(find.text('Label Barcode'), findsNothing);
+        }
+      },
+    );
+  }
+
   testWidgets(
     'kasir operasional tanpa agregat atau alat pemilik, role tidak menghapus data',
     (tester) async {
@@ -86,6 +135,7 @@ void main() {
         expect(find.text(label), findsNothing);
       }
       expect(find.text('Omzet Hari Ini'), findsOneWidget);
+      expect(find.byType(DashboardHeroCard), findsOneWidget);
       expect(find.text('Aksi Cepat'), findsOneWidget);
       expect(find.text('Penjualan harian'), findsNothing);
       final assets = tester
@@ -115,6 +165,52 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('Hero bersama mempertahankan desain kasir dan CTA sesuai peran', (
+    tester,
+  ) async {
+    session.selectRole(UserRole.cashier);
+    DashboardShortcut? selected;
+    await host(tester, select: (value) => selected = value);
+    final hero = find.byType(DashboardHeroCard);
+    final cashier = tester.widget<DashboardHeroCard>(hero);
+    final decoration = tester
+        .widget<Container>(
+          find.descendant(of: hero, matching: find.byType(Container)).first,
+        )
+        .decoration;
+    expect(cashier.title, 'Omzet Hari Ini');
+    expect(cashier.actionIcon, Icons.qr_code_scanner);
+    await tester.tap(
+      find.descendant(of: hero, matching: find.byType(FilledButton)),
+    );
+    expect(selected, DashboardShortcut.cashier);
+    session.selectRole(UserRole.owner);
+    await tester.pumpAndSettle();
+    final owner = tester.widget<DashboardHeroCard>(hero);
+    expect(owner.title, 'Penjualan Bersih');
+    expect(owner.actionLabel, 'Lihat laporan');
+    expect(owner.actionIcon, Icons.assessment_outlined);
+    expect(
+      tester
+          .widget<Container>(
+            find.descendant(of: hero, matching: find.byType(Container)).first,
+          )
+          .decoration,
+      decoration,
+    );
+    final button = find.descendant(
+      of: hero,
+      matching: find.byType(FilledButton),
+    );
+    await tester.ensureVisible(button);
+    expect(tester.getSize(button).height, greaterThanOrEqualTo(48));
+    await tester.tap(button);
+    expect(selected, DashboardShortcut.reports);
+    expect(find.byType(DashboardActionPod), findsNWidgets(4));
+    expect(find.text('Penjualan harian'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets(
     'pemilik angka nyata, snapshot harian, stok dan tanpa barcode pada 360 skala 1.3',
@@ -167,9 +263,17 @@ void main() {
             );
       }
       await host(tester);
-      await reveal(tester, 'Penjualan bersih: Rp 20.000');
-      expect(find.text('2 nota'), findsOneWidget);
-      expect(find.text('Rata-rata per nota: Rp 10.000'), findsOneWidget);
+      await reveal(tester, 'Penjualan Bersih');
+      final hero = find.byType(DashboardHeroCard);
+      expect(
+        find.descendant(of: hero, matching: find.text('Rp 20.000')),
+        findsOneWidget,
+      );
+      expect(find.text('2 Nota'), findsOneWidget);
+      expect(
+        find.descendant(of: hero, matching: find.text('Rp 10.000')),
+        findsOneWidget,
+      );
       await reveal(tester, 'Stok kosong: 1 produk');
       expect(find.text('Stok menipis: 1 produk'), findsOneWidget);
       expect(find.text('Tanpa barcode: 2 produk'), findsOneWidget);
@@ -262,11 +366,19 @@ void main() {
       final expected = DashboardPeriod(DateTime.now(), days);
       expect(source.start, expected.start);
       expect(source.end, expected.end);
-      expect(
-        find.text('Penjualan bersih: ${formatRupiah(days * 100)}'),
-        findsOneWidget,
+      final hero = tester.widget<DashboardHeroCard>(
+        find.byType(DashboardHeroCard),
       );
-      expect(find.text('1 nota'), findsOneWidget);
+      expect(hero.daily.single.totalAmount, days * 100);
+      expect(hero.actionLabel, 'Lihat laporan');
+      expect(
+        find.descendant(
+          of: find.byType(DashboardHeroCard),
+          matching: find.text(formatRupiah(days * 100)),
+        ),
+        findsNWidgets(2),
+      );
+      expect(find.text('1 Nota'), findsOneWidget);
       expect(find.text('Snapshot periode · $days barang'), findsOneWidget);
       expect(find.text('Kotor: ${formatRupiah(days * 200)}'), findsOneWidget);
       expect(find.text('nota-$days'), findsOneWidget);
@@ -311,7 +423,7 @@ void main() {
     session = failing;
     await host(tester);
     await reveal(tester, 'Data beranda gagal dimuat. Angka belum tersedia.');
-    expect(find.textContaining('Penjualan bersih:'), findsNothing);
+    expect(find.byType(DashboardHeroCard), findsNothing);
     expect(find.textContaining('Stok kosong:'), findsNothing);
     failing.fail = false;
     await tester.tap(find.text('Coba lagi'));

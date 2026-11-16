@@ -4,6 +4,7 @@ import '../../../core/format/rupiah.dart';
 import '../../../core/session/app_session.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_radius.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/category_icon.dart';
 import '../model/catalog_product.dart';
@@ -18,7 +19,6 @@ class CatalogProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final session = AppSessionScope.of(context);
-
     final (icon, color, label) = switch (product.stockStatus) {
       ProductStockStatus.available => (
         Icons.inventory_2_outlined,
@@ -39,53 +39,98 @@ class CatalogProductCard extends StatelessWidget {
 
     return AppCard(
       onTap: onTap,
+      padding: const EdgeInsets.all(AppSpacing.sm),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              width: AppSpacing.minTouchTarget,
+              height: AppSpacing.minTouchTarget,
+              decoration: BoxDecoration(
+                color: AppColors.primarySubtle,
+                borderRadius: AppRadius.controlBorder,
+              ),
+              child: Center(
+                child: CategoryIcon(
+                  category: product.category,
+                  size: AppSpacing.lg,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            product.name,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(
+            '${product.category} · ${product.locationLabel}',
+            style: theme.textTheme.bodySmall?.copyWith(color: AppColors.muted),
+          ),
+          if (product.barcode?.isNotEmpty ?? false) ...[
+            const SizedBox(height: AppSpacing.xxs),
+            Text(
+              'Barcode: ${product.barcode}',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: AppColors.muted,
+              ),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            '${formatRupiah(product.price)} / ${product.unit}',
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Icon(icon, color: color, size: AppSpacing.md),
+              const SizedBox(width: AppSpacing.xxs),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      product.name,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xxs),
-                    Row(
-                      children: [
-                        CategoryIcon(category: product.category, size: 14),
-                        const SizedBox(width: AppSpacing.xxs),
-                        Expanded(
-                          child: Text(
-                            '${product.category} · ${product.locationLabel}',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: AppColors.muted,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                child: Text(
+                  label,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColors.ink,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
-              const SizedBox(width: AppSpacing.xs),
-              Tooltip(
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          ListenableBuilder(
+            listenable: session.cart,
+            builder: (context, _) {
+              final inCart = session.cart.items
+                  .where((item) => item.productId == product.id)
+                  .fold(0, (sum, item) => sum + item.quantity);
+              return Tooltip(
                 message: 'Tambah ke Kasir',
                 child: FilledButton.tonalIcon(
-                  icon: const Icon(Icons.add_shopping_cart, size: 20),
+                  icon: const Icon(
+                    Icons.add_shopping_cart,
+                    size: AppSpacing.lg,
+                  ),
                   label: const Text('Kasir'),
                   style: FilledButton.styleFrom(
-                    minimumSize: const Size(0, AppSpacing.minTouchTarget),
+                    minimumSize: const Size(
+                      AppSpacing.minTouchTarget,
+                      AppSpacing.minTouchTarget,
+                    ),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm,
+                      horizontal: AppSpacing.xxs,
                     ),
                   ),
-                  onPressed: product.stockStatus == ProductStockStatus.empty
+                  onPressed: inCart >= product.stock
                       ? null
                       : () {
                           session.cart.addProduct(product);
@@ -99,33 +144,8 @@ class CatalogProductCard extends StatelessWidget {
                           );
                         },
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            '${formatRupiah(product.price)} / ${product.unit}',
-            style: theme.textTheme.titleSmall?.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, color: color, size: AppSpacing.md),
-              const SizedBox(width: AppSpacing.xs),
-              Expanded(
-                child: Text(
-                  label,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
+              );
+            },
           ),
         ],
       ),

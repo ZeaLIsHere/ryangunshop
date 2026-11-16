@@ -70,7 +70,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Tersimpan di perangkat'), findsOneWidget);
+    expect(find.text('Tersimpan di perangkat'), findsNothing);
     // Nilai inventaris: 15000 * 10 = Rp 150.000
     expect(find.text('Rp 150.000'), findsOneWidget);
     expect(find.text('10'), findsWidgets);

@@ -15,49 +15,55 @@ Berkas ini melengkapi, bukan menggantikan:
 
 RyanGunshop adalah aplikasi kasir dan pengelolaan warung untuk Android berbasis
 Flutter/Dart. Inti pengalamannya adalah efisiensi kasir dan pencatatan transaksi:
-halaman Beranda menampilkan Hero Omzet harian dinamis, cetak laporan harian, 4 modul
-bento Aksi Cepat (Pindai Barcode, Buka Kasir, Stok, Riwayat Nota), dan riwayat transaksi
-terkini. Alur kasir berjalan cepat dari pemindaian barcode atau pemilihan barang katalog,
-keranjang belanja responsif, lalu pembayaran tunai (uang pas & kembalian instan) atau QRIS.
+Beranda kasir mempertahankan Hero Omzet harian, laporan, empat bento Aksi Cepat,
+dan nota terkini. Beranda pemilik menyediakan analitik Hari ini/7 hari/30 hari,
+perhatian stok, produk terlaris, dan aksi kelola. Keduanya memakai komponen Hero,
+aksi, nota, serta Pintasan Menu bersama. Transaksi tunai, produk, stok, dan draft
+keranjang tersimpan di SQLite/Drift; QRIS nyata belum terverifikasi.
 
 Karakter produk: praktis, tenang, jelas, dapat dipercaya. Violet modern (`#7C3AED`)
 menjadi identitas tindakan dan navigasi. Antarmuka harus dapat dipakai tanpa pelatihan
 teknis pada perangkat kelas bawah.
 
-## 2. Cakupan tahap ini: UI dan fondasi backend lokal
+## 2. Cakupan berjalan — 15 November 2026
 
-Tahap ini mengerjakan **tampilan/interaksi (frontend)** dan fondasi backend lokal
-offline-first. Layanan cloud dan integrasi perangkat nyata tetap ditunda.
+Tahap UI-only sudah dilewati. Cakupan yang disetujui pengguna mencakup:
 
-Diperbolehkan pada branch backend:
+- SQLite/Drift offline-first, migrasi, repository, dan pengujian lokal.
+- Kamera barcode nyata melalui `mobile_scanner`, fallback manual, kelola produk
+  pemilik, generator kode internal, dan label Code128.
+- Analitik repository nyata, laporan harian PDF/XLSX dengan berbagi Android.
+  Berbagi bukan penyimpanan otomatis ke Downloads; laba historis belum dihitung
+  karena snapshot harga modal transaksi belum tersedia.
+- Firebase native bersakelar `FIREBASE_ENABLED`, outbox SQLite, dan pengurasan
+  saat startup, perubahan sesi, serta tiap 15 detik selama aplikasi berjalan.
+  Bukan layanan sinkronisasi latar belakang Android. Produk lama tidak otomatis
+  di-backfill; SDK siap bukan bukti unggah cloud berhasil.
+- IyanBoT/Groq dengan tool baca dan draft yang perlu konfirmasi pengguna sebelum
+  transaksi atau perubahan produk disimpan. Produk hanya dapat dikelola pemilik.
+  Uji API langsung belum terverifikasi dan dijeda atas permintaan pengguna.
 
-- Persistensi lokal SQLite melalui Drift/Isar.
-- Repository lokal untuk produk, stok, keranjang, dan transaksi.
-- Migrasi skema, seed data contoh, dan pengujian repository.
+Belum menjadi jaminan produksi: autentikasi/login/PIN, isolasi tenant yang
+terverifikasi, pemulihan cloud, pembayaran QRIS nyata, cetak fisik, foto koreksi
+privat, model TFLite, dan rencana restok. `backend-agent` bukan syarat POS lokal.
+Pergantian pemilik/kasir di Pengaturan adalah mode aplikasi, bukan batas keamanan.
+Web memakai jalur pratinjau tanpa SQLite/sinkronisasi native.
 
-Tetap dilarang dikerjakan sekarang:
-
-- Firestore, outbox cloud, dan sinkronisasi jaringan.
-- `backend-agent` (WhatsApp, Ollama, tool registry) dan webhook QRIS.
-- Firebase Authentication, rules, index, Storage, dan App Check.
-- Foto koreksi privat, dataset AI, dan model TFLite nyata.
-- Perhitungan rencana restok dan laporan berbasis data nyata.
-
-Komponen backend yang dibuat harus memiliki batas lokal yang jelas dan tidak boleh
-memerlukan kredensial atau layanan eksternal. Integrasi UI dilakukan bertahap setelah
-repository lokal memiliki test.
-
-Panduan bagi agen AI: pada branch UI jangan menambahkan dependensi database. Pada branch
-backend, dependensi database lokal boleh ditambahkan lewat PR dan harus disertai test.
-Jangan menambahkan Firebase, kredensial, kunci API, atau model machine learning. Jangan
-menambahkan kredensial, kunci API, atau berkas `.env`. Bila dokumen lain seperti
-`README.md` menyebut layanan cloud, perlakukan itu sebagai rencana tahap berikutnya.
+Jangan membaca atau menyalin isi `.env`, kredensial, maupun konfigurasi privat
+untuk memperbarui dokumentasi. Jangan commit rahasia. `--dart-define` bukan
+penyimpanan rahasia yang aman dalam APK. Penambahan dependensi, layanan, atau
+perluasan cakupan baru tetap memerlukan persetujuan dan pengujian.
 
 ## 3. Konteks peran
 
-- Pemilik dan kasir adalah dua peran pengguna. Mode edit denah hanya untuk pemilik.
+- Pemilik dan kasir dipilih melalui Pengaturan tanpa login. Kelola produk hanya
+  untuk pemilik; pemeriksaan izin dibaca ulang saat penyimpanan. Denah/panorama
+  adalah arsip, bukan navigasi utama.
 - Setiap anggota tim hanya mengubah berkas dalam cakupan miliknya pada `TEAM.md`.
-  Perubahan pada berkas milik orang lain dilakukan lewat pull request.
+  Perubahan lintas pemilik memerlukan persetujuan eksplisit dan review lewat PR.
+  Pengguna sudah menyetujui integrasi lintas fitur pada
+  `feat/ui-shell-owner-barcode`; persetujuan itu bukan izin mengubah berkas di
+  luar tugas aktif.
 - Periksa `PROGRESS.md` sebelum mulai bekerja untuk mengetahui tugas yang sudah selesai,
   lalu perbarui baris Anda pada pull request yang sama saat tugas selesai.
 - Tentukan Anda membantu siapa dari nama branch yang aktif: `feat/ui-shell-*`
@@ -71,6 +77,8 @@ mobile/lib/
 ├── main.dart
 ├── app/                       # shell, routing, navigasi
 ├── core/
+│   ├── config/                # konfigurasi build dan bootstrap Firebase
+│   ├── data/                  # SQLite/Drift, repository, outbox, sinkronisasi
 │   ├── session/               # keadaan sesi lintas fitur, misalnya peran pengguna
 │   ├── format/                # pemformatan bersama, misalnya nominal rupiah
 │   ├── theme/                 # token warna, tipografi, spacing, radius
@@ -101,7 +109,7 @@ mobile/lib/
 
 | Istilah | Arti |
 |---|---|
-| Beranda | Halaman utama POS: ringkasan omzet, cetak laporan, 4 bento aksi cepat, dan riwayat transaksi |
+| Beranda | Dashboard menurut peran: operasional kasir atau analitik/kelola pemilik |
 | Kasir | Halaman transaksi belanja kasir: rincian barang, kuantitas, diskon, dan total bayar |
 | Aksi Cepat | 4 Modul bento cepat di Beranda: Pindai Barcode, Buka Kasir, Stok, dan Riwayat Nota |
 | SyncPill | Penanda status offline, antre sinkronisasi, atau tersinkron |
@@ -132,8 +140,9 @@ lebar 360 dp.
 **State dan kejujuran data.** Setiap layar yang menampilkan data wajib punya state kosong,
 memuat, error, dan offline, bukan hanya jalur bahagia. Empty state selalu menyediakan
 tindakan lanjutan. Jangan pernah menampilkan pembayaran berhasil, stok tersedia, atau data
-tersinkron yang belum dikonfirmasi. Karena tahap ini memakai data contoh, tandai status
-sebagai contoh dan jangan membuatnya tampak seperti integrasi nyata.
+tersinkron yang belum dikonfirmasi. Data SQLite nyata tidak diberi label contoh;
+data pratinjau/simulasi tetap ditandai. Badge lokal pada judul Produk sudah dihapus;
+itu tidak berarti produk sudah tersimpan di cloud.
 
 **Motion.** Splash memakai satu signature motion sekitar 1,45 detik dengan crossfade 280
 ms, dan `disableAnimations` menghasilkan transisi instan. Sediakan reduced motion pada
@@ -162,7 +171,9 @@ mengklaim pekerjaan sudah benar tanpa menjalankan keduanya.
 ## 8. Alur kerja Git
 
 - `main` selalu dapat dijalankan. Bekerja di branch `feat/ui-shell-*`,
-  `feat/ui-spatial-*`, atau `feat/ui-commerce-*` sesuai peran.
+  `feat/ui-spatial-*`, `feat/ui-commerce-*`, atau `feat/backend-*` sesuai tugas.
+- Commit dan push hanya bila diminta dalam tugas aktif; jangan memasukkan
+  perubahan pengguna atau pekerjaan lain tanpa meninjau cakupannya.
 - Satu tugas sama dengan satu pull request. Setiap PR ditinjau minimal satu anggota lain
   dan di-merge dengan squash merge.
 - Tidak ada force-push ke `main`.

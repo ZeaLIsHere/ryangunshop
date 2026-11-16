@@ -1,79 +1,112 @@
-# Alur UI katalog dan kasir
+# Alur UI dan status implementasi RyanGunshop
 
-Pemilik: Blessly Victory Deo Silaban. Lingkup implementasi saat ini mencakup seluruh alur UI
-katalog, formulir produk, pemindai barcode/produk, keranjang, hingga pratinjau pembayaran.
-Seluruh harga, stok, lokasi, dan status pembayaran menggunakan data contoh lokal sesuai
-batasan tahap antarmuka.
+Status: 15 November 2026. Dokumen ini menggambarkan implementasi lokal saat ini,
+bukan lagi tahap UI-only. Pemilik fitur katalog/kasir: Blessly Victory Deo Silaban;
+shell, Beranda, dan laporan: Tariq. Pembagian kerja tetap mengikuti `TEAM.md`.
 
-## Alur kerja utama
+## Peran dan Beranda
+
+Pemilik/kasir dipilih lewat Pengaturan, tanpa login atau PIN. Pembatasan kelola
+produk adalah pemeriksaan mode aplikasi, bukan batas keamanan autentikasi.
+Peran dibaca dari sesi bersama dan diperiksa ulang saat penyimpanan.
+
+- **Kasir:** desain operasional asli dipertahankan: Hero **Omzet Hari Ini**,
+  aksi laporan, empat bento Aksi Cepat (Pindai Barcode, Buka Kasir, Stok,
+  Riwayat Nota), lalu nota terkini. Tidak menampilkan alat kelola pemilik.
+- **Pemilik:** periode **Hari ini / 7 hari / 30 hari**, Hero **Penjualan Bersih**
+  beserta jumlah nota/rata-rata, grafik harian, perhatian stok saat ini dan aksi
+  kelola, produk terlaris, lalu nota periode. Periode memakai kalender lokal,
+  termasuk hari ini; batas akhir eksklusif adalah awal besok. Nilai produk
+  terlaris adalah penjualan kotor sebelum diskon nota, bukan laba.
+- `mobile/lib/features/dashboard/view/dashboard_components.dart` menyediakan
+  Hero, pod aksi, baris nota, dan `DashboardShortcutsSection` bersama. Pemakaian
+  komponen bersama tidak menyamakan hierarki kedua peran.
+- **Pintasan Menu** dipulihkan pada kedua Beranda: Katalog produk, Keranjang,
+  Riwayat transaksi, Pengaturan, Statistik, Chatbot. Tujuan tetap memakai router
+  dan pemeriksaan izin layar terkait.
+
+## Produk dan pemindaian
+
+1. **Produk (`ProductCatalog`):** pencarian, kategori, urutan, dan filter stok
+   membaca repository lokal. Judul halaman **Produk**; tag **Tersimpan di
+   perangkat** sudah dihapus. Penghapusan tag bukan bukti unggah cloud.
+2. Katalog memakai `CustomScrollView`/`SliverList.builder` untuk membangun baris
+   grid secara lazy. Cakupan uji: dua kolom pada 360 dp, tiga pada 600 dp, lima
+   pada 1024 dp, termasuk text scale 1.3. Tinggi kartu mengikuti konten alami,
+   bukan aspect ratio tetap atau pemotongan teks untuk memaksa tinggi.
+3. **Kelola produk:** pemilik dapat menambah, mengedit, menghapus, membuat kode
+   internal, dan menghasilkan PDF label **Code128**. Validasi barcode/harga/stok
+   tetap berlaku; kasir tidak mendapat kontrol kelola produk.
+4. **`ProductScannerScreen`:** kamera native nyata melalui `mobile_scanner`,
+   dengan pencarian/input manual saat izin ditolak atau kamera tidak tersedia.
+   Hasil perlu konfirmasi sebelum masuk keranjang. Kamera dilepas selama
+   checkout dan disiapkan ulang bila pengguna memindai lagi.
+
+## Keranjang dan pembayaran
 
 ```text
-Katalog/Pemindai ──> Konfirmasi Produk ──> Keranjang (CartCheckout) ──> Sheet Pembayaran ──> Status Berhasil
+Produk / kamera / input manual
+  → hasil produk dan konfirmasi
+  → keranjang: kuantitas, diskon, total
+  → pembayaran tunai
+  → SQLite: nota + baris barang + pengurangan stok
+  → bukti transaksi lokal
 ```
 
-1. **Eksplorasi Katalog:** Kasir atau pemilik dapat mencari produk lewat input teks,
-   menyaring kategori, melihat peringatan stok menipis, atau mengurutkan berdasarkan nama,
-   harga, dan stok.
-2. **Tambah dan Edit Produk (`ProductFormScreen`):** Formulir satu kolom bertahap mencakup
-   pratinjau foto, nama & SKU/barcode, harga jual/modal, stok awal, serta kategori.
-   Dilengkapi validasi inline untuk barcode ganda dan angka negatif.
-3. **Pemindaian (`ProductScannerScreen`):** Simulasi pemindai kamera dengan area bidik,
-   kontrol senter/flash, tombol simulasi deteksi, serta opsi pencarian manual ketika
-   kamera tidak diizinkan atau produk tidak terdeteksi. Hasil pemindaian wajib dikonfirmasi
-   sebelum dimasukkan ke keranjang.
-4. **Keranjang Belanja (`CartCheckoutScreen`):** Penyesuaian kuantitas produk dengan stepper,
-   ringkasan subtotal & total sticky di bawah, serta pembersihan keranjang.
-5. **Pembayaran (`PaymentSheet`):** Memisahkan alur Tunai (pilihan uang pas, uang cepat,
-   dan hitung kembalian instan) serta QRIS (simulasi siklus `creating`, `awaitingPayment`,
-   `paid`, `expired`, dan `failed`).
-6. **Bukti Transaksi (`PaymentSuccessScreen`):** Menampilkan rincian transaksi contoh dengan
-   penandaan jelas bahwa data dan pencatatan kasir bersifat simulasi.
+Produk, stok, nota, dan draft keranjang tersimpan lewat SQLite/Drift pada native.
+Penyimpanan transaksi tunai nyata bukan simulasi sesi. Status berhasil hanya
+boleh muncul setelah penyimpanan berhasil. State memuat, kosong, error/retry,
+dan offline harus tetap dapat dipakai; data pratinjau diberi label contoh.
 
-## Yang sudah tersedia
+QRIS belum terverifikasi sebagai pembayaran nyata. State `creating`,
+`awaitingPayment`, `paid`, `expired`, `failed` adalah kontrak tampilan/simulasi,
+bukan bukti pembayaran penyedia. Cetak struk thermal/Bluetooth fisik juga belum
+terverifikasi. PDF label bukan bukti printer fisik bekerja.
 
-- `ProductCatalog`: daftar produk, filter kategori, pencarian kata kunci, indikator stok
-  (aman, menipis, habis), serta `SampleBadge`.
-- Pemilih skenario di katalog: daftar contoh, memuat, kosong, gagal, dan offline.
-- `ProductFormScreen`: penambahan produk baru dan pengeditan produk yang sudah ada, dengan
-  validasi nomor, barcode, dan kategori produk.
-- `ProductScannerScreen`: pemindai simulasi dengan state siap, mendeteksi, hasil terdeteksi,
-  izin kamera ditolak, dan konfirmasi produk langsung ke keranjang.
-- `ManualProductSearchScreen`: pencarian manual sebagai jalan keluar saat pemindai kamera
-  tidak dapat digunakan.
-- `CartCheckoutScreen`: daftar belanja dinamis, penyesuaian kuantitas, dan penghitungan total.
-- `PaymentSheet` & `PaymentSuccessScreen`: simulasi tunai dan QRIS dinamis lengkap dengan
-  tampilan kembalian, batas waktu QR, pencatatan otomatis transaksi ke sesi lokal,
-  dan opsi cetak struk via printer Bluetooth.
+## Laporan dan analitik
 
-## Status alur bertahap
+Laporan mengambil transaksi repository untuk **tanggal kalender lokal** yang
+dipilih, bukan jendela 24 jam bergulir. Ekspor menghasilkan PDF dan berkas Excel
+**`.xlsx` nyata**. Android membuka lembar berbagi; aplikasi penerima/pengguna
+menentukan penyimpanan. Berkas **tidak dijamin otomatis masuk Downloads**.
+Tidak ada laba historis karena nota belum menyimpan snapshot harga modal.
 
-| Fase | Alur | Status |
-|---|---|---|
-| 0 | Buka katalog → lihat harga dan stok contoh | Selesai (terintegrasi ke app shell) |
-| 1 | Katalog → cari/filter stok menipis → urutkan → tambah produk | Selesai (fitur pencarian, filter, dan sorting) |
-| 2 | Formulir → foto contoh, identitas, harga/stok, kategori → validasi inline | Selesai (`ProductFormScreen` & `ProductDetailSheet`) |
-| 3 | Mulai pindai → hasil simulasi → konfirmasi eksplisit → pencarian manual | Selesai (`ProductScannerScreen` & `ManualProductSearchScreen`) |
-| 4 | Konfirmasi produk → `CartCheckout` → pembayaran tunai/QRIS → simpan sesi & struk | Selesai (`CartCheckout`, `PaymentSheet`, `PaymentSuccessScreen`) |
-| 5 | Uji alur pada Android layar kecil (360 dp) & rilis internal | Selesai / Review (teruji pada pengujian widget & manual) |
+## IyanBoT, cloud, dan web
 
-## Makna state pembayaran
+- IyanBoT/Groq memiliki tool baca dan penyusunan draft. Produk atau penjualan
+  baru disimpan lokal setelah konfirmasi pengguna; kelola produk tetap khusus
+  pemilik, termasuk pemeriksaan ulang saat konfirmasi. Uji API langsung belum
+  terverifikasi dan dijeda atas permintaan pengguna.
+- Firebase native diaktifkan lewat flag build `FIREBASE_ENABLED` dari konfigurasi
+  privat. Outbox SQLite dikuras saat startup, perubahan sesi, serta setiap 15
+  detik selama aplikasi berjalan. Ini bukan layanan latar belakang Android.
+  SDK siap bukan bukti unggah berhasil; produk lama tidak otomatis di-backfill.
+- Jalur tulis kode: `stores/{storeId}/products/{productId}` dan
+  `stores/{storeId}/transactions/{transactionId}`. Autentikasi Firestore,
+  keamanan/isolasi tenant, deployment aturan, dan pemulihan cloud belum
+  terverifikasi. Detail: `firebase-setup.md` dan `firestore-schema.md`.
+- Web hanya pratinjau; tidak memakai SQLite, antrean outbox, atau sinkronisasi
+  native. Denah/panorama adalah arsip, bukan navigasi utama.
+- QRIS nyata, cetak thermal, foto koreksi privat, model TFLite, dan rencana
+  restok belum menjadi kemampuan produksi terverifikasi.
 
-| State QRIS | Makna tampilan yang direncanakan |
-|---|---|
-| `creating` | Menyiapkan QR contoh |
-| `awaitingPayment` | Menunggu pembayaran dalam simulasi |
-| `paid` | Contoh tampilan pembayaran diterima; bukan transaksi nyata |
-| `expired` | QR contoh kedaluwarsa, menyediakan tindakan buat ulang |
-| `failed` | Simulasi gagal, menyediakan coba lagi atau beralih ke tunai |
+## Bukti validasi dan batasnya
 
-## Pemeriksaan kualitas
+Hasil validasi **15 November 2026**: analyzer bersih dan **212 pengujian lulus**,
+dijalankan ulang saat pembaruan dokumentasi. APK sebelumnya dibangun sekitar
+**51 detik**, dipasang dengan `adb install -r`, dan diluncurkan pada Samsung. Build/install/launch **tidak
+membuktikan UI fisik atau seluruh alur perangkat sudah diperiksa**; verifikasi
+visual, kamera, berbagi, cetak fisik, unggah cloud, dan API langsung tetap perlu
+bukti masing-masing.
 
-Jalankan dari folder `mobile/`:
+Pemeriksaan kode dari `mobile/`:
 
 ```bash
-flutter analyze
-flutter test
+flutter analyze --no-pub
+flutter test --no-pub --reporter expanded
 ```
 
-Cakupan pengujian mencakup verifikasi layar kecil (lebar 360 dp), pembesaran teks (text scale 1.3),
-target sentuh minimal 48 dp, pemulihan dari state gagal/kosong, dan kepatuhan prinsip data jujur.
+Acuan pengujian: `catalog_grid_test.dart`, `dashboard_test.dart`,
+`dashboard_period_test.dart`, `checkout_persistence_test.dart`,
+`report_export_test.dart`, `chatbot_actions_test.dart`, serta pengujian repository
+pada `mobile/test/`. Pengujian widget bukan audit visual Android fisik.

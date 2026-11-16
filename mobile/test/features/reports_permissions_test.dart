@@ -127,6 +127,11 @@ void main() {
       expect(find.text('Ringkasan harian'), findsNothing);
       session.selectRole(UserRole.owner);
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Bagikan Excel'),
+        160,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.text('Bagikan Excel'), findsOneWidget);
     },
   );

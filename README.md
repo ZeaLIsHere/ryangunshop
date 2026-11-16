@@ -1,10 +1,37 @@
 # RyanGunshop
 
-Aplikasi kasir dan pengelolaan warung untuk Android berbasis Flutter/Dart, disusun dari
-Mini-SRS RyanGunshop. Mini-SRS dipakai sebagai sumber requirement, bukan sebagai
-instruksi langsung.
+Aplikasi kasir dan pengelolaan warung Android berbasis Flutter/Dart,
+offline-first dengan SQLite/Drift. Mini-SRS menjadi sumber requirement,
+bukan bukti seluruh fitur sudah berjalan di produksi.
 
-## Tim
+## Status — 15 November 2026
+
+Branch integrasi: `feat/ui-shell-owner-barcode`. Tahap UI-only sudah dilewati;
+integrasi lintas fitur berikut disetujui pengguna.
+
+| Area | Kondisi berjalan |
+|---|---|
+| POS lokal | Produk, stok, draft keranjang, nota tunai, snapshot item, dan pengurangan stok memakai SQLite/Drift; database baru kosong |
+| Peran | Pemilik/kasir dipilih di Pengaturan tanpa login/PIN; kelola produk hanya pemilik, izin dibaca ulang saat simpan; bukan batas keamanan |
+| Beranda kasir | Hero Omzet asli, laporan harian, empat bento Aksi Cepat, nota terkini |
+| Beranda pemilik | Analitik repository Hari ini/7 hari/30 hari, grafik, perhatian stok, produk terlaris, nota, dan aksi kelola |
+| Komponen Beranda | Hero/aksi/nota bersama; Pintasan Menu pada kedua peran: katalog, keranjang, riwayat, pengaturan, statistik, chatbot |
+| Produk | Judul `Produk`, tanpa badge lokal; grid lazy 2 kolom pada 360 dp, 3 pada 600 dp, 5 pada 1024 dp, aman pada text scale 1.3 dalam pengujian otomatis |
+| Barcode | Kamera `mobile_scanner` nyata, fallback manual, generator kode internal RG dan label Code128 untuk pemilik |
+| Laporan | PDF/XLSX harian dari repository, berbagi Android; bukan penyimpanan otomatis ke Downloads |
+| IyanBoT | Groq dengan tool baca dan draft; transaksi/produk perlu konfirmasi sebelum disimpan; produk hanya pemilik; live API belum terverifikasi dan pengujian dijeda pengguna |
+| Firebase | Native bersakelar `FIREBASE_ENABLED`, outbox SQLite, pengurasan saat startup/perubahan sesi dan tiap 15 detik selama aplikasi berjalan |
+| QRIS | Jalur simulasi tersedia; pembayaran QRIS nyata belum terverifikasi |
+| Denah/360 | Arsip fitur, bukan navigasi utama |
+
+Laba historis belum dihitung karena snapshot harga modal transaksi belum tersedia.
+Produk terlaris menampilkan penjualan kotor sebelum diskon nota, bukan laba.
+Inisialisasi Firebase bukan bukti unggah cloud. Produk lama tidak otomatis masuk
+outbox; belum ada jaminan backfill, pemulihan cloud, atau isolasi tenant produksi.
+Timer sinkronisasi bukan layanan latar belakang Android. Web hanya pratinjau,
+tanpa SQLite/sinkronisasi native. POS lokal tidak memerlukan `backend-agent`.
+
+## Tim dan dokumen
 
 | Nama | NIM |
 |---|---|
@@ -12,32 +39,18 @@ instruksi langsung.
 | Tariq Rahmadari | 241401021 |
 | Blessly Victory Deo Silaban | 241401060 |
 
-Peran dan porsi kerja masing-masing ada di [TEAM.md](TEAM.md).
-
-## Cakupan tahap ini: UI dan data lokal
-
-Pada branch `feat/backend-persistence`, aplikasi Android memakai SQLite/Drift untuk
-produk, stok, draft keranjang, nota tunai, dan ringkasan Beranda. Basis data baru
-dimulai kosong; tambahkan produk lewat Katalog. QRIS, laporan, dan sebagian
-pratinjau pemindai masih berupa contoh.
-Pratinjau Chrome tetap memakai data contoh agar susunan layar mudah diperiksa.
-
-Persiapan migrasi database ke Firebase Firestore — termasuk pembuatan proyek,
-API key, aturan keamanan, dan skema dokumen — dijelaskan di
-[`docs/firebase-setup.md`](docs/firebase-setup.md) dan
-[`docs/firestore-schema.md`](docs/firestore-schema.md). Integrasi cloud masih
-nonaktif secara bawaan (`FIREBASE_ENABLED`); aplikasi tetap berjalan penuh
-dengan SQLite.
-
-Mulai membaca dari berkas berikut:
-
 | Berkas | Isi |
 |---|---|
-| `AGENTS.md` | Aturan kerja untuk anggota tim dan agen AI |
-| `PRODUCT.md` | Apa yang dibangun, untuk siapa, dan batasannya |
-| `DESIGN.md` | Aturan visual, komponen, dan aturan interaksi |
-| `TEAM.md` | Pembagian tugas, pemilik berkas, dan alur kerja Git |
-| `PROGRESS.md` | Status pengerjaan, peta fitur, dan langkah berikutnya |
+| [AGENTS.md](AGENTS.md) | Aturan kerja dan cakupan integrasi yang disetujui |
+| [PRODUCT.md](PRODUCT.md) | Pengguna, pengalaman, status nyata, dan batas produk |
+| [DESIGN.md](DESIGN.md) | Token visual, komponen, dan interaksi |
+| [TEAM.md](TEAM.md) | Kepemilikan, riwayat pembagian tugas, dan review |
+| [PROGRESS.md](PROGRESS.md) | Status tugas, bukti pengujian, dan riwayat pengerjaan |
+| [instruksi.md](instruksi.md) | Operasi dan verifikasi sinkronisasi Firebase |
+
+Panduan tambahan: `docs/firebase-setup.md`, `docs/firestore-schema.md`,
+`docs/COLOR_PALETTE.md`, `docs/ui-flow.md`, dan `docs/a11y.md`.
+Baca catatan historis sesuai tanggalnya; persiapan layanan bukan bukti produksi.
 
 ## Struktur
 
@@ -45,42 +58,28 @@ Mulai membaca dari berkas berikut:
 mobile/
 ├── lib/
 │   ├── main.dart
-│   ├── app/                 # shell, routing, splash, dan keadaan awal
+│   ├── app/                 # shell, routing, startup, pemicu sinkronisasi
 │   ├── core/
-│   │   ├── session/         # keadaan sesi lintas fitur, misalnya peran pengguna
-│   │   ├── format/          # pemformatan bersama, misalnya nominal rupiah
-│   │   ├── theme/           # token warna, tipografi, jarak, dan radius
-│   │   └── widgets/         # komponen dasar yang dipakai lintas fitur
+│   │   ├── config/          # konfigurasi build dan bootstrap Firebase
+│   │   ├── data/            # Drift, repository, migrasi, outbox, sinkronisasi
+│   │   ├── session/         # sesi/peran dan keadaan lintas fitur
+│   │   ├── format/          # format rupiah
+│   │   ├── theme/           # token visual
+│   │   └── widgets/         # komponen dasar
 │   └── features/<nama_fitur>/
-│       ├── model/           # model UI dan enum state
-│       ├── view_model/      # satu ViewModel per fitur
-│       ├── view/            # layar dan widget fitur
-│       └── sample/          # data contoh untuk pratinjau
-├── test/                    # pengujian unit dan widget, mengikuti susunan lib/
-└── android/                 # proyek Android (min API 26)
-docs/
-├── COLOR_PALETTE.md         # palet warna dan aturan kontras
-├── ui-flow.md               # dokumentasi alur UI katalog, kasir, dan pembayaran
-└── a11y.md                  # audit aksesibilitas, skala teks 1.3, dan target sentuh
+│       ├── model/
+│       ├── view_model/
+│       ├── view/
+│       └── sample/          # data pratinjau, bukan data usaha
+├── test/                    # pengujian unit, repository, widget, dan alur
+└── android/                 # Android min API 26
+firebase/                    # aturan dan indeks; deploy bukan bukti akses aman
+docs/                        # panduan fitur, Firebase, dan aksesibilitas
 ```
 
-## Menjalankan aplikasi
+## Menjalankan dan memvalidasi
 
-### Pratinjau Android dari VS Code
-
-1. Pasang extension rekomendasi **Dart** dan **Flutter** saat VS Code menawarkan
-   rekomendasi workspace.
-2. Buka Command Palette, jalankan `Flutter: Launch Emulator`, lalu pilih salah satu
-   emulator Android.
-3. Pilih konfigurasi **RyanGunshop — Android Preview** pada panel Run and Debug,
-   kemudian tekan `F5`.
-4. Gunakan hot reload dan `Flutter: Open DevTools` untuk membuka Widget Inspector di
-   samping editor.
-
-Konfigurasi berada di `.vscode/extensions.json` dan `.vscode/launch.json`. Pratinjau web
-tidak dipakai untuk memvalidasi UI Android.
-
-### Terminal
+Dari root proyek:
 
 ```bash
 cd mobile
@@ -90,130 +89,87 @@ flutter test
 flutter run
 ```
 
-Jika mengubah tabel Drift, jalankan `dart run build_runner build`, lalu commit berkas
-`app_database.g.dart` bersama perubahan tabel.
+Untuk regenerasi tabel Drift: `dart run build_runner build` dari `mobile/`.
+Sertakan `app_database.g.dart` bersama perubahan skema/migrasi dalam PR.
 
-### Pratinjau cepat di Chrome
+VS Code: pasang extension Dart/Flutter, pilih emulator/perangkat, lalu konfigurasi
+**RyanGunshop — Android Preview** di Run and Debug dan tekan `F5`.
+Konfigurasi workspace ada di `.vscode/`. Validasi Android memakai emulator atau
+perangkat; `flutter run -d chrome` hanya untuk inspeksi susunan layar.
 
-Untuk melihat susunan layar tanpa membangun ke perangkat:
+### Build Android dengan konfigurasi privat
 
-```bash
-cd mobile
-flutter run -d chrome
+Berkas `.env` privat disediakan pengelola di root proyek. Jangan membaca,
+menyalin, menampilkan, atau commit isinya untuk dokumentasi. Build lokal tanpa
+konfigurasi layanan tetap tersedia lewat `flutter build apk --debug`.
+
+Dari `mobile/`, perintah `sh` yang dipakai pada build terakhir:
+
+```sh
+JAVA_TOOL_OPTIONS=-Dorg.gradle.project.kotlin.incremental=false flutter build apk --debug --dart-define-from-file=../.env
 ```
 
-Gunakan mode perangkat di DevTools (`Ctrl+Shift+M`) dan pilih lebar 360–430 dp, karena
-antarmuka dirancang untuk layar ponsel.
+Untuk PowerShell, assignment environment terpisah:
 
-Pratinjau web hanya untuk melihat susunan layar. Font yang dipakai adalah font sistem
-komputer, bukan font Android, dan perilaku gesture berbeda. Validasi tetap memakai
-emulator atau perangkat Android.
-
-### Navigasi Fitur Terintegrasi
-
-Seluruh fitur antarmuka kini telah tersambung di dalam kerangka aplikasi utama (`lib/main.dart`):
-
-1. **Beranda (Dashboard POS):** Menampilkan Hero Omzet harian dinamis, rata-rata transaksi, cetak laporan harian, 4 modul bento Aksi Cepat (`Pindai Barcode`, `Buka Kasir`, `Stok`, `Riwayat Nota`), dan riwayat aktivitas transaksi terkini dengan placeholder gambar produk.
-2. **Katalog & Formulir:** Cari dan filter stok menipis pada tab Produk, serta tambah/edit produk dengan validasi barcode dan nomor.
-3. **Pemindai Barcode:** Akses cepat pemindai dari Beranda atau tab Kasir; mendukung simulasi deteksi kamera dan pencarian manual.
-4. **Kasir & Pembayaran:** Tab Kasir menyediakan rincian pesanan dengan penanda SKU, stepper kuantitas, opsi diskon/voucher, dan sheet pembayaran tunai (dengan nominal cepat uang pas & kembalian instan) atau QRIS simulasi lengkap. Transaksi lunas otomatis tersimpan ke sesi lokal.
-5. **Pengaturan & Laporan:** Ganti peran pengguna (Pemilik / Kasir) dan lihat ringkasan laporan transaksi serta analitik penjualan.
-6. **Asisten AI (IyanBoT):** Obrolan asisten toko pintar untuk tanya stok dan operasional warung.
-
-### Panduan Pengujian Layar Kecil (360 dp)
-
-Sesuai `DESIGN.md` dan `docs/a11y.md`, seluruh antarmuka diuji pada perangkat layar kecil:
-
-1. Di emulator Android atau perangkat fisik beresolusi 360×640 dp / 360×800 dp:
-   - Atur pengaturan ukuran tampilan (*Display size*) ke ukuran terkecil atau standar.
-   - Atur ukuran font (*Font size*) ke 130% (Text Scale 1.3×).
-2. Periksa bahwa:
-   - Tidak ada pesan peringatan *overflow* kuning-hitam di seluruh layar.
-   - Tombol tindakan utama (`PrimaryAction`, tombol bayar, stepper keranjang) tetap mudah ditekan dengan target sentuh ≥ 48 dp.
-   - Form produk dan sheet pembayaran dapat digulir penuh saat keyboard virtual muncul.
-
-### Catatan Rilis Internal (v0.6.0-ui, sebelum fondasi backend)
-
-- **Cakupan:** 100% implementasi antarmuka dan interaksi UI (Fase 0 hingga Fase 5), redesain Beranda POS kasir, aset ikon 3D seragam (`01` s/d `10` dan logo resmi), serta alur kasir hingga simpan nota ke sesi lokal.
-- **Integritas Pengujian:** Seluruh 90 automated widget & flow tests lulus (`flutter test`), bebas error analyzer (`flutter analyze`).
-- **Prinsip Kejujuran Data:** Seluruh status stok, pembayaran QRIS, dan transaksi ditandai dengan badge contoh/simulasi (`SampleBadge`) dan belum mencatat mutasi data riil ke backend.
-- **Roadmap Produksi:** Rencana teknis pengembangan menuju produksi (Drift/SQLite, scanner kamera, thermal printer, PIN) tercatat di `PROGRESS.md`.
-
-## Tahap berikutnya
-
-Bagian ini mencatat pekerjaan yang belum selesai setelah fondasi lokal. Status terkini
-ada di `PROGRESS.md`.
-
-### Lapisan data dan sinkronisasi
-
-- SQLite/Drift sudah dipakai untuk produk dan transaksi tunai lokal; sinkronisasi
-  Firestore masih tahap berikutnya.
-- Outbox untuk perubahan produk dan tata letak, beserta penanganan konflik.
-- Rencana restok dihitung lokal dari rata-rata penjualan 28 hari, lead time pemasok,
-  stok pengaman, dan target persediaan tujuh hari setelah barang tiba.
-- Peran pengguna ditentukan dari klaim akun, bukan dari pilihan di halaman pengaturan.
-
-### Pembayaran QRIS
-
-QRIS dinamis memerlukan akun merchant dan API payment gateway resmi. Rahasia, pembuatan
-charge, signature, serta penerimaan webhook tidak boleh berada di aplikasi. Transaksi
-QRIS baru dianggap berhasil setelah webhook provider tervalidasi.
-
-### `backend-agent`
-
-Node/TypeScript untuk WhatsApp, Ollama, dan Firestore. Agent tidak menerima path
-collection atau `storeId` dari LLM; seluruh angka bisnis berasal dari tool registry yang
-membaca Firestore.
-
-```bash
-cd backend-agent
-npm install
-npm run check
-npm run test:firebase
+```powershell
+$env:JAVA_TOOL_OPTIONS = '-Dorg.gradle.project.kotlin.incremental=false'
+flutter build apk --debug --dart-define-from-file=../.env
 ```
 
-Salin `.env.example` menjadi `.env`, lalu isi kredensial WhatsApp, Ollama, dan Firebase.
-Berkas `.env` tidak boleh masuk repository.
+APK: `mobile/build/app/outputs/flutter-apk/app-debug.apk`. Opsi Kotlin tersebut
+merupakan workaround build debug yang dipakai, bukan perubahan konfigurasi sumber.
+`--dart-define` tidak menyembunyikan secret dalam APK. Jangan memasukkan service
+account, private key, atau secret pembayaran. Groq/Firebase memerlukan jaringan,
+dapat menimbulkan biaya, dan dapat mengirim data toko ke penyedia.
 
-### Foto koreksi privat
+### Pemeriksaan perangkat
 
-Foto koreksi hanya diambil setelah consent eksplisit. Aplikasi menghapus EXIF/GPS,
-membatasi sisi terpanjang menjadi 1280 px, menyimpannya di direktori privat, lalu
-mengantrekan upload tenant-scoped saat perangkat kembali online. Penolakan consent atau
-kegagalan foto tidak membatalkan produk yang sudah dipilih kasir.
+- Lebar 360 dp dan text scale 1.3: gulir kedua Beranda, semua Pintasan Menu,
+  Produk, formulir, dan checkout; periksa overflow serta target sentuh ≥48 dp.
+- Uji offline: buat produk sebagai pemilik, cari/pindai, bayar tunai, tutup/buka
+  aplikasi; produk, draft, nota, dan stok harus konsisten.
+- Uji izin kamera ditolak, barcode asing, fallback manual, dan pelepasan kamera
+  selama checkout. Ganti peran sebelum simpan untuk memeriksa ulang izin.
+- Bagikan laporan PDF/XLSX hari yang benar; periksa isi, bukan hanya sheet berbagi.
+- Cetak label ukuran aktual 100%, tanpa penyesuaian halaman, lalu pindai hasil.
+  Kode RG/Code128 bukan EAN/GS1; barcode kemasan yang ada tidak diganti.
+- Uji outbox dan dokumen cloud dengan prosedur `instruksi.md`; jangan menyamakan
+  status SDK siap atau antrean kosong dengan semua produk sudah terunggah.
 
-Sebelum mengaktifkannya di produksi, aktifkan Firebase Storage pada paket Blaze, deploy
-rules, lalu pasang lifecycle penghapusan 30 hari pada bucket yang benar:
+## Bukti validasi terakhir
 
-```bash
-firebase deploy --only storage
-gcloud storage buckets update gs://BUCKET_NAME \
-  --lifecycle-file=firebase/storage.lifecycle.json
-```
+Hasil terakhir yang dilaporkan, bukan eksekusi ulang saat penyuntingan dokumen:
 
-Gunakan Firebase Console untuk memantau request App Check sebelum menyalakan
-enforcement Storage.
+- `flutter analyze --no-pub`: bersih.
+- `flutter test --no-pub --reporter expanded`: **212/212 lulus**.
+- 15 November 2026: APK debug dibangun sekitar **51 detik**, dipasang memakai
+  `adb install -r`, dan diluncurkan pada Samsung **SM_A366B**, perangkat
+  `RRGYC07G09Z`. Pemasangan ulang mempertahankan data, bukan uninstall/reset.
+- UI fisik menyeluruh, alur pemindaian penuh, cetak label/struk, live cloud,
+  serta live Groq **belum terverifikasi**. Peluncuran APK tidak membuktikan
+  semua alur tersebut lulus.
 
-### Klasifikasi produk di perangkat
+## Riwayat dan tahap berikutnya
 
-1. Tambahkan model float32 `[1,H,W,3]` ke
-   `mobile/assets/models/product_classifier.tflite`.
-2. Isi `mobile/assets/models/labels.txt`, satu label per baris.
-3. Daftarkan aset model di `mobile/pubspec.yaml`.
-4. Kalibrasi normalisasi input dan confidence threshold pada perangkat target.
+Rilis historis `v0.6.0-ui` menyelesaikan tahap UI dengan 90 test dan data contoh.
+Fondasi lokal, kamera nyata, laporan, analitik pemilik, label, Groq, serta outbox
+kemudian ditambahkan. Klaim data sesi/contoh pada rilis lama bukan kondisi POS
+Android sekarang; riwayat rinci tetap di `PROGRESS.md`.
 
-Classifier dibuat lazy sehingga aplikasi dasar tetap dapat dibuka tanpa model.
+Belum selesai atau belum terverifikasi untuk produksi:
 
-## Prinsip data
+- Login/PIN, identitas tepercaya, claim/keanggotaan toko, serta pengujian isolasi
+  tenant dan aturan Firestore. Pilihan peran di Pengaturan bukan pengaman.
+- Bukti unggah cloud nyata, backfill produk lama, pemulihan perangkat baru,
+  strategi konflik, dan sinkronisasi latar belakang Android bila dibutuhkan.
+- QRIS resmi: charge dan secret di server, signature/webhook tervalidasi sebelum
+  pembayaran dinyatakan berhasil.
+- Cetak fisik, snapshot modal untuk laba historis, serta rencana restok berbasis
+  penjualan, lead time, stok pengaman, dan target persediaan.
+- Foto koreksi privat dengan consent, penghapusan EXIF/GPS, retensi dan akses
+  tenant-scoped yang diuji; model TFLite beserta kalibrasi perangkat.
+- WhatsApp/Ollama `backend-agent` sebagai pengembangan terpisah, bukan langkah
+  instalasi yang diperlukan untuk POS lokal.
 
-Prinsip berikut berlaku saat lapisan data dikerjakan, dan belum diterapkan pada tahap UI.
-
-- Nominal memakai `int` rupiah, bukan floating point. Pemformatannya sudah tersedia di
-  `mobile/lib/core/format/rupiah.dart`.
-- Checkout, item snapshot, dan pengurangan stok berada dalam satu transaksi SQLite.
-- Password tidak disimpan aplikasi; autentikasi memakai Firebase Authentication.
-- Foto koreksi tidak dapat dibaca kembali oleh client; akses dataset hanya melalui
-  backend Admin SDK yang diaudit, dan objek otomatis dihapus setelah 30 hari.
-
-Dokumen keputusan dashboard ada di [PRODUCT.md](PRODUCT.md) dan
-[DESIGN.md](DESIGN.md).
+Dependensi/layanan baru perlu persetujuan dan PR. Pertahankan kepemilikan berkas,
+review lintas anggota, serta larangan commit rahasia sesuai `AGENTS.md`/`TEAM.md`.

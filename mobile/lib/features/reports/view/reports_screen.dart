@@ -8,7 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/brand_spinner.dart';
-import '../../../core/widgets/sample_badge.dart';
+import '../../../core/theme/app_radius.dart';
 import '../model/daily_report_export.dart';
 import '../model/report_scenario.dart';
 import '../sample/reports_sample.dart';
@@ -113,6 +113,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
     final day = await showDatePicker(
       context: context,
       initialDate: _model.selectedDay,
+      initialEntryMode:
+          MediaQuery.sizeOf(context).width >= AppSpacing.minTouchTarget * 16
+          ? DatePickerEntryMode.input
+          : DatePickerEntryMode.calendar,
       firstDate: DateTime(1970),
       lastDate: DateTime(9999, 12, 31),
       helpText: 'Pilih tanggal laporan',
@@ -138,6 +142,21 @@ class _ReportsScreenState extends State<ReportsScreen> {
     child: Text(label),
   );
 
+  Widget _exportButton(String label, IconData icon, VoidCallback? action) =>
+      TextButton.icon(
+        style: TextButton.styleFrom(
+          backgroundColor: AppColors.primarySubtle,
+          minimumSize: const Size(
+            AppSpacing.minTouchTarget,
+            AppSpacing.minTouchTarget,
+          ),
+          padding: const EdgeInsets.all(AppSpacing.sm),
+        ),
+        onPressed: _exporting ? null : action,
+        icon: Icon(icon),
+        label: Text(label),
+      );
+
   Widget _section(String title, List<Widget> children) => Padding(
     padding: const EdgeInsets.only(top: AppSpacing.lg),
     child: Column(
@@ -152,7 +171,20 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   Widget _amount(String label, String value) => Padding(
     padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
-    child: Wrap(spacing: AppSpacing.sm, children: [Text(label), Text(value)]),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: Text(label)),
+        const SizedBox(width: AppSpacing.sm),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
+      ],
+    ),
   );
 
   @override
@@ -161,82 +193,157 @@ class _ReportsScreenState extends State<ReportsScreen> {
     body: SafeArea(
       child: ListenableBuilder(
         listenable: _model,
-        builder: (context, _) => ListView(
-          padding: const EdgeInsets.all(AppSpacing.screen),
-          children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: SampleBadge(
-                label: _model.isLocal
-                    ? 'Tersimpan di perangkat'
-                    : 'Pratinjau data contoh',
-              ),
+        builder: (context, _) => Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: AppSpacing.minTouchTarget * 16,
             ),
-            const SizedBox(height: AppSpacing.sm),
-            const Text(
-              'Cakupan: transaksi pada perangkat ini saja. Bisa dibuka offline. '
-              'Tanggal dan jam mengikuti waktu lokal perangkat; bukan gabungan semua perangkat.',
-            ),
-            _action('Tanggal: ${_date(_model.selectedDay)}', _pickDay),
-            Wrap(
-              spacing: AppSpacing.xs,
+            child: ListView(
+              padding: const EdgeInsets.all(AppSpacing.screen),
               children: [
-                _action('Hari ini', () {
-                  setState(() => _showAll = false);
-                  _model.selectDay(DateTime.now());
-                }),
-                _action('Muat ulang', () => _model.load()),
+                AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Tanggal laporan',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(
+                            AppSpacing.minTouchTarget,
+                            AppSpacing.minTouchTarget,
+                          ),
+                          padding: const EdgeInsets.all(AppSpacing.sm),
+                        ),
+                        onPressed: _exporting ? null : _pickDay,
+                        icon: const Icon(Icons.calendar_month_outlined),
+                        label: Text('Tanggal: ${_date(_model.selectedDay)}'),
+                      ),
+                      Row(
+                        children: [
+                          _action('Hari ini', () {
+                            setState(() => _showAll = false);
+                            _model.selectDay(DateTime.now());
+                          }),
+                          const Spacer(),
+                          IconButton(
+                            tooltip: 'Muat ulang',
+                            onPressed: _exporting ? null : () => _model.load(),
+                            icon: const Icon(Icons.refresh),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                if (!_model.isLocal) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'Pratinjau data contoh · waktu lokal perangkat',
+                    style: Theme.of(context).textTheme.bodySmall
+                        ?.copyWith(color: AppColors.muted),
+                  ),
+                ],
+                if (!_model.isLocal)
+                  Wrap(
+                    spacing: AppSpacing.xs,
+                    children: [
+                      for (final scenario in ReportScenario.values)
+                        _action(
+                          scenario.label,
+                          () => _model.load(scenario: scenario),
+                        ),
+                    ],
+                  ),
+                ..._body(),
+                if (_canReport && _model.isLocal)
+                  _section('Bagikan laporan', [
+                    AppCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Text(
+                            'PDF untuk ringkasan · Excel untuk rincian',
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Wrap(
+                            spacing: AppSpacing.xs,
+                            children: [
+                              _exportButton(
+                                'Bagikan PDF',
+                                Icons.picture_as_pdf_outlined,
+                                _model.status == ReportsStatus.ready
+                                    ? () => _export(pdf: true)
+                                    : null,
+                              ),
+                              _exportButton(
+                                'Bagikan Excel',
+                                Icons.table_chart_outlined,
+                                _model.status == ReportsStatus.ready
+                                    ? () => _export(pdf: false)
+                                    : null,
+                              ),
+                            ],
+                          ),
+
+                          if (_exporting)
+                            const BrandSpinner(label: 'Menyiapkan ekspor…'),
+                          if (_exportError != null)
+                            Semantics(
+                              liveRegion: true,
+                              child: Column(
+                                children: [
+                                  const Icon(
+                                    Icons.error_outline,
+                                    color: AppColors.error,
+                                  ),
+                                  Text(
+                                    _exportError!,
+                                    semanticsLabel: _exportError,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          const SizedBox(height: AppSpacing.sm),
+                          const Text(
+                            'Pilih aplikasi atau lokasi penyimpanan di menu berbagi Android. Tidak otomatis tersimpan ke Downloads.',
+                          ),
+                          const ExpansionTile(
+                            tilePadding: EdgeInsets.zero,
+                            title: Text('Isi berkas dan cara menyimpan'),
+                            children: [
+                              Text(
+                                'PDF: ringkasan dan semua produk. Excel (.xlsx): lembar Ringkasan, '
+                                'Transaksi (satu baris per nota), dan Barang Terjual '
+                                '(kotor sebelum diskon nota). '
+                                'Pilih tujuan berbagi atau penyimpanan yang tersedia di Android. '
+                                'Berkas belum tersimpan permanen sebelum disimpan lewat tujuan tersebut.',
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ]),
+                const SizedBox(height: AppSpacing.md),
+                const ExpansionTile(
+                  title: Text('Tentang data laporan'),
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.all(AppSpacing.md),
+                      child: Text(
+                        'Transaksi pada perangkat ini saja, bukan gabungan semua perangkat. Tanggal dan jam mengikuti waktu lokal perangkat. Data dapat dibuka offline.',
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
-            if (!_model.isLocal)
-              Wrap(
-                spacing: AppSpacing.xs,
-                children: [
-                  for (final scenario in ReportScenario.values)
-                    _action(
-                      scenario.label,
-                      () => _model.load(scenario: scenario),
-                    ),
-                ],
-              ),
-            if (_canReport && _model.isLocal) ...[
-              Wrap(
-                spacing: AppSpacing.xs,
-                children: [
-                  _action(
-                    'Bagikan PDF',
-                    _model.status == ReportsStatus.ready
-                        ? () => _export(pdf: true)
-                        : null,
-                  ),
-                  _action(
-                    'Bagikan Excel',
-                    _model.status == ReportsStatus.ready
-                        ? () => _export(pdf: false)
-                        : null,
-                  ),
-                ],
-              ),
-
-              if (_exporting) const BrandSpinner(label: 'Menyiapkan ekspor…'),
-              if (_exportError != null) ...[
-                const Icon(Icons.error_outline, color: AppColors.error),
-                Text(_exportError!, semanticsLabel: _exportError),
-              ],
-            ],
-            ..._body(),
-            if (_canReport && _model.isLocal)
-              const Padding(
-                padding: EdgeInsets.only(top: AppSpacing.lg),
-                child: Text(
-                  'PDF: ringkasan dan semua produk. Excel (.xlsx): lembar Ringkasan, '
-                  'Transaksi (satu baris per nota), dan Barang Terjual '
-                  '(kotor sebelum diskon nota). '
-                  'Pilih tujuan berbagi atau penyimpanan yang tersedia di Android. '
-                  'Berkas belum tersimpan permanen sebelum disimpan lewat tujuan tersebut.',
-                ),
-              ),
-          ],
+          ),
         ),
       ),
     ),
@@ -244,24 +351,39 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   List<Widget> _body() {
     if (_model.status == ReportsStatus.loading) {
-      return [const BrandSpinner(label: ReportsSample.loadingLabel)];
+      return [
+        const Padding(
+          padding: EdgeInsets.only(top: AppSpacing.lg),
+          child: AppCard(
+            child: Padding(
+              padding: EdgeInsets.all(AppSpacing.lg),
+              child: BrandSpinner(label: ReportsSample.loadingLabel),
+            ),
+          ),
+        ),
+      ];
     }
     if (_model.status == ReportsStatus.failure) {
       return [
-        const Icon(Icons.error_outline, color: AppColors.error),
-        const Text(ReportsSample.errorTitle),
-        const Text(ReportsSample.errorDescription),
-        _action('Coba lagi', () => _model.load()),
+        _stateCard(
+          icon: Icons.error_outline,
+          title: ReportsSample.errorTitle,
+          description: ReportsSample.errorDescription,
+          action: 'Coba lagi',
+          onPressed: () => _model.load(),
+          error: true,
+        ),
       ];
     }
     if (!_model.hasRecords) {
       return [
-        const Icon(Icons.receipt_long_outlined, color: AppColors.muted),
-        const Text(ReportsSample.emptyTitle),
-        const Text(
-          'Tidak ada transaksi pada tanggal ini. Pilih tanggal lain atau kembali ke beranda.',
+        _stateCard(
+          icon: Icons.receipt_long_outlined,
+          title: ReportsSample.emptyTitle,
+          description: 'Tidak ada transaksi pada tanggal ini. Pilih tanggal lain untuk melihat penjualan.',
+          action: 'Pilih tanggal lain',
+          onPressed: _pickDay,
         ),
-        _action('Pilih tanggal lain', _pickDay),
         _action('Kembali ke beranda', () => Navigator.of(context).maybePop()),
       ];
     }
@@ -269,14 +391,29 @@ class _ReportsScreenState extends State<ReportsScreen> {
     return [
       if (_canReport)
         _section('Ringkasan harian', [
-          AppCard(
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: const BoxDecoration(
+              color: AppColors.primarySubtle,
+              borderRadius: AppRadius.panelBorder,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _amount('Penjualan kotor', formatRupiah(_model.grossAmount)),
-                _amount('Diskon nota', formatRupiah(_model.discountAmount)),
-                _amount('Penjualan bersih', formatRupiah(_model.totalAmount)),
-                Text('${_model.records.length} transaksi'),
+                const Text('Penjualan bersih'),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  formatRupiah(_model.totalAmount),
+                  style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                    color: AppColors.primaryDark,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  '${_model.records.length} transaksi',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
                 _amount(
                   'Rata-rata per nota',
                   formatRupiah(_model.averageAmount.round()),
@@ -284,37 +421,64 @@ class _ReportsScreenState extends State<ReportsScreen> {
               ],
             ),
           ),
+          const SizedBox(height: AppSpacing.sm),
+          AppCard(
+            child: Column(
+              children: [
+                _amount('Penjualan kotor', formatRupiah(_model.grossAmount)),
+                _amount('Diskon nota', formatRupiah(_model.discountAmount)),
+              ],
+            ),
+          ),
         ]),
       if (_canReport && _model.isLocal) ...[
         _section('Metode pembayaran tercatat', [
-          for (final entry in _model.paymentBreakdown.entries)
-            _amount(
-              '${reportPaymentLabel(entry.key)} · ${entry.value.count} nota',
-              formatRupiah(entry.value.total),
+          AppCard(
+            child: Column(
+              children: [
+                for (final entry in _model.paymentBreakdown.entries)
+                  _amount(
+                    '${reportPaymentLabel(entry.key)} · ${entry.value.count} nota',
+                    formatRupiah(entry.value.total),
+                  ),
+              ],
             ),
+          ),
         ]),
         _section('Produk terlaris', [
           const Text(
             'Urutan jumlah terjual. Nilai kotor sebelum diskon nota; '
             'nama berasal dari snapshot penjualan terbaru.',
           ),
-          if (products.isEmpty) const Text('Rincian barang tidak tersimpan.'),
-          for (final product in (_showAll ? products : products.take(5)))
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product.name,
-                    style: Theme.of(context).textTheme.titleMedium,
+          const SizedBox(height: AppSpacing.sm),
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (products.isEmpty)
+                  const Text('Rincian barang tidak tersimpan.'),
+                for (final product in (_showAll ? products : products.take(5)))
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.xs,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          product.name,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        Text(
+                          '${product.quantity} barang · ${formatRupiah(product.gross)}',
+                        ),
+                        const Divider(),
+                      ],
+                    ),
                   ),
-                  Text(
-                    '${product.quantity} barang · ${formatRupiah(product.gross)}',
-                  ),
-                ],
-              ),
+              ],
             ),
+          ),
           if (products.length > 5)
             _action(
               _showAll ? 'Tampilkan 5 teratas' : 'Lihat semua produk',
@@ -339,7 +503,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   Text(
                     '${_model.records[index].timeLabel} · ${_model.isLocal ? reportPaymentLabel(_model.dailyRecords[index].paymentMethod) : _model.records[index].paymentMethod.label}',
                   ),
-                  Text(formatRupiah(_model.records[index].total)),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    formatRupiah(_model.records[index].total),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: AppColors.primaryDark,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   if (_model.isLocal)
                     _action(
                       'Lihat nota',
@@ -352,6 +523,51 @@ class _ReportsScreenState extends State<ReportsScreen> {
       ]),
     ];
   }
+
+  Widget _stateCard({
+    required IconData icon,
+    required String title,
+    required String description,
+    required String action,
+    required VoidCallback onPressed,
+    bool error = false,
+  }) => Padding(
+    padding: const EdgeInsets.only(top: AppSpacing.lg),
+    child: AppCard(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Icon(
+              icon,
+              size: AppSpacing.minTouchTarget,
+              color: error ? AppColors.error : AppColors.primary,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(description, textAlign: TextAlign.center),
+            const SizedBox(height: AppSpacing.lg),
+            FilledButton(
+              onPressed: _exporting ? null : onPressed,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(
+                  AppSpacing.minTouchTarget,
+                  AppSpacing.minTouchTarget,
+                ),
+              ),
+              child: Text(action),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 
   void _openReceipt(db.TransactionRecord record) {
     Navigator.of(context).push(
