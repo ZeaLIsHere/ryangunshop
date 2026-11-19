@@ -180,6 +180,7 @@ class CloudReadThrough extends ChangeNotifier {
             revision != database.localWriteRevision) {
           throw StateError('Penulisan lokal sedang berlangsung; coba lagi');
         }
+        final layoutPending = pending.contains('layout/main');
         for (final id in deleted) {
           if (!pending.contains('product/$id')) {
             await database.deleteProduct(id);
@@ -188,6 +189,11 @@ class CloudReadThrough extends ChangeNotifier {
         // Tidak ada penghapusan berdasarkan absennya dokumen dari snapshot.
         for (final product in products.values) {
           if (pending.contains('product/${product.id}')) continue;
+          final local = layoutPending
+              ? await (database.select(
+                  database.products,
+                )..where((p) => p.id.equals(product.id))).getSingleOrNull()
+              : null;
           await database.saveProduct(
             ProductsCompanion.insert(
               id: product.id,
@@ -198,8 +204,10 @@ class CloudReadThrough extends ChangeNotifier {
               stock: product.stock,
               category: Value(product.category),
               unit: Value(product.unit),
-              fixtureId: Value(product.fixtureId),
-              locationLabel: Value(product.locationLabel),
+              fixtureId: Value(local?.fixtureId ?? product.fixtureId),
+              locationLabel: Value(
+                local?.locationLabel ?? product.locationLabel,
+              ),
               lowStockThreshold: Value(product.lowStockThreshold),
               updatedAt: dates[product.id]!,
             ),

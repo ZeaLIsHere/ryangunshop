@@ -34,7 +34,14 @@ class DriftSyncQueue implements SyncQueue {
   Future<List<OutboxEntry>> pending({int limit = 20}) async {
     final rows =
         await (database.select(database.syncOutboxEntries)
-              ..orderBy([(row) => OrderingTerm.asc(row.id)])
+              ..orderBy([
+                (_) => OrderingTerm(
+                  expression: const CustomExpression<int>(
+                    "CASE WHEN entity = 'layout' THEN 1 ELSE 0 END",
+                  ),
+                ),
+                (row) => OrderingTerm.asc(row.id),
+              ])
               ..limit(limit))
             .get();
     return rows.map(_toEntry).toList();

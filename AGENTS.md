@@ -10,6 +10,8 @@ Berkas ini melengkapi, bukan menggantikan:
 - `README.md` — struktur proyek dan cara menjalankan.
 - `TEAM.md` — siapa mengerjakan apa dan siapa pemilik berkas mana.
 - `PROGRESS.md` — status pengerjaan terkini, peta fitur, dan langkah berikutnya.
+- [docs/monitor-plan.md](docs/monitor-plan.md) — rencana dan status tahapan Monitor;
+  implementasi fondasi lokal sudah disetujui pengguna.
 
 ## 1. Ringkasan proyek
 
@@ -18,18 +20,23 @@ Flutter/Dart. Inti pengalamannya adalah efisiensi kasir dan pencatatan transaksi
 Beranda kasir mempertahankan Hero Omzet harian, laporan, empat bento Aksi Cepat,
 dan nota terkini. Beranda pemilik menyediakan analitik Hari ini/7 hari/30 hari,
 perhatian stok, produk terlaris, dan aksi kelola. Keduanya memakai komponen Hero,
-aksi, nota, serta Pintasan Menu bersama. Transaksi tunai, produk, stok, dan draft
-keranjang tersimpan di SQLite/Drift; QRIS nyata belum terverifikasi.
+aksi, nota, serta Pintasan Menu bersama. Pembacaan native memakai cloud-first
+melalui `CloudReadThrough`; SQLite/Drift tetap menyimpan data lokal, draft
+keranjang, transaksi tunai, dan outbox untuk operasi offline. Web hanya pratinjau
+lokal; QRIS nyata belum terverifikasi.
 
 Karakter produk: praktis, tenang, jelas, dapat dipercaya. Violet modern (`#7C3AED`)
 menjadi identitas tindakan dan navigasi. Antarmuka harus dapat dipakai tanpa pelatihan
 teknis pada perangkat kelas bawah.
 
-## 2. Cakupan berjalan — 15 November 2026
+## 2. Cakupan berjalan — 19 November 2026
 
 Tahap UI-only sudah dilewati. Cakupan yang disetujui pengguna mencakup:
 
-- SQLite/Drift offline-first, migrasi, repository, dan pengujian lokal.
+- Native cloud-first melalui `CloudReadThrough`: hasil server digunakan ulang
+  15 detik, backoff kegagalan 30 detik, timeout 8 detik dengan fallback cache
+  SQLite/Drift. Perubahan tertunda dilindungi; revisi data sesi memperbarui UI.
+  Migrasi, repository, transaksi lokal, dan pengujian tetap tersedia.
 - Kamera barcode nyata melalui `mobile_scanner`, fallback manual, kelola produk
   pemilik, generator kode internal, dan label Code128.
 - Analitik repository nyata, laporan harian PDF/XLSX dengan berbagi Android.
@@ -39,6 +46,19 @@ Tahap UI-only sudah dilewati. Cakupan yang disetujui pengguna mencakup:
   saat startup, perubahan sesi, serta tiap 15 detik selama aplikasi berjalan.
   Bukan layanan sinkronisasi latar belakang Android. Produk lama tidak otomatis
   di-backfill; SDK siap bukan bukti unggah cloud berhasil.
+- Impor Firestore proyek `iyangunshop`, toko `toko-utama`, terverifikasi:
+  90 dokumen dibuat dan terbaca ulang, terdiri dari 24 produk dan 66 nota tunai,
+  394 unit, Rp3.035.800. Rentang 10–24 November 2026 inklusif: 15 hari,
+  3–6 nota/hari. Data presentasi tanpa label visual; asalnya tetap metadata internal.
+- Monitor mulai dibangun: model, tiga template, validasi grid/JSON, repository
+  layout lokal dan migrasi SQLite 6→7 tersedia. Setup/editor ortografik lokal
+  serta tombol owner aktif. Penempatan massal, drag Edit, isometrik dan alert stok
+  tersedia. Jalur sync layout+lokasi bertoken sudah ditulis, belum terverifikasi live. Target akhir tombol Beranda pemilik
+  membuka halaman isometrik 2.5D ringan dari atas, Flutter native tanpa engine
+  atau dependensi baru; bukan tab baru dan tidak mengubah navigasi yang ada.
+  Detail dan batas cakupan mengikuti [rencana Monitor](docs/monitor-plan.md).
+  `floor_plan` tetap arsip: kandidat penggunaan ulang wajib diaudit, bukan
+  mengaktifkan kembali layar dengan data contoh.
 - IyanBoT/Groq dengan tool baca dan draft yang perlu konfirmasi pengguna sebelum
   transaksi atau perubahan produk disimpan. Produk hanya dapat dikelola pemilik.
   Uji API langsung belum terverifikasi dan dijeda atas permintaan pengguna.
@@ -47,7 +67,20 @@ Belum menjadi jaminan produksi: autentikasi/login/PIN, isolasi tenant yang
 terverifikasi, pemulihan cloud, pembayaran QRIS nyata, cetak fisik, foto koreksi
 privat, model TFLite, dan rencana restok. `backend-agent` bukan syarat POS lokal.
 Pergantian pemilik/kasir di Pengaturan adalah mode aplikasi, bukan batas keamanan.
-Web memakai jalur pratinjau tanpa SQLite/sinkronisasi native.
+Web memakai jalur pratinjau lokal tanpa SQLite/sinkronisasi native.
+
+Akses baca tanpa autentikasi diketahui mengembalikan HTTP 200. Rules tidak
+diubah; pengguna menolak penambahan login/PIN/Anonymous Auth. Jangan menganggap
+impor berhasil sebagai bukti keamanan. Stok lintas perangkat masih
+last-write-wins, bukan atomik; tidak ada snapshot atomik lintas halaman/koleksi,
+dan pembacaan dibatasi 10.000 dokumen per koleksi.
+
+Basis kode terakhir `a85a159` sudah dipush. Validasi terakhir yang dilaporkan:
+analyzer bersih, 268 test Flutter dan 12 test Node impor lulus. APK cloud-first
++ Monitor berhasil dibangun, belum dipasang karena tidak ada Android tersambung.
+Render widget tersedia pada 360/1024 dp skala 1,3; visual Android dan unduh data
+cloud lewat aplikasi nyata belum terverifikasi.
+Pembaruan dokumentasi bukan eksekusi ulang validasi.
 
 Jangan membaca atau menyalin isi `.env`, kredensial, maupun konfigurasi privat
 untuk memperbarui dokumentasi. Jangan commit rahasia. `--dart-define` bukan
@@ -116,6 +149,7 @@ mobile/lib/
 | SyncPill | Penanda status offline, antre sinkronisasi, atau tersinkron |
 | QRIS | Pembayaran QR; statusnya `creating`, `awaitingPayment`, `paid`, `expired`, `failed` |
 | Denah (arsip) | Pustaka tata letak 2D dan panorama 360 yang diarsipkan dari antarmuka utama |
+| Monitor (rencana) | Pantau stok repository menurut lokasi utama produk pada tata letak isometrik 2.5D; bukan hitungan fisik per lokasi atau deteksi otomatis |
 
 ## 6. Aturan UI yang wajib dipatuhi
 

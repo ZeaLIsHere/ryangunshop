@@ -70,7 +70,8 @@ void main() {
       var stock = 10;
       var name = 'Nota awal';
       var calls = 0;
-      final old = DateTime.now().subtract(const Duration(hours: 1));
+      final now = DateTime.now();
+      final old = DateTime(now.year, now.month, now.day, 12);
       final cloud = CloudReadThrough(
         database: database,
         fetch: () async {

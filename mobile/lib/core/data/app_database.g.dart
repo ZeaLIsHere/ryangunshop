@@ -2814,6 +2814,268 @@ class SyncOutboxEntriesCompanion extends UpdateCompanion<SyncOutboxEntry> {
   }
 }
 
+class $MonitorLayoutsTable extends MonitorLayouts
+    with TableInfo<$MonitorLayoutsTable, MonitorLayoutRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MonitorLayoutsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _payloadMeta = const VerificationMeta(
+    'payload',
+  );
+  @override
+  late final GeneratedColumn<String> payload = GeneratedColumn<String>(
+    'payload',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _revisionMeta = const VerificationMeta(
+    'revision',
+  );
+  @override
+  late final GeneratedColumn<int> revision = GeneratedColumn<int>(
+    'revision',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, payload, revision];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'monitor_layouts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MonitorLayoutRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('payload')) {
+      context.handle(
+        _payloadMeta,
+        payload.isAcceptableOrUnknown(data['payload']!, _payloadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_payloadMeta);
+    }
+    if (data.containsKey('revision')) {
+      context.handle(
+        _revisionMeta,
+        revision.isAcceptableOrUnknown(data['revision']!, _revisionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_revisionMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  MonitorLayoutRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MonitorLayoutRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      payload: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload'],
+      )!,
+      revision: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}revision'],
+      )!,
+    );
+  }
+
+  @override
+  $MonitorLayoutsTable createAlias(String alias) {
+    return $MonitorLayoutsTable(attachedDatabase, alias);
+  }
+}
+
+class MonitorLayoutRow extends DataClass
+    implements Insertable<MonitorLayoutRow> {
+  final String id;
+  final String payload;
+  final int revision;
+  const MonitorLayoutRow({
+    required this.id,
+    required this.payload,
+    required this.revision,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['payload'] = Variable<String>(payload);
+    map['revision'] = Variable<int>(revision);
+    return map;
+  }
+
+  MonitorLayoutsCompanion toCompanion(bool nullToAbsent) {
+    return MonitorLayoutsCompanion(
+      id: Value(id),
+      payload: Value(payload),
+      revision: Value(revision),
+    );
+  }
+
+  factory MonitorLayoutRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MonitorLayoutRow(
+      id: serializer.fromJson<String>(json['id']),
+      payload: serializer.fromJson<String>(json['payload']),
+      revision: serializer.fromJson<int>(json['revision']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'payload': serializer.toJson<String>(payload),
+      'revision': serializer.toJson<int>(revision),
+    };
+  }
+
+  MonitorLayoutRow copyWith({String? id, String? payload, int? revision}) =>
+      MonitorLayoutRow(
+        id: id ?? this.id,
+        payload: payload ?? this.payload,
+        revision: revision ?? this.revision,
+      );
+  MonitorLayoutRow copyWithCompanion(MonitorLayoutsCompanion data) {
+    return MonitorLayoutRow(
+      id: data.id.present ? data.id.value : this.id,
+      payload: data.payload.present ? data.payload.value : this.payload,
+      revision: data.revision.present ? data.revision.value : this.revision,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MonitorLayoutRow(')
+          ..write('id: $id, ')
+          ..write('payload: $payload, ')
+          ..write('revision: $revision')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, payload, revision);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MonitorLayoutRow &&
+          other.id == this.id &&
+          other.payload == this.payload &&
+          other.revision == this.revision);
+}
+
+class MonitorLayoutsCompanion extends UpdateCompanion<MonitorLayoutRow> {
+  final Value<String> id;
+  final Value<String> payload;
+  final Value<int> revision;
+  final Value<int> rowid;
+  const MonitorLayoutsCompanion({
+    this.id = const Value.absent(),
+    this.payload = const Value.absent(),
+    this.revision = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MonitorLayoutsCompanion.insert({
+    required String id,
+    required String payload,
+    required int revision,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       payload = Value(payload),
+       revision = Value(revision);
+  static Insertable<MonitorLayoutRow> custom({
+    Expression<String>? id,
+    Expression<String>? payload,
+    Expression<int>? revision,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (payload != null) 'payload': payload,
+      if (revision != null) 'revision': revision,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MonitorLayoutsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? payload,
+    Value<int>? revision,
+    Value<int>? rowid,
+  }) {
+    return MonitorLayoutsCompanion(
+      id: id ?? this.id,
+      payload: payload ?? this.payload,
+      revision: revision ?? this.revision,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (payload.present) {
+      map['payload'] = Variable<String>(payload.value);
+    }
+    if (revision.present) {
+      map['revision'] = Variable<int>(revision.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MonitorLayoutsCompanion(')
+          ..write('id: $id, ')
+          ..write('payload: $payload, ')
+          ..write('revision: $revision, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2826,6 +3088,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CartDraftItemsTable cartDraftItems = $CartDraftItemsTable(this);
   late final $SyncOutboxEntriesTable syncOutboxEntries =
       $SyncOutboxEntriesTable(this);
+  late final $MonitorLayoutsTable monitorLayouts = $MonitorLayoutsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2837,6 +3100,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     cartDrafts,
     cartDraftItems,
     syncOutboxEntries,
+    monitorLayouts,
   ];
 }
 
@@ -4342,6 +4606,183 @@ typedef $$SyncOutboxEntriesTableProcessedTableManager =
       SyncOutboxEntry,
       PrefetchHooks Function()
     >;
+typedef $$MonitorLayoutsTableCreateCompanionBuilder =
+    MonitorLayoutsCompanion Function({
+      required String id,
+      required String payload,
+      required int revision,
+      Value<int> rowid,
+    });
+typedef $$MonitorLayoutsTableUpdateCompanionBuilder =
+    MonitorLayoutsCompanion Function({
+      Value<String> id,
+      Value<String> payload,
+      Value<int> revision,
+      Value<int> rowid,
+    });
+
+class $$MonitorLayoutsTableFilterComposer
+    extends Composer<_$AppDatabase, $MonitorLayoutsTable> {
+  $$MonitorLayoutsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get revision => $composableBuilder(
+    column: $table.revision,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MonitorLayoutsTableOrderingComposer
+    extends Composer<_$AppDatabase, $MonitorLayoutsTable> {
+  $$MonitorLayoutsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get revision => $composableBuilder(
+    column: $table.revision,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MonitorLayoutsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MonitorLayoutsTable> {
+  $$MonitorLayoutsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get payload =>
+      $composableBuilder(column: $table.payload, builder: (column) => column);
+
+  GeneratedColumn<int> get revision =>
+      $composableBuilder(column: $table.revision, builder: (column) => column);
+}
+
+class $$MonitorLayoutsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MonitorLayoutsTable,
+          MonitorLayoutRow,
+          $$MonitorLayoutsTableFilterComposer,
+          $$MonitorLayoutsTableOrderingComposer,
+          $$MonitorLayoutsTableAnnotationComposer,
+          $$MonitorLayoutsTableCreateCompanionBuilder,
+          $$MonitorLayoutsTableUpdateCompanionBuilder,
+          (
+            MonitorLayoutRow,
+            BaseReferences<
+              _$AppDatabase,
+              $MonitorLayoutsTable,
+              MonitorLayoutRow
+            >,
+          ),
+          MonitorLayoutRow,
+          PrefetchHooks Function()
+        > {
+  $$MonitorLayoutsTableTableManager(
+    _$AppDatabase db,
+    $MonitorLayoutsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MonitorLayoutsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MonitorLayoutsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MonitorLayoutsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> payload = const Value.absent(),
+                Value<int> revision = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MonitorLayoutsCompanion(
+                id: id,
+                payload: payload,
+                revision: revision,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String payload,
+                required int revision,
+                Value<int> rowid = const Value.absent(),
+              }) => MonitorLayoutsCompanion.insert(
+                id: id,
+                payload: payload,
+                revision: revision,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$MonitorLayoutsTable, MonitorLayoutRow>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $MonitorLayoutsTable,
+                    MonitorLayoutRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MonitorLayoutsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MonitorLayoutsTable,
+      MonitorLayoutRow,
+      $$MonitorLayoutsTableFilterComposer,
+      $$MonitorLayoutsTableOrderingComposer,
+      $$MonitorLayoutsTableAnnotationComposer,
+      $$MonitorLayoutsTableCreateCompanionBuilder,
+      $$MonitorLayoutsTableUpdateCompanionBuilder,
+      (
+        MonitorLayoutRow,
+        BaseReferences<_$AppDatabase, $MonitorLayoutsTable, MonitorLayoutRow>,
+      ),
+      MonitorLayoutRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -4358,4 +4799,6 @@ class $AppDatabaseManager {
       $$CartDraftItemsTableTableManager(_db, _db.cartDraftItems);
   $$SyncOutboxEntriesTableTableManager get syncOutboxEntries =>
       $$SyncOutboxEntriesTableTableManager(_db, _db.syncOutboxEntries);
+  $$MonitorLayoutsTableTableManager get monitorLayouts =>
+      $$MonitorLayoutsTableTableManager(_db, _db.monitorLayouts);
 }

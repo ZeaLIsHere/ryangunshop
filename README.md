@@ -1,13 +1,15 @@
 # RyanGunshop
 
 Aplikasi kasir dan pengelolaan warung Android berbasis Flutter/Dart,
-offline-first dengan SQLite/Drift. Mini-SRS menjadi sumber requirement,
+cloud-first pada native dengan cache dan operasi offline SQLite/Drift.
+Web hanya pratinjau lokal. Mini-SRS menjadi sumber requirement,
 bukan bukti seluruh fitur sudah berjalan di produksi.
 
-## Status — 15 November 2026
+## Status — 19 November 2026
 
 Branch integrasi: `feat/ui-shell-owner-barcode`. Tahap UI-only sudah dilewati;
-integrasi lintas fitur berikut disetujui pengguna.
+integrasi lintas fitur berikut disetujui pengguna. Basis kode terakhir dipush:
+`a85a159`. Fondasi Monitor mulai dibangun atas persetujuan pengguna; belum UI aktif.
 
 | Area | Kondisi berjalan |
 |---|---|
@@ -20,16 +22,30 @@ integrasi lintas fitur berikut disetujui pengguna.
 | Barcode | Kamera `mobile_scanner` nyata, fallback manual, generator kode internal RG dan label Code128 untuk pemilik |
 | Laporan | PDF/XLSX harian dari repository, berbagi Android; bukan penyimpanan otomatis ke Downloads |
 | IyanBoT | Groq dengan tool baca dan draft; transaksi/produk perlu konfirmasi sebelum disimpan; produk hanya pemilik; live API belum terverifikasi dan pengujian dijeda pengguna |
-| Firebase | Native bersakelar `FIREBASE_ENABLED`, outbox SQLite, pengurasan saat startup/perubahan sesi dan tiap 15 detik selama aplikasi berjalan |
+| Firebase | Native bersakelar `FIREBASE_ENABLED`; `CloudReadThrough` cloud-first, cache hasil server 15 detik, backoff 30 detik, timeout 8 detik lalu fallback cache; outbox saat startup/perubahan sesi dan tiap 15 detik selama aplikasi berjalan |
+| Konsistensi UI | Perubahan tertunda dilindungi dari cloud usang; revisi data sesi memperbarui dashboard, katalog, statistik, dan laporan |
+| Monitor | Isometrik native, editor drag, tiga template, penempatan massal dan alert stok tersedia lokal; jalur sync layout ditulis, belum diuji live |
 | QRIS | Jalur simulasi tersedia; pembayaran QRIS nyata belum terverifikasi |
 | Denah/360 | Arsip fitur, bukan navigasi utama |
 
 Laba historis belum dihitung karena snapshot harga modal transaksi belum tersedia.
 Produk terlaris menampilkan penjualan kotor sebelum diskon nota, bukan laba.
-Inisialisasi Firebase bukan bukti unggah cloud. Produk lama tidak otomatis masuk
-outbox; belum ada jaminan backfill, pemulihan cloud, atau isolasi tenant produksi.
-Timer sinkronisasi bukan layanan latar belakang Android. Web hanya pratinjau,
-tanpa SQLite/sinkronisasi native. POS lokal tidak memerlukan `backend-agent`.
+Impor Firestore `iyangunshop` / `stores/toko-utama` terverifikasi: 90 dokumen
+dibuat dan terbaca ulang, 24 produk, 66 nota tunai, 394 unit, Rp3.035.800.
+Rentang data presentasi 10–24 November 2026 inklusif (15 hari, 3–6 nota/hari),
+termasuk tanggal setelah hari verifikasi. Tanpa label visual demo; metadata asal
+internal. Ini bukan klaim penjualan aktual atau bukti unduh data lewat aplikasi.
+
+Produk lama tidak otomatis masuk outbox; belum ada jaminan backfill atau
+pemulihan perangkat baru. Stok lintas perangkat masih last-write-wins, bukan
+atomik. Tidak ada snapshot atomik lintas halaman/koleksi; batas 10.000 dokumen
+per koleksi. Full scan tetap memakai read Firestore sesuai jumlah dokumen.
+Timer sinkronisasi bukan layanan latar belakang Android. Web hanya pratinjau
+lokal tanpa SQLite/cloud-first native. POS lokal tidak memerlukan `backend-agent`.
+
+**Batas keamanan:** akses baca tanpa autentikasi diketahui menghasilkan HTTP 200.
+Rules tidak diubah; pengguna menolak tambahan login/PIN/Anonymous Auth. Impor
+berhasil bukan bukti isolasi tenant atau keamanan produksi.
 
 ## Tim dan dokumen
 
@@ -47,10 +63,32 @@ tanpa SQLite/sinkronisasi native. POS lokal tidak memerlukan `backend-agent`.
 | [TEAM.md](TEAM.md) | Kepemilikan, riwayat pembagian tugas, dan review |
 | [PROGRESS.md](PROGRESS.md) | Status tugas, bukti pengujian, dan riwayat pengerjaan |
 | [instruksi.md](instruksi.md) | Operasi dan verifikasi sinkronisasi Firebase |
+| [docs/monitor-plan.md](docs/monitor-plan.md) | Rencana dan status pembangunan Monitor |
 
 Panduan tambahan: `docs/firebase-setup.md`, `docs/firestore-schema.md`,
 `docs/COLOR_PALETTE.md`, `docs/ui-flow.md`, dan `docs/a11y.md`.
 Baca catatan historis sesuai tanggalnya; persiapan layanan bukan bukti produksi.
+
+## Monitor — UI lokal, validasi cloud/perangkat berikutnya
+
+Tombol Beranda pemilik membuka halaman isometrik 2.5D ringan dari atas, Flutter
+native tanpa engine/dependensi baru. Tanpa login atau tab baru; navigasi tetap.
+Penyiapan: pilih salah satu dari tiga template (rak dinding, dua baris,
+rak dinding + tengah), lalu tempatkan produk lewat filter massal dan konfirmasi
+manual. Produk tanpa lokasi boleh ditunda.
+
+Satu fixture utama per produk memakai `fixtureId`, `locationLabel`, dan ambang
+stok yang ada; hitungan stok tetap dari repository. Mode Pantau terpisah dari
+Edit: snap ke grid, tambah/nama/pindah/putar 90°/hapus rak, kulkas, atau meja kasir.
+Draft memakai Simpan/Batal dan konfirmasi saat keluar. Hapus fixture hanya
+melepas penempatan produk; pindah fixture tidak mengubah stok. Kuantitas fisik
+per lokasi dan deteksi otomatis tidak didukung.
+
+Ponsel memakai bottom sheet, tablet panel samping; target ≥48 dp, lebar 360 dp,
+text scale 1.3, state kosong/memuat/error/offline. Arsip `floor_plan` wajib diaudit
+sebelum digunakan ulang, bukan diaktifkan dengan data contoh. Detail mengikuti
+[rencana kanonis](docs/monitor-plan.md); usulan peran di `TEAM.md` belum mengubah
+kepemilikan permanen.
 
 ## Struktur
 
@@ -103,7 +141,8 @@ Berkas `.env` privat disediakan pengelola di root proyek. Jangan membaca,
 menyalin, menampilkan, atau commit isinya untuk dokumentasi. Build lokal tanpa
 konfigurasi layanan tetap tersedia lewat `flutter build apk --debug`.
 
-Dari `mobile/`, perintah `sh` yang dipakai pada build terakhir:
+Dari `mobile/`, perintah `sh` yang dipakai pada build 15 November
+(bukan bukti APK cloud-first sudah dibangun):
 
 ```sh
 JAVA_TOOL_OPTIONS=-Dorg.gradle.project.kotlin.incremental=false flutter build apk --debug --dart-define-from-file=../.env
@@ -133,6 +172,9 @@ dapat menimbulkan biaya, dan dapat mengirim data toko ke penyedia.
 - Bagikan laporan PDF/XLSX hari yang benar; periksa isi, bukan hanya sheet berbagi.
 - Cetak label ukuran aktual 100%, tanpa penyesuaian halaman, lalu pindai hasil.
   Kode RG/Code128 bukan EAN/GS1; barcode kemasan yang ada tidak diganti.
+- Uji unduh data cloud, fallback offline/timeout, perlindungan perubahan tertunda,
+  dan pembaruan UI lewat revisi data. Impor terverifikasi bukan bukti alur ini
+  sudah berjalan di APK.
 - Uji outbox dan dokumen cloud dengan prosedur `instruksi.md`; jangan menyamakan
   status SDK siap atau antrean kosong dengan semua produk sudah terunggah.
 
@@ -141,13 +183,17 @@ dapat menimbulkan biaya, dan dapat mengirim data toko ke penyedia.
 Hasil terakhir yang dilaporkan, bukan eksekusi ulang saat penyuntingan dokumen:
 
 - `flutter analyze --no-pub`: bersih.
-- `flutter test --no-pub --reporter expanded`: **212/212 lulus**.
+- `flutter test --no-pub --reporter expanded`: **240/240 lulus**.
+- `node --test mobile/tool/seed_firestore_november.test.mjs`: **12/12 lulus**.
+- Hasil analyzer/test tersebut dilaporkan 19 November 2026 sebelum commit
+  `a85a159`; impor Firestore juga terverifikasi, terpisah dari validasi aplikasi.
 - 15 November 2026: APK debug dibangun sekitar **51 detik**, dipasang memakai
   `adb install -r`, dan diluncurkan pada Samsung **SM_A366B**, perangkat
   `RRGYC07G09Z`. Pemasangan ulang mempertahankan data, bukan uninstall/reset.
-- UI fisik menyeluruh, alur pemindaian penuh, cetak label/struk, live cloud,
-  serta live Groq **belum terverifikasi**. Peluncuran APK tidak membuktikan
-  semua alur tersebut lulus.
+- APK **cloud-first belum dibangun/dipasang**; unduh data cloud lewat aplikasi
+  nyata belum terverifikasi. Build 15 November bukan validasi kode terbaru.
+- UI fisik menyeluruh, alur pemindaian penuh, cetak label/struk, serta live Groq
+  **belum terverifikasi**. Peluncuran APK lama tidak membuktikan alur tersebut lulus.
 
 ## Riwayat dan tahap berikutnya
 
@@ -158,10 +204,14 @@ Android sekarang; riwayat rinci tetap di `PROGRESS.md`.
 
 Belum selesai atau belum terverifikasi untuk produksi:
 
-- Login/PIN, identitas tepercaya, claim/keanggotaan toko, serta pengujian isolasi
-  tenant dan aturan Firestore. Pilihan peran di Pengaturan bukan pengaman.
-- Bukti unggah cloud nyata, backfill produk lama, pemulihan perangkat baru,
-  strategi konflik, dan sinkronisasi latar belakang Android bila dibutuhkan.
+- Pengamanan akses, identitas tepercaya, claim/keanggotaan toko, serta pengujian
+  isolasi tenant dan rules. Login/PIN/Anonymous Auth ditolak pengguna; perubahan
+  autentikasi perlu persetujuan baru. Pilihan peran bukan pengaman.
+- Build/install APK cloud-first, unduh data dan unggah outbox lewat aplikasi,
+  backfill produk lama, pemulihan perangkat baru, konflik stok lintas perangkat,
+  dan sinkronisasi latar belakang Android bila disetujui.
+- Monitor lokal tersedia dengan editor, penempatan dan kanvas; jalur cloud layout
+  perlu uji live dan visual Android. Review lintas pemilik tetap berlaku.
 - QRIS resmi: charge dan secret di server, signature/webhook tervalidasi sebelum
   pembayaran dinyatakan berhasil.
 - Cetak fisik, snapshot modal untuk laba historis, serta rencana restok berbasis

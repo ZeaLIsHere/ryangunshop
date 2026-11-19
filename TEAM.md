@@ -3,12 +3,14 @@
 Dokumen ini menetapkan peran, kepemilikan berkas, dan urutan pekerjaan tiga anggota
 tim agar porsi kerja seimbang dan jejak kontribusinya terlihat jelas di GitHub.
 
-**Cakupan berjalan — 15 November 2026:** tahap UI-only sudah dilewati. POS Android
-memakai SQLite/Drift, kamera `mobile_scanner`, kelola produk pemilik dan label
-Code128, laporan PDF/XLSX berbagi Android, serta analitik repository nyata.
-Firebase native/outbox bersakelar dan IyanBoT/Groq sudah terintegrasi; kesiapan
-kode bukan bukti unggah cloud atau panggilan API langsung berhasil. Pengujian
-live Groq dijeda atas permintaan pengguna. QRIS nyata belum terverifikasi.
+**Cakupan berjalan — 19 November 2026:** tahap UI-only sudah dilewati. POS Android
+memakai cloud-first native `CloudReadThrough` dengan cache/operasi offline
+SQLite/Drift, kamera `mobile_scanner`, kelola produk pemilik dan label Code128,
+laporan PDF/XLSX berbagi Android, serta analitik repository nyata. Firebase
+native/outbox bersakelar dan IyanBoT/Groq terintegrasi. Impor Firestore sudah
+terverifikasi; APK cloud-first dan unduh data lewat aplikasi nyata belum
+terverifikasi. Pengujian live Groq dijeda pengguna; QRIS nyata belum terverifikasi.
+Basis kode terakhir dipush: `a85a159`.
 
 Branch `feat/ui-shell-owner-barcode` membantu Tariq. Pengguna menyetujui integrasi
 lintas fitur pada branch ini; kepemilikan dan review PR tetap berlaku, bukan izin
@@ -60,12 +62,41 @@ dan `assets/models/`) diajukan lewat pull request agar tidak berbenturan.
 Lapisan `core/config/**`, `core/data/**`, `core/session/**`, `core/format/**`,
 fitur baru di luar tabel, pengujian terkait, serta dokumen `AGENTS.md`, `TEAM.md`,
 dan `instruksi.md` harus ditetapkan penanggung jawabnya dalam tugas/PR integrasi;
-tabel lama tidak otomatis memberi kepemilikan baru. Tugas penyelarasan dokumen
-ini secara eksplisit mengizinkan `AGENTS.md`, `PRODUCT.md`, `README.md`,
-`TEAM.md`, dan `instruksi.md`, tanpa mengubah pemilik permanen atau cakupan lain.
+tabel lama tidak otomatis memberi kepemilikan baru. Tugas dokumentasi
+19 November ini mencakup seluruh dokumen operasional dan rencana kanonis
+`docs/monitor-plan.md`, tanpa mengubah pemilik permanen. Referensi desain di
+`contoh-desain/` dan panduan `.agents/skills/` tetap sebagai referensi.
+Kode aplikasi, migrasi, rules, dan dependensi di luar cakupan tugas ini.
+Tidak ada commit/push dalam tugas ini.
 
 `PROGRESS.md` dikecualikan dari aturan satu pengubah: setiap anggota hanya menyunting
 baris tugasnya sendiri, dan pembaruan itu dilakukan pada pull request tugas tersebut.
+
+## Monitor — usulan koordinasi, bukan kepemilikan baru
+
+Pengguna sudah menyetujui pembangunan; UI isometrik/editor/penempatan/alert lokal
+tersedia. Jalur cloud layout belum diuji live; validasi perangkat masih diperlukan. Rujukan kanonis:
+[docs/monitor-plan.md](docs/monitor-plan.md). Tombol Beranda pemilik membuka
+halaman isometrik 2.5D ringan Flutter native, tanpa engine/dependensi, login,
+atau tab baru; navigasi yang ada tetap.
+
+| Usulan penanggung jawab | Cakupan yang perlu disepakati sebelum implementasi |
+|---|---|
+| Farel | Tampilan spasial, tiga template, editor fixture, audit arsip `floor_plan`, aksesibilitas |
+| Tariq | Tombol/routing Beranda pemilik serta koordinasi data bersama dan persistensi draft |
+| Blessly | Review penempatan produk, filter massal/konfirmasi, `fixtureId`, `locationLabel`, ambang stok, dan dampak katalog/kasir |
+
+Usulan ini tidak memindahkan kepemilikan permanen. Perubahan lintas pemilik
+memerlukan persetujuan eksplisit dan review PR. Arsip `floor_plan` hanya kandidat
+penggunaan ulang setelah audit, bukan layar data contoh yang langsung diaktifkan.
+
+Batas review: pilih template lalu tempatkan produk; produk tanpa lokasi boleh
+ditunda. Satu fixture utama per produk, stok dari repository tanpa hitungan
+salinan. Pantau/Edit terpisah; snap ke grid, tambah/nama/pindah/putar 90°/hapus
+rak, kulkas, meja kasir. Draft Simpan/Batal dan konfirmasi keluar; hapus fixture
+melepas penempatan, bukan menghapus produk; pindah tidak mengubah stok.
+Tidak ada kuantitas fisik per lokasi atau deteksi otomatis. Bottom sheet ponsel,
+panel samping tablet; ≥48 dp, 360 dp/text scale 1.3, state kosong/memuat/error/offline.
 
 ## Alur kerja Git
 
@@ -128,8 +159,11 @@ pada keduanya. `ProductCatalog` berjudul Produk memakai grid lazy responsif
 Laporan harian PDF/XLSX berasal dari repository dan dibagikan Android, bukan
 auto Downloads; laba historis belum tersedia tanpa snapshot modal. Firebase
 menguras outbox saat startup/perubahan sesi dan tiap 15 detik selama aplikasi
-berjalan, bukan layanan latar belakang. Produk lama tidak otomatis di-backfill;
-SDK siap bukan bukti cloud tersimpan. Web tanpa SQLite/sinkronisasi native.
+berjalan, bukan layanan latar belakang. `CloudReadThrough` memakai ulang hasil
+server 15 detik, backoff kegagalan 30 detik, timeout 8 detik dengan fallback
+cache. Perubahan tertunda dilindungi; revisi data sesi memperbarui UI. Produk
+lama tidak otomatis di-backfill. Web tetap pratinjau lokal tanpa SQLite/cloud-first
+native; SDK siap bukan bukti semua data tersimpan di cloud.
 Draft IyanBoT perlu konfirmasi dan produk hanya pemilik; live API belum diuji.
 
 ### Fase 0 — Fondasi UI dan aset
@@ -204,19 +238,31 @@ SQLite, kamera, laporan nyata, Firebase native/outbox, dan tool/draft Groq bukan
 lagi pekerjaan yang dilarang. Perluasan layanan/dependensi tetap perlu persetujuan.
 Pekerjaan produksi berikut belum selesai atau belum terverifikasi:
 
-- Login/PIN, identitas/keanggotaan toko tepercaya, isolasi tenant, dan aturan
-  Firestore yang teruji; konfigurasi/rules/index tersedia bukan bukti keamanan.
-- Unggah cloud langsung, backfill produk lama, konflik dan pemulihan perangkat
-  baru, serta layanan sinkronisasi latar belakang bila disetujui.
+- Akses baca tanpa autentikasi diketahui HTTP 200; rules tidak diubah. Pengguna
+  menolak tambahan login/PIN/Anonymous Auth. Identitas/keanggotaan toko dan isolasi
+  tenant belum terjamin; perubahan autentikasi perlu persetujuan baru.
+- Build/install APK cloud-first, unduh data dan unggah outbox lewat aplikasi,
+  backfill produk lama, serta pemulihan perangkat baru belum terverifikasi.
+  Stok lintas perangkat masih last-write-wins, bukan atomik; tidak ada snapshot
+  atomik lintas halaman/koleksi, batas 10.000 dokumen/koleksi. Layanan sinkronisasi
+  latar belakang memerlukan persetujuan terpisah.
+- Monitor mulai dibangun atas izin pengguna. Model/template, validasi dan
+  persistensi dan UI lokal tersedia; jalur cloud belum diuji live/perangkat.
 - QRIS provider resmi/webhook tervalidasi, cetak fisik label/struk, snapshot
   harga modal untuk laba historis, dan perhitungan restok.
 - Foto koreksi privat, dataset AI, TFLite, serta WhatsApp/Ollama `backend-agent`.
 
-Validasi terakhir yang dilaporkan: analyzer bersih dan 212 test lulus. Pada
-15 November 2026 APK debug dibangun sekitar 51 detik, dipasang ulang `-r` dan
-diluncurkan pada Samsung SM_A366B tanpa menghapus data. Ini bukan audit UI
-fisik, pemindaian penuh, cetak, atau bukti live cloud/Groq; semuanya masih
-memerlukan verifikasi tersendiri.
+Impor Firestore `iyangunshop` / `stores/toko-utama` terverifikasi: 90 dokumen
+dibuat dan terbaca ulang, 24 produk, 66 nota tunai, 394 unit, Rp3.035.800.
+Rentang 10–24 November 2026 inklusif: 15 hari, 3–6 nota/hari. Data presentasi
+tanpa label visual, metadata asal internal; bukan bukti penjualan aktual atau
+keberhasilan unduh data lewat aplikasi.
+
+Validasi terakhir yang dilaporkan pada 19 November: analyzer bersih, 240 test
+Flutter dan 12 test Node lulus, bukan eksekusi ulang pada tugas dokumen ini.
+APK debug 15 November pernah dibangun/dipasang/diluncurkan pada Samsung SM_A366B
+tanpa menghapus data; APK cloud-first terbaru belum dibangun/dipasang.
+Audit UI fisik, pemindaian penuh, cetak, dan live Groq tetap belum terverifikasi.
 
 ## Riwayat penyelarasan dokumen tahap UI
 

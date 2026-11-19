@@ -82,6 +82,17 @@ class SyncOutboxEntries extends Table {
   TextColumn get lastError => text().nullable()();
 }
 
+/// Satu layout lokal. Revisi ini bukan versi/konfirmasi server Firestore.
+@DataClassName('MonitorLayoutRow')
+class MonitorLayouts extends Table {
+  TextColumn get id => text()();
+  TextColumn get payload => text()();
+  IntColumn get revision => integer()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [
     Products,
@@ -90,6 +101,7 @@ class SyncOutboxEntries extends Table {
     CartDrafts,
     CartDraftItems,
     SyncOutboxEntries,
+    MonitorLayouts,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -110,7 +122,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   // Versi 1 di branch ini memiliki dua bentuk: hanya products, atau seluruh
   // tabel transaksi. Periksa tabel sebelum membuatnya agar kedua bentuk aman.
@@ -157,6 +169,9 @@ class AppDatabase extends _$AppDatabase {
         }
         if (from < 6) {
           await m.createTable(syncOutboxEntries);
+        }
+        if (from < 7) {
+          await m.createTable(monitorLayouts);
         }
       });
     },

@@ -17,6 +17,7 @@ import '../../catalog/view/product_form_screen.dart';
 import '../model/dashboard_shortcut.dart';
 import '../../../core/session/completed_transaction.dart';
 import 'dashboard_components.dart';
+import '../../monitor/view/monitor_screen.dart';
 
 typedef _DashboardData = ({
   List<ProductRecord> products,
@@ -281,6 +282,19 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                         _stockLine(
                           Icons.barcode_reader,
                           'Tanpa barcode: ${data.products.where((p) => p.barcode == null || p.barcode!.trim().isEmpty).length} produk',
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(
+                              AppSpacing.minTouchTarget,
+                              AppSpacing.minTouchTarget,
+                            ),
+                          ),
+                          onPressed: () =>
+                              _openManagement(const MonitorScreen()),
+                          icon: const Icon(Icons.space_dashboard_outlined),
+                          label: const Text('Buka Monitor Toko'),
                         ),
                       ],
                     ),

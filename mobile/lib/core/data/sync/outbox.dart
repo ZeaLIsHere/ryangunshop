@@ -7,7 +7,7 @@ library;
 
 /// Jenis data yang disinkronkan. Draft keranjang sengaja tidak termasuk karena
 /// hanya berlaku untuk perangkat yang sedang dipakai.
-enum SyncEntityType { product, transaction }
+enum SyncEntityType { product, transaction, layout }
 
 /// Operasi yang harus dijalankan pada dokumen tujuan.
 enum SyncOperation { upsert, delete }
@@ -91,7 +91,9 @@ class OutboxEntry {
       payload: rawPayload is Map
           ? rawPayload.map((key, value) => MapEntry(key.toString(), value))
           : const {},
-      createdAt: DateTime.fromMillisecondsSinceEpoch(_asInt(json['createdAt'])!),
+      createdAt: DateTime.fromMillisecondsSinceEpoch(
+        _asInt(json['createdAt'])!,
+      ),
       attempts: _asInt(json['attempts']) ?? 0,
       lastError: json['lastError'] as String?,
     );
@@ -107,12 +109,14 @@ class OutboxEntry {
   static SyncEntityType _parseEntity(Object? value) =>
       SyncEntityType.values.firstWhere(
         (entity) => entity.name == value,
-        orElse: () => throw FormatException('Jenis sinkronisasi tidak dikenal: $value'),
+        orElse: () =>
+            throw FormatException('Jenis sinkronisasi tidak dikenal: $value'),
       );
 
   static SyncOperation _parseOperation(Object? value) =>
       SyncOperation.values.firstWhere(
         (operation) => operation.name == value,
-        orElse: () => throw FormatException('Operasi sinkronisasi tidak dikenal: $value'),
+        orElse: () =>
+            throw FormatException('Operasi sinkronisasi tidak dikenal: $value'),
       );
 }

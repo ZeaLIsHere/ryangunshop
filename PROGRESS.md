@@ -15,7 +15,33 @@ berjalan tanpa harus menebak dari riwayat commit.
   pengujian sudah selesai tetapi verifikasi emulator atau tinjauan PR belum ada, dan
   `selesai` hanya bila seluruh poin "Definisi selesai" di `TEAM.md` terpenuhi.
 
-## Kondisi terkini — 15 November 2026
+## Kondisi terkini — 20 November 2026
+
+- Basis kode `a85a159` sudah dipush pada `feat/ui-shell-owner-barcode`.
+  Native mengutamakan Firestore melalui `CloudReadThrough`: reuse hasil 15 detik,
+  backoff gagal 30 detik, timeout 8 detik, fallback SQLite. Outbox dan revisi data
+  melindungi perubahan lokal serta memperbarui UI. Web masih preview lokal.
+- Impor Firestore `iyangunshop` / `toko-utama` terverifikasi create-only/read-back:
+  24 produk, 66 nota tunai, 394 unit, Rp3.035.800, 10–24 November 2026 inklusif
+  (15 hari, 3–6 nota/hari). Data tampil normal tanpa label visual, metadata internal.
+- Validasi tahap Monitor: analyzer bersih, 268 test Flutter dan 12 test Node lulus.
+- APK debug cloud-first + Monitor berhasil dibangun ulang (50 detik), siap dipasang
+  saat HP terhubung. Belum dipasang: tidak ada HP/emulator Android terdeteksi saat ini.
+  Unduh cloud lewat aplikasi nyata belum terverifikasi. Render widget 360/1024 dp
+  skala 1,3 dibuat di build/monitor-previews; ini bukan bukti visual fisik Android.
+- Akses baca publik HTTP 200 masih diketahui; rules tidak diubah. Peran Pengaturan
+  bukan autentikasi. Stok lintas perangkat last-write-wins; snapshot lintas koleksi
+  tidak atomik dan pembacaan dibatasi 10.000 dokumen/koleksi. Live Groq tetap dijeda.
+- Monitor **mulai dibangun** atas izin pengguna. Fondasi model, tiga template,
+  validasi grid/JSON, repository SQLite dan migrasi 6→7 tersedia. Tombol owner,
+  setup template, editor isometrik/drag, penempatan massal dan alert stok tersedia.
+  Jalur sync layout+lokasi bertoken tersedia di kode; live server/perangkat belum
+  diverifikasi. Target lengkap mengikuti
+  [docs/monitor-plan.md](docs/monitor-plan.md); navbar dan alur kasir tidak berubah.
+- Semua dokumen operasional diselaraskan. Skill dan contoh desain tetap referensi,
+  bukan catatan status fitur. Catatan tanggal lama di bawah adalah riwayat.
+
+## Riwayat kondisi sebelum cloud-first — 15 November 2026
 
 - Beranda kasir dan pemilik terpisah menurut peran Pengaturan, tanpa login/PIN.
   Hero, pod aksi, baris nota, serta Pintasan Menu memakai komponen bersama.
@@ -72,6 +98,107 @@ berkas checklist terpisah.
 | Keranjang dan pembayaran (Kasir) | `mobile/lib/features/checkout/`, `.../payment/` | Blessly | review |
 | Chatbot asisten AI (IyanBoT) | `mobile/lib/features/chatbot/` | Tim | review |
 | Analitik & statistik penjualan | `mobile/lib/features/statistics/` | Tim | review |
+| Monitor pemilik (fondasi lokal; UI belum aktif) | `mobile/lib/features/monitor/model/`, `core/data/monitor_layout_repository.dart` | Koordinasi pada `TEAM.md` | jalan |
+
+## Audit teknis dan perbaikan Monitor — 20 November 2026, review
+
+- Audit komprehensif mengacu pada `audit.native.md` dan `craft-floor.md`:
+  1. Concurrency/Race condition: pencegahan permintaan stok lama menimpa hasil
+     stok terbaru via sequence counter `_productsRequest`.
+  2. Keamanan token: pembangkitan token layout memakai kriptografis `Random.secure()`,
+     bukan timestamp microsecond yang dapat ditebak.
+  3. Aksesibilitas dan dialog hierarchy: saat peran pengguna berubah di Pengaturan
+     sementara dialog/sheet Monitor masih terbuka, seluruh rute Monitor dan modal
+     di atasnya ditutup tuntas dengan `popUntil`.
+  4. Visual kanvas & clutter: rendering nomor urut ringkas pada kotak atap fixture
+     isometrik dengan deteksi overlap untuk mencegah tabrakan label teks pada rak rapat.
+  5. Layout form keyboard insets: lembar penempatan produk mengadaptasi `viewInsetsOf`
+     sehingga kolom pencarian dan tombol tidak tertutup keyboard virtual.
+  6. Idempotensi sinkronisasi: layout jarak jauh yang identik tidak memicu penulisan
+     ulang database atau peningkatan revisi lokal yang mubazir.
+- Validasi: analyzer bersih (3,9 detik); seluruh 268 Flutter test lulus (24 detik);
+  seluruh 12 Node test lulus (0,3 detik). APK dibangun ulang dalam 50 detik.
+  Tidak build/install di HP (perangkat belum terhubung), tidak commit/push.
+
+## Build dan verifikasi lanjutan Monitor — 20 November 2026
+
+- APK debug berhasil memakai flag Kotlin incremental nonaktif dan konfigurasi
+  privat build tanpa mencetak nilainya. Peringatan migrasi KGP Firebase tetap ada.
+- ADB kosong; Flutter juga melaporkan tidak ada emulator Android. Tidak install
+  atau menghapus data aplikasi. Jalur APK: `mobile/build/app/outputs/flutter-apk/app-debug.apk`.
+- GET layout server `stores/toko-utama/layouts/main` menghasilkan 404 NOT_FOUND;
+  belum ada layout tersimpan. GET daftar produk HTTP 200 (26 dokumen saat probe).
+  Tidak membuat layout rekaan, mengubah rules, atau menulis data untuk uji ini.
+  Hasil baca bukan bukti write/layout transaction native berhasil.
+- Dua render widget baru 360/1024 dp skala 1,3 dibuat ke folder build yang tidak
+  di-commit. Pemeriksaan gambar melalui tool tidak memberi bukti visual yang dapat
+  diandalkan; uji fisik Android masih wajib. Tidak mengklaim audit visual selesai.
+- Regresi dashboard yang memakai satu jam lalu gagal setelah tengah malam;
+  waktu test disetel ke tengah hari pada tanggal yang sama agar deterministik
+  terhadap batas hari. Tidak mengubah logika dashboard produksi.
+- Validasi akhir: analyzer bersih; 265/265 Flutter test dan 12/12 Node test lulus.
+  Tugas berikutnya: hubungkan Android USB, install -r, simpan layout owner nyata,
+  verifikasi layout/read-back/cloud+offline dan role guard. Belum commit/push.
+
+## Monitor isometrik, penempatan dan jalur sinkronisasi — 19 November 2026, review
+
+- Tanpa sub-agent. Isometrik CustomPainter, hit-test, pan/zoom/reset, pemilihan,
+  drag snap hanya Edit; gesture editor dipisah dari InteractiveViewer agar drag
+  tidak kalah arena gesture. Daftar objek sebagai alternatif aksesibel.
+- Penempatan massal pencarian/kategori, lokasi utama satu produk, detail stok dan
+  alert habis/menipis/belum ditempatkan. Stok dibaca ulang dari repository/revisi
+  sesi; draft penempatan tidak menyalin stok. Hapus objek melepas penempatan.
+- Layout+penempatan atomik SQLite, proyeksi lokasi produk tanpa perubahan stok/harga.
+  Outbox layout token/baseToken, precondition konflik, retry idempoten dan transaksi
+  Firestore memperbarui layout+lokasi saja. Maksimal 400 penempatan/450 lokasi per save.
+  Layout pending menjaga lokasi saat cache stok segar masuk. Antrean produk/nota
+  didahulukan dan kegagalan layout tidak memblokir operasi POS.
+- Jalur cloud belum diuji live. Tidak mengubah rules/deploy atau menulis Firestore;
+  koleksi layout dapat ditolak rules server. Status lokal/pending/gagal tidak
+  disamakan tersinkron. Browser tanpa SQLite tetap menjelaskan batas native.
+- Validasi akhir: analyzer bersih (3,7 detik), seluruh 263 Flutter test lulus
+  (22 detik), termasuk detail stok reaktif. Tidak build/install/commit/push.
+
+## Setup dan editor lokal Monitor — 19 November 2026, review
+
+- Tanpa sub-agent. Beranda owner membuka Monitor; akses kasir diblokir dan peran
+  dibaca ulang sebelum/sesudah write dalam transaksi agar role berubah membatalkan save.
+- Setup tiga preview template, editor ortografik, daftar objek, tambah/nama/pindah
+  satu petak/rotasi/hapus, Simpan/Batal dan konfirmasi keluar. Draft gagal save
+  dipertahankan; revisi conflict memerlukan batal/muat ulang. Tidak ada stok palsu.
+- Penyimpanan tetap lokal. Browser tanpa DB menjelaskan batas native; tidak
+  mengaku berhasil simpan. Penempatan produk, drag, isometrik dan cloud menyusul.
+- Analyzer bersih; seluruh 253 test Flutter lulus (38 detik).
+  Enam test editor mencakup draft/retry/conflict, rollback izin, kembali/buang,
+  role guard, serta 360/1024 dp skala 1,3. Visual Android belum diperiksa.
+  Tidak build/install, commit/push atau tulis Firestore.
+
+## Fondasi Monitor tahap 0–1 — 19 November 2026, review
+
+- Implementasi langsung tanpa sub-agent sesuai permintaan. Audit arsip menemukan
+  ViewModel berbasis sample; tidak diaktifkan kembali. Model baru immutable,
+  validasi versi/payload, ID unik, footprint rotasi, batas area dan overlap.
+- Tiga template deterministik; penyimpanan satu layout lokal dengan revisi optimistic.
+  Migrasi Drift 6→7 hanya menambah tabel; kode generated dibangun dengan build_runner.
+  Data rusak tidak direset diam-diam. Simpan layout tidak menyentuh produk/POS/outbox.
+- Untuk tahap fondasi, menghapus objek terpakai diblokir; pelepasan penempatan atomik
+  dan cloud conflict/save tetap tahap berikutnya. Belum UI/editor/isometrik/routing.
+- Analyzer bersih, 247/247 test Flutter lulus (40 detik), termasuk tujuh test baru
+  template/JSON/grid, conflict/rollback, reopen, migrasi dan preservasi POS.
+  Tidak menambah dependensi, build/install APK, commit/push atau menulis Firestore.
+
+## Perencanaan Monitor dan sinkronisasi dokumentasi — 19 November 2026
+
+- Rencana lengkap disimpan di `docs/monitor-plan.md`: scope, trade-off template,
+  setup dua langkah, Pantau/Edit, draft, penempatan massal, kontrak data/offline,
+  tahapan implementasi, ownership usulan dan kriteria penerimaan.
+- Kandidat arsip `floor_plan` diaudit awal: ViewModel memakai data sample sehingga
+  tidak boleh diaktifkan langsung. Renderer/data Monitor belum ditulis.
+- Dokumen aktif membedakan fitur berjalan, impor cloud terverifikasi, keterbatasan,
+  dan Monitor terencana. Pemeriksaan 13 dokumen operasional: tautan lokal dan
+  pagar kode valid; `git diff --check` bersih. Analyzer/test tidak dijalankan ulang
+  karena tugas ini hanya dokumentasi. Referensi skill/desain tidak diubah. Tidak mengakses rahasia,
+  menulis Firestore, mengubah kode, build/install APK, atau commit/push dalam tugas ini.
 
 ## Validasi sebelum commit cloud-first — 19 November 2026
 
