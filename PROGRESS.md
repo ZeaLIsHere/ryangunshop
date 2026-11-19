@@ -25,10 +25,12 @@ berjalan tanpa harus menebak dari riwayat commit.
   24 produk, 66 nota tunai, 394 unit, Rp3.035.800, 10–24 November 2026 inklusif
   (15 hari, 3–6 nota/hari). Data tampil normal tanpa label visual, metadata internal.
 - Validasi tahap Monitor: analyzer bersih, 268 test Flutter dan 12 test Node lulus.
-- APK debug cloud-first + Monitor berhasil dibangun ulang (50 detik), siap dipasang
-  saat HP terhubung. Belum dipasang: tidak ada HP/emulator Android terdeteksi saat ini.
-  Unduh cloud lewat aplikasi nyata belum terverifikasi. Render widget 360/1024 dp
-  skala 1,3 dibuat di build/monitor-previews; ini bukan bukti visual fisik Android.
+- APK debug cloud-first + Monitor berhasil dibangun (50 detik) dan telah dipasang
+  ulang via `adb install -r` serta dijalankan pada Samsung SM_A366B (serial RRGYC07G09Z)
+  tanpa menghapus data lokal. Logcat menunjukkan startup mulus dan klien Firestore
+  aktif. Data 24 produk dan 66 nota yang telah diinjeksi ke Firestore siap
+  disinkronkan/ditampilkan di perangkat. Render widget 360/1024 dp skala 1,3
+  tersedia di build/monitor-previews.
 - Akses baca publik HTTP 200 masih diketahui; rules tidak diubah. Peran Pengaturan
   bukan autentikasi. Stok lintas perangkat last-write-wins; snapshot lintas koleksi
   tidak atomik dan pembacaan dibatasi 10.000 dokumen/koleksi. Live Groq tetap dijeda.
