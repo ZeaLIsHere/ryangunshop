@@ -27,8 +27,7 @@ pengalaman utama POS.
    280 ms, onboarding tiga halaman, serta dukungan reduced motion.
 2. **Beranda kasir.** Hero Omzet harian asli, laporan harian, empat bento
    Pindai Barcode/Buka Kasir/Stok/Riwayat Nota, dan transaksi terbaru.
-3. **Beranda pemilik.** Penjualan Bersih, jumlah nota, rata-rata, grafik harian,
-   perhatian stok saat ini, produk terlaris, nota periode, dan aksi kelola.
+3. **Beranda pemilik.** Penjualan Bersih, jumlah nota, rata-rata, grafik harian kurva halus (*Smooth Area Line Chart* bergradien violet interaktif dengan scrubbing tanggal dan kurva adaptif), Status Stok, **Bento Aksi Kelola** (kartu unggulan Monitor Toko 3D isometrik + 4 action pods), produk terlaris, nota periode.
    Periode Hari ini/7 hari/30 hari membaca repository nyata; hari kosong bernilai
    nol. Penjualan produk terlaris berlabel kotor sebelum diskon nota, bukan laba.
 4. **Komponen bersama.** Kedua Beranda memakai Hero, pod aksi, dan baris nota
@@ -47,10 +46,11 @@ pengalaman utama POS.
    uang pas, dan kembalian. Checkout menyimpan nota beserta snapshot item dan
    mengurangi stok dalam transaksi SQLite. QRIS tetap jalur simulasi;
    pembayaran QRIS nyata belum terverifikasi.
-8. **Laporan.** PDF dan XLSX harian dari transaksi repository, dibagikan lewat
-   Android, bukan otomatis masuk Downloads. Tidak mengklaim laba historis
-   karena harga modal belum disnapshot pada transaksi. Cetak fisik belum
-   terverifikasi, termasuk label dan printer struk.
+8. **Laporan dan statistik.** Laporan harian PDF dan XLSX dari transaksi repository,
+   dibagikan lewat Android (bukan auto-save ke Downloads). Layar **Statistik** berbasis
+   **Bento Grid Asimetris**: Hero nilai aset inventaris toko dan omzet, 2-up kesehatan
+   stok & efisiensi margin laba, komposisi kategori produk, tren, dan daftar restok.
+   Tidak mengklaim laba historis transaksi lama karena harga modal belum disnapshot.
 9. **IyanBoT.** Integrasi Groq memakai tool baca serta draft transaksi/produk.
    LLM tidak langsung menulis: pengguna harus mengonfirmasi draft sebelum
    repository menyimpan. Draft produk hanya untuk pemilik. Uji API langsung

@@ -16,8 +16,9 @@ integrasi lintas fitur berikut disetujui pengguna. Basis kode terakhir dipush:
 | POS lokal | Produk, stok, draft keranjang, nota tunai, snapshot item, dan pengurangan stok memakai SQLite/Drift; database baru kosong |
 | Peran | Pemilik/kasir dipilih di Pengaturan tanpa login/PIN; kelola produk hanya pemilik, izin dibaca ulang saat simpan; bukan batas keamanan |
 | Beranda kasir | Hero Omzet asli, laporan harian, empat bento Aksi Cepat, nota terkini |
-| Beranda pemilik | Analitik repository Hari ini/7 hari/30 hari, grafik, perhatian stok, produk terlaris, nota, dan aksi kelola |
-| Komponen Beranda | Hero/aksi/nota bersama; Pintasan Menu pada kedua peran: katalog, keranjang, riwayat, pengaturan, statistik, chatbot |
+| Beranda pemilik | Analitik repository Hari ini/7 hari/30 hari, Smooth Area Line Chart bergradien violet interaktif, Status Stok, Bento Aksi Kelola, produk terlaris, dan nota |
+| Statistik | Layar statistik berbasis Bento Grid Asimetris Fungsional: estimasi nilai aset toko, omzet, kesehatan inventaris, efisiensi margin, dan komposisi kategori |
+| Komponen Beranda | Hero/aksi/nota bersama; Pintasan Menu pada kedua peran dengan perataan tinggi kartu (`IntrinsicHeight`): katalog, keranjang, riwayat, pengaturan, statistik, chatbot |
 | Produk | Judul `Produk`, tanpa badge lokal; grid lazy 2 kolom pada 360 dp, 3 pada 600 dp, 5 pada 1024 dp, aman pada text scale 1.3 dalam pengujian otomatis |
 | Barcode | Kamera `mobile_scanner` nyata, fallback manual, generator kode internal RG dan label Code128 untuk pemilik |
 | Laporan | PDF/XLSX harian dari repository, berbagi Android; bukan penyimpanan otomatis ke Downloads |
@@ -183,17 +184,11 @@ dapat menimbulkan biaya, dan dapat mengirim data toko ke penyedia.
 Hasil terakhir yang dilaporkan, bukan eksekusi ulang saat penyuntingan dokumen:
 
 - `flutter analyze --no-pub`: bersih.
-- `flutter test --no-pub --reporter expanded`: **240/240 lulus**.
+- `flutter test --no-pub --reporter expanded`: **268/268 lulus**.
 - `node --test mobile/tool/seed_firestore_november.test.mjs`: **12/12 lulus**.
-- Hasil analyzer/test tersebut dilaporkan 19 November 2026 sebelum commit
-  `a85a159`; impor Firestore juga terverifikasi, terpisah dari validasi aplikasi.
-- 15 November 2026: APK debug dibangun sekitar **51 detik**, dipasang memakai
-  `adb install -r`, dan diluncurkan pada Samsung **SM_A366B**, perangkat
-  `RRGYC07G09Z`. Pemasangan ulang mempertahankan data, bukan uninstall/reset.
-- APK **cloud-first belum dibangun/dipasang**; unduh data cloud lewat aplikasi
-  nyata belum terverifikasi. Build 15 November bukan validasi kode terbaru.
+- 20 November 2026: APK debug cloud-first + Monitor (dengan pembaruan Bento Aksi Kelola, Smooth Area Line Chart, dan Bento Grid Statistik) berhasil dibangun sekitar **19–50 detik**, dipasang memakai `adb install -r`, dan diluncurkan pada Samsung **SM_A366B**, perangkat `RRGYC07G09Z`. Pemasangan ulang mempertahankan data lokal.
 - UI fisik menyeluruh, alur pemindaian penuh, cetak label/struk, serta live Groq
-  **belum terverifikasi**. Peluncuran APK lama tidak membuktikan alur tersebut lulus.
+  **belum terverifikasi**. Peluncuran APK tidak membuktikan semua alur tersebut lulus.
 
 ## Riwayat dan tahap berikutnya
 

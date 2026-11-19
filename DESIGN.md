@@ -103,12 +103,12 @@ Hierarki utama:
   dan CTA sesuai peran. Ekstraksi komponen mempertahankan desain asli kasir.
 - Beranda kasir mempertahankan Hero, aksi laporan, empat bento Aksi Cepat, dan
   nota terkini. Beranda pemilik mempunyai hierarki analitik tersendiri:
-  **Hari ini / 7 hari / 30 hari**, ringkasan, grafik harian, perhatian stok dan
-  aksi kelola, produk terlaris, lalu nota periode. Periode memakai kalender lokal;
+  **Hari ini / 7 hari / 30 hari**, ringkasan, grafik tren harian (*Smooth Area Line Chart* bergradien violet interaktif dengan scrubbing tanggal dan kurva adaptif), Status Stok, **Bento Aksi Kelola** (kartu unggulan Monitor Toko 3D isometrik + 4 action pods), produk terlaris, lalu nota periode. Periode memakai kalender lokal;
   produk terlaris berlabel penjualan kotor sebelum diskon nota, bukan laba.
 - Pod aksi dan baris nota kedua peran juga memakai `dashboard_components.dart`.
   `DashboardShortcutsSection` memulihkan enam **Pintasan Menu** pada keduanya:
   Katalog produk, Keranjang, Riwayat transaksi, Pengaturan, Statistik, Chatbot.
+  Tinggi kartu berpasangan diratakan secara presisi menggunakan `IntrinsicHeight` dan `crossAxisAlignment.stretch`.
 - `QuickActionPods`: Baris kartu aksi 4-up berisi squircle 48×48 dp berlatar warna pastel fungsional
   (`08_pindai_barcode.png`, `02_keranjang.png`, `09_stok_produk.png`, `03_riwayat_transaksi.png`) memuat aksi operasional kasir harian.
 - `ProductScanner`: Layar kamera dengan sudut bidik ungu menyala (*purple glow*), garis laser scan
@@ -143,6 +143,12 @@ Hierarki utama:
   Berbagi bukan jaminan penyimpanan otomatis ke Downloads. Laba historis belum
   dihitung karena nota belum menyimpan snapshot harga modal. Cetak thermal/
   Bluetooth fisik belum terverifikasi; jangan menampilkannya sebagai kemampuan teruji.
+- `StatisticsScreen`: Layar statistik dan performa warung berbasis **Bento Grid Asimetris Fungsional**:
+  Hero Bento Utama memuat Estimasi Nilai Total Aset/Inventaris Toko (`inventoryValue`) dan Omzet Hari Ini;
+  2-Up Bento Cards menyajikan Kesehatan Inventaris (total item, varian, alert restok) dan Efisiensi Margin Laba (rata-rata margin % dan produk termodal);
+  Bento Kategori Produk memuat multi-segment progress bar tonal;
+  kontainer bento terstruktur untuk tren penjualan, metode pembayaran, jam sibuk, produk terlaris/lambat laku, peringkat margin laba, dan daftar perlu restok.
+  Hierarki mengutamakan data nyata dari database/cloud daripada tumpukan kartu kosong.
 - `FloatingBottomNav`: Navigasi bawah berbayang violet lembut dengan urutan Beranda (ikon `beranda.png`), Chatbot, tombol Kasir terangkat di tengah (`02_keranjang.png`), Produk, dan Statistik. Chatbot/Statistik membuka rute yang sudah ada dan kembali ke tab sebelumnya; Statistik kasir tetap diarahkan ke Riwayat Nota. Pengaturan tersedia melalui app bar.
 - `StoreFloorPlan (Arsip)`: Komponen kanvas tata letak 2D berbasis matriks titik (*grid-matrix*) dan panorama 360 zona diarsipkan dari antarmuka utama demi kecepatan alur kasir.
 

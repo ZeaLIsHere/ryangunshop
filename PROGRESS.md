@@ -100,7 +100,24 @@ berkas checklist terpisah.
 | Keranjang dan pembayaran (Kasir) | `mobile/lib/features/checkout/`, `.../payment/` | Blessly | review |
 | Chatbot asisten AI (IyanBoT) | `mobile/lib/features/chatbot/` | Tim | review |
 | Analitik & statistik penjualan | `mobile/lib/features/statistics/` | Tim | review |
-| Monitor pemilik (fondasi lokal; UI belum aktif) | `mobile/lib/features/monitor/model/`, `core/data/monitor_layout_repository.dart` | Koordinasi pada `TEAM.md` | jalan |
+| Monitor pemilik (tata letak isometrik & stok) | `mobile/lib/features/monitor/` | Koordinasi pada `TEAM.md` | review |
+
+## Penyempurnaan Bento Dashboard, Grafik Kurva dan Bento Statistik — 20 November 2026, review
+
+- Beranda Owner:
+  1. Tombol Monitor sendirian di atas dihapus. Area atas langsung mulai dari filter periode (`Hari ini`, `7 hari`, `30 hari`) dan kartu Penjualan Bersih.
+  2. Tombol Monitor diintegrasikan ke dalam Bento Aksi Kelola di bawah sebagai kartu unggulan utama ("Monitor Toko — Pantau stok rak & tata letak 3D isometrik") dipadukan dengan 4 action pods (2x2).
+  3. Grafik Penjualan Harian dirombak dari diagram batang kaku menjadi *Smooth Area Line Chart* bergradien violet interaktif dengan garis panduan, scrubbing tanggal, dan kurva adaptif (mulai dari Rp 0 saat mode "Hari ini").
+  4. Pintasan Menu: Tinggi kartu berpasangan diratakan secara presisi menggunakan `IntrinsicHeight` & `crossAxisAlignment: CrossAxisAlignment.stretch`. Deskripsi Chatbot diselaraskan ("Bantuan tanya jawab") agar pas 1 baris sama dengan kartu Statistik.
+- Layar Statistik:
+  Dirombak total menjadi **Bento Grid Fungsional Asimetris** mengacu pada prinsip *Linear*, *unslop*, dan *design-taste-frontend*:
+  1. Hero Bento Utama: Estimasi Nilai Total Aset Inventaris Toko (`inventoryValue`) dan Omzet/Aktivitas Hari Ini.
+  2. 2-Up Bento Cards: Kesehatan Inventaris (item, varian, alert restok) & Efisiensi Margin Laba (rata-rata margin % dan produk termodal).
+  3. Bento Komposisi Kategori: Progress bar multi-segment tonal dengan rincian kategori produk.
+  4. Kontainer Bento Terstruktur: Tren penjualan, metode pembayaran, jam sibuk, peringkat produk terlaris/lambat laku, margin produk, dan daftar perlu restok.
+- Validasi:
+  - Analyzer bersih; 268/268 test Flutter dan 12/12 test Node lulus.
+  - APK debug dibangun ulang (18,7 detik), diinstal via `adb install -r`, dan diluncurkan di Samsung SM_A366B (`RRGYC07G09Z`) tanpa menghapus data lokal.
 
 ## Audit teknis dan perbaikan Monitor — 20 November 2026, review
 
