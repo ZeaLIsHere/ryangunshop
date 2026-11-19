@@ -1,6 +1,7 @@
 # Alur UI dan status implementasi RyanGunshop
 
-Status: 15 November 2026. Dokumen ini menggambarkan implementasi lokal saat ini,
+Status: 19 November 2026, acuan kode `a85a159`. Dokumen ini membedakan
+implementasi cloud-first native dari rencana Monitor,
 bukan lagi tahap UI-only. Pemilik fitur katalog/kasir: Blessly Victory Deo Silaban;
 shell, Beranda, dan laporan: Tariq. Pembagian kerja tetap mengikuti `TEAM.md`.
 
@@ -25,10 +26,36 @@ Peran dibaca dari sesi bersama dan diperiksa ulang saat penyimpanan.
   Riwayat transaksi, Pengaturan, Statistik, Chatbot. Tujuan tetap memakai router
   dan pemeriksaan izin layar terkait.
 
+## Monitor — alur UI rencana, fondasi lokal tersedia
+
+Rencana kanonis: [Rencana Monitor](monitor-plan.md), disusun terpisah.
+Tombol **Monitor** direncanakan hanya pada Beranda pemilik, menuju halaman baru;
+kasir dan navigasi utama tetap. Peran lokal bukan batas keamanan.
+
+1. **Setup awal:** pilih template Dinding, Dua baris, atau Dinding + tengah.
+   Pilih produk secara massal dan konfirmasikan penempatan manual. Boleh lewati;
+   produk tersisa berada di **Belum ditempatkan**, tidak diberi lokasi palsu.
+2. **Pantau:** kanvas isometrik 2.5D ringan, pilih fixture untuk detail; pan/zoom
+   tidak memindahkan fixture. Kandidat native `CustomPainter` + `InteractiveViewer`.
+   Audit reuse `floor_plan` arsip; bukan pengaktifan panorama/data contoh lama.
+3. **Detail:** bottom sheet ponsel atau panel samping tablet. Baca stok dan
+   `lowStockThreshold` produk yang sudah ada. Peringatan ikon + teks menghitung
+   jenis produk menipis/habis, bukan total unit campuran.
+4. **Edit:** grid sederhana rak/kulkas/meja kasir; tambah, pindah, nama, rotasi
+   90°, hapus. **Simpan** menerapkan draft, **Batal** membuang draft; keluar
+   dengan perubahan belum disimpan memerlukan konfirmasi.
+5. **Penempatan:** satu lokasi utama per produk lewat `fixtureId`. Pindah fixture
+   tidak mengubah stok. Hapus rak melepas penempatan, bukan menghapus produknya.
+   Persistensi layout dan migrasi masih usulan, bukan koleksi Firestore aktif.
+6. **Jalur alternatif:** daftar aksesibel setara kanvas, reset zoom, reduced
+   motion; lebar 360 dp/skala 1.3, target sentuh 48 dp. Sediakan state kosong,
+   memuat, error/retry, offline; cache bukan jaminan stok cloud terbaru.
+
 ## Produk dan pemindaian
 
 1. **Produk (`ProductCatalog`):** pencarian, kategori, urutan, dan filter stok
-   membaca repository lokal. Judul halaman **Produk**; tag **Tersimpan di
+   membaca repository cloud-first native dengan cache/fallback SQLite.
+   Judul halaman **Produk**; tag **Tersimpan di
    perangkat** sudah dihapus. Penghapusan tag bukan bukti unggah cloud.
 2. Katalog memakai `CustomScrollView`/`SliverList.builder` untuk membangun baris
    grid secara lazy. Cakupan uji: dua kolom pada 360 dp, tiga pada 600 dp, lima
@@ -56,7 +83,9 @@ Produk / kamera / input manual
 Produk, stok, nota, dan draft keranjang tersimpan lewat SQLite/Drift pada native.
 Penyimpanan transaksi tunai nyata bukan simulasi sesi. Status berhasil hanya
 boleh muncul setelah penyimpanan berhasil. State memuat, kosong, error/retry,
-dan offline harus tetap dapat dipakai; data pratinjau diberi label contoh.
+dan offline harus tetap dapat dipakai. Data sintetis yang diimpor untuk
+presentasi memakai UI biasa tanpa label contoh/sintetis/demo; asalnya dicatat
+melalui ID/metadata internal, bukan penanda di layar.
 
 QRIS belum terverifikasi sebagai pembayaran nyata. State `creating`,
 `awaitingPayment`, `paid`, `expired`, `failed` adalah kontrak tampilan/simulasi,
@@ -81,19 +110,39 @@ Tidak ada laba historis karena nota belum menyimpan snapshot harga modal.
   privat. Outbox SQLite dikuras saat startup, perubahan sesi, serta setiap 15
   detik selama aplikasi berjalan. Ini bukan layanan latar belakang Android.
   SDK siap bukan bukti unggah berhasil; produk lama tidak otomatis di-backfill.
-- Jalur tulis kode: `stores/{storeId}/products/{productId}` dan
+- Baca native memakai `Source.server`, reuse hasil 15 detik, backoff gagal
+  30 detik, timeout 8 detik lalu fallback SQLite. Request native terlambat tidak
+  overlap; hasil terlambat tidak diimpor. Outbox pending dan revisi tulis lokal
+  melindungi perubahan produk/nota. `dataRevision` menyegarkan Beranda, Produk,
+  Statistik, serta laporan. Impor nota tidak menjalankan checkout lagi.
+- Full scan dibatasi 10.000 dokumen/koleksi; melampaui batas bukan impor parsial.
+  Snapshot lintas koleksi/halaman tidak atomik dan setiap scan memakai read
+  Firestore. Stok multi-device masih last-write-wins, tidak aman bersamaan.
+- Jalur baca/tulis kode: `stores/{storeId}/products/{productId}` dan
   `stores/{storeId}/transactions/{transactionId}`. Autentikasi Firestore,
   keamanan/isolasi tenant, deployment aturan, dan pemulihan cloud belum
   terverifikasi. Detail: `firebase-setup.md` dan `firestore-schema.md`.
 - Web hanya pratinjau; tidak memakai SQLite, antrean outbox, atau sinkronisasi
-  native. Denah/panorama adalah arsip, bukan navigasi utama.
+  native atau cloud-first. Denah/panorama adalah arsip; Monitor baru fondasi lokal, UI belum aktif.
 - QRIS nyata, cetak thermal, foto koreksi privat, model TFLite, dan rencana
   restok belum menjadi kemampuan produksi terverifikasi.
 
 ## Bukti validasi dan batasnya
 
-Hasil validasi **15 November 2026**: analyzer bersih dan **212 pengujian lulus**,
-dijalankan ulang saat pembaruan dokumentasi. APK sebelumnya dibangun sekitar
+Validasi terakhir yang dilaporkan **19 November 2026**: analyzer bersih,
+**240 test Flutter + 12 test Node lulus**, termasuk rekonsiliasi stok legacy.
+Impor berizin sudah create-only dan read-back terverifikasi: 90 dokumen,
+24 produk, 66 nota tunai, 394 unit, Rp3.035.800 untuk 10–24 November 2026
+inklusif (15 hari). Tanggal mendatang termasuk dataset; filter periode tetap
+mengikuti kalender. Data tampil normal, asal hanya metadata internal.
+
+APK cloud-first belum dibangun/dipasang; baca native dan unggah outbox perangkat
+belum diuji langsung. GET tanpa autentikasi masih HTTP 200: risiko baca publik.
+Tidak ada perubahan rules/auth atau permintaan login/PIN/Anonymous Auth.
+Hasil di atas bukan uji ulang pada tugas dokumentasi, bukan validasi Monitor.
+
+**Riwayat sebelum cloud-first, 15 November 2026:** analyzer bersih dan
+**212 pengujian lulus**. APK saat itu dibangun sekitar
 **51 detik**, dipasang dengan `adb install -r`, dan diluncurkan pada Samsung. Build/install/launch **tidak
 membuktikan UI fisik atau seluruh alur perangkat sudah diperiksa**; verifikasi
 visual, kamera, berbagi, cetak fisik, unggah cloud, dan API langsung tetap perlu

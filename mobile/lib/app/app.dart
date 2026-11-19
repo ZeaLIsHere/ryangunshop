@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../core/config/firebase_bootstrap.dart';
 import '../core/data/app_database.dart';
 import '../core/data/sync/drift_sync_queue.dart';
+import '../core/data/sync/cloud_read_through.dart';
 import '../core/data/sync/firestore_sync_target.dart';
 import '../core/data/sync/sync_engine.dart';
 import '../core/data/sync/sync_queue.dart';
@@ -47,8 +48,23 @@ class _RyanGunshopAppState extends State<RyanGunshopApp> {
             storeId: FirebaseBootstrap.storeId,
           ),
         );
+  late final CloudReadThrough? _cloudReadThrough =
+      _database == null || !FirebaseBootstrap.isReady
+      ? null
+      : CloudReadThrough(
+          database: _database,
+          fetch: FirestoreReadSource(
+            FirebaseFirestore.instance,
+            storeId: FirebaseBootstrap.storeId,
+          ).fetch,
+        );
   late final AppSession _session =
-      widget.session ?? AppSession(database: _database, syncQueue: _syncQueue);
+      widget.session ??
+      AppSession(
+        database: _database,
+        syncQueue: _syncQueue,
+        cloudReadThrough: _cloudReadThrough,
+      );
   late final bool _ownsSession = widget.session == null;
   Timer? _syncTimer;
 
@@ -61,6 +77,7 @@ class _RyanGunshopAppState extends State<RyanGunshopApp> {
       unawaited(_syncEngine.flush());
       _syncTimer = Timer.periodic(const Duration(seconds: 15), (_) {
         unawaited(_syncEngine.flush());
+        unawaited(_session.refreshCloud());
       });
     }
   }
@@ -79,7 +96,11 @@ class _RyanGunshopAppState extends State<RyanGunshopApp> {
     final database = _database;
     final pendingWrites = database == null
         ? null
-        : _session.finishLocalWrites();
+        : Future.wait<void>([
+            _session.finishLocalWrites(),
+            if (_cloudReadThrough != null) _cloudReadThrough.finish(),
+          ]).then<void>((_) {});
+    _cloudReadThrough?.dispose();
     if (_ownsSession) {
       _session.dispose();
     }

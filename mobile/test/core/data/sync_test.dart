@@ -58,7 +58,10 @@ void main() {
       expect(payload['schemaVersion'], FirestoreSchema.version);
       expect(payload['barcode'], '8990001');
       expect(payload['salePrice'], 4000);
-      expect(payload['updatedAt'], DateTime(2026, 11, 13, 10).millisecondsSinceEpoch);
+      expect(
+        payload['updatedAt'],
+        DateTime(2026, 11, 13, 10).millisecondsSinceEpoch,
+      );
       expect(result.name, 'Air Mineral');
       expect(result.stock, 12);
       expect(result.category, 'Minuman');
@@ -268,10 +271,7 @@ void main() {
       final queue = InMemorySyncQueue();
       final products = DriftProductRepository(database);
       await products.save(_product);
-      final transactions = DriftTransactionRepository(
-        database,
-        queue: queue,
-      );
+      final transactions = DriftTransactionRepository(database, queue: queue);
 
       await transactions.checkout(
         transactionId: 'TRX-1',
@@ -289,12 +289,25 @@ void main() {
         ],
       );
 
-      final entry = (await queue.pending()).single;
+      final entries = await queue.pending();
+      expect(
+        entries
+            .where((e) => e.entity == SyncEntityType.product)
+            .single
+            .payload['stock'],
+        10,
+      );
+      final entry = entries.singleWhere(
+        (e) => e.entity == SyncEntityType.transaction,
+      );
       expect(entry.entity, SyncEntityType.transaction);
       expect(entry.entityId, 'TRX-1');
       expect(entry.payload['itemCount'], 2);
       expect(entry.payload['summaryTitle'], 'Air Mineral');
-      expect(FirestoreSchema.soldItemsFromDocument(entry.payload), hasLength(1));
+      expect(
+        FirestoreSchema.soldItemsFromDocument(entry.payload),
+        hasLength(1),
+      );
     });
 
     test('checkout batal bila antrean gagal, stok tidak berubah', () async {

@@ -8,7 +8,9 @@ import '../data/drift_product_repository.dart';
 import '../data/in_memory_product_repository.dart';
 import '../data/in_memory_transaction_repository.dart';
 import '../data/product_repository.dart';
+import '../data/product_record.dart';
 import '../data/sync/sync_queue.dart';
+import '../data/sync/cloud_read_through.dart';
 import '../data/transaction_repository.dart';
 import '../../features/checkout/model/cart_item.dart';
 import '../../features/checkout/view_model/cart_view_model.dart';
@@ -20,7 +22,7 @@ import 'user_role.dart';
 /// Dipisahkan dari fitur agar denah, pengaturan, dan kasir membaca peran dari satu
 /// sumber yang sama.
 class AppSession extends ChangeNotifier {
-  AppSession({this.database, this.syncQueue})
+  AppSession({this.database, this.syncQueue, this.cloudReadThrough})
     : _inMemoryProducts = InMemoryProductRepository([]),
       cart = CartViewModel(withSampleItems: false),
       _todayRevenue = 0,
@@ -33,6 +35,22 @@ class AppSession extends ChangeNotifier {
     if (database != null) {
       cart.addListener(_onCartChanged);
       unawaited(loadLocalCart());
+      _dataSubscription = database!
+          .customSelect(
+            'SELECT 1',
+            readsFrom: {
+              database!.products,
+              database!.transactions,
+              database!.transactionItems,
+            },
+          )
+          .watch()
+          .listen((_) {
+            if (_disposed) return;
+            dataRevision++;
+            _summaryDirty = true;
+            unawaited(loadLocalSummary(refreshCloud: false));
+          }, onError: (Object _) {});
     }
   }
 
@@ -40,16 +58,25 @@ class AppSession extends ChangeNotifier {
 
   /// Antrean Firestore. Kosong berarti aplikasi berjalan lokal saja.
   final SyncQueue? syncQueue;
+  final CloudReadThrough? cloudReadThrough;
   final InMemoryProductRepository _inMemoryProducts;
   late final InMemoryTransactionRepository _inMemoryTransactions;
   final CartViewModel cart;
 
   ProductRepository get productRepository => database != null
-      ? DriftProductRepository(database!, queue: syncQueue)
+      ? DriftProductRepository(
+          database!,
+          queue: syncQueue,
+          beforeRead: cloudReadThrough?.refresh,
+        )
       : _inMemoryProducts;
 
   TransactionRepository get transactionRepository => database != null
-      ? DriftTransactionRepository(database!, queue: syncQueue)
+      ? DriftTransactionRepository(
+          database!,
+          queue: syncQueue,
+          beforeRead: cloudReadThrough?.refresh,
+        )
       : _inMemoryTransactions;
 
   UserRole _role = UserRole.owner;
@@ -59,6 +86,8 @@ class AppSession extends ChangeNotifier {
   int _lowStockCount;
   final List<CompletedTransaction> _recentTransactions;
   bool _disposed = false;
+  int dataRevision = 0;
+  StreamSubscription<Object?>? _dataSubscription;
   int _localLoadVersion = 0;
   bool _cartReady = false;
   bool _cartLoadFailed = false;
@@ -67,6 +96,8 @@ class AppSession extends ChangeNotifier {
   int _cartRevision = 0;
   Future<void>? _cartLoadFuture;
   Future<void> _cartWriteQueue = Future<void>.value();
+  Future<void>? _summaryFuture;
+  bool _summaryDirty = false;
 
   bool get isLocalCartReady => database == null || _cartReady;
   bool get isLocalCartLoadFailed => _cartLoadFailed;
@@ -172,14 +203,41 @@ class AppSession extends ChangeNotifier {
     await _cartWriteQueue;
   }
 
-  Future<void> loadLocalSummary() async {
+  Future<void> refreshCloud({bool force = false}) async {
+    await cloudReadThrough?.refresh(force: force);
+  }
+
+  Future<void> loadLocalSummary({bool refreshCloud = true}) {
+    return _summaryFuture ??= _reloadSummary(refreshCloud: refreshCloud)
+        .whenComplete(() => _summaryFuture = null);
+  }
+
+  Future<void> _reloadSummary({required bool refreshCloud}) async {
+    do {
+      _summaryDirty = false;
+      await _loadSummary(refreshCloud: refreshCloud);
+      refreshCloud = false;
+    } while (_summaryDirty && !_disposed);
+  }
+
+  Future<void> _loadSummary({required bool refreshCloud}) async {
     if (_disposed) return;
-    final source = transactionRepository;
+    final source = !refreshCloud && database != null
+        ? DriftTransactionRepository(database!)
+        : transactionRepository;
+    final products = !refreshCloud && database != null
+        ? DriftProductRepository(database!)
+        : productRepository;
     final version = ++_localLoadVersion;
     try {
-      final today = await source.summaryForDay(DateTime.now());
-      final recent = await source.listRecent(limit: 20);
-      final allProducts = await productRepository.listProducts();
+      final results = await Future.wait<Object>([
+        source.summaryForDay(DateTime.now()),
+        source.listRecent(limit: 20),
+        products.listProducts(),
+      ]);
+      final today = results[0] as DailySalesSummary;
+      final recent = results[1] as List<TransactionRecord>;
+      final allProducts = results[2] as List<ProductRecord>;
       if (_disposed || version != _localLoadVersion) return;
       _todayRevenue = today.total;
       _todayTransactionCount = today.count;
@@ -264,6 +322,7 @@ class AppSession extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    unawaited(_dataSubscription?.cancel());
     cart.removeListener(_onCartChanged);
     cart.dispose();
     super.dispose();

@@ -39,6 +39,7 @@ class _CashierDashboardState extends State<CashierDashboard> {
   >?
   _data;
   int? _count;
+  int? _dataRevision;
   ValueChanged<DashboardShortcut> get onShortcutSelected =>
       widget.onShortcutSelected;
   VoidCallback? get onStartScan => widget.onStartScan;
@@ -46,8 +47,12 @@ class _CashierDashboardState extends State<CashierDashboard> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final count = AppSessionScope.of(context).todayTransactionCount;
-    if (_data == null || _count != count) {
+    final session = AppSessionScope.of(context);
+    final count = session.todayTransactionCount;
+    if (_data == null ||
+        _count != count ||
+        _dataRevision != session.dataRevision) {
+      _dataRevision = session.dataRevision;
       _count = count;
       _data = _load();
     }
@@ -88,9 +93,14 @@ class _CashierDashboardState extends State<CashierDashboard> {
     );
   }
 
-  void _reload() => setState(() {
-    _data = _load();
-  });
+  Future<void> _reload() async {
+    await AppSessionScope.of(context).refreshCloud(force: true);
+    if (mounted) {
+      setState(() {
+        _data = _load();
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

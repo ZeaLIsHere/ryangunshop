@@ -14,17 +14,21 @@ import 'sync/sync_queue.dart';
 /// Firestore pada saat yang sama. Tanpa [queue], aplikasi tetap bekerja penuh
 /// secara lokal.
 class DriftProductRepository implements ProductRepository {
-  const DriftProductRepository(this.database, {this.queue});
+  const DriftProductRepository(this.database, {this.queue, this.beforeRead});
 
   final AppDatabase database;
   final SyncQueue? queue;
+  final Future<void> Function()? beforeRead;
 
   @override
-  Future<List<ProductRecord>> listProducts() async =>
-      (await database.listProducts()).map(_toRecord).toList();
+  Future<List<ProductRecord>> listProducts() async {
+    await beforeRead?.call();
+    return (await database.listProducts()).map(_toRecord).toList();
+  }
 
   @override
   Future<ProductRecord?> findByBarcode(String barcode) async {
+    await beforeRead?.call();
     final product = await database.findProductByBarcode(barcode);
     return product == null ? null : _toRecord(product);
   }
@@ -44,51 +48,55 @@ class DriftProductRepository implements ProductRepository {
       throw ArgumentError('Data produk tidak valid');
     }
     final updatedAt = DateTime.now();
-    await database.saveProduct(
-      ProductsCompanion.insert(
-        id: product.id,
-        barcode: Value(product.barcode?.trim()),
-        name: product.name,
-        salePrice: product.salePrice,
-        stock: product.stock,
-        costPrice: Value(product.costPrice),
-        category: Value(product.category),
-        unit: Value(product.unit),
-        fixtureId: Value(product.fixtureId),
-        locationLabel: Value(product.locationLabel),
-        lowStockThreshold: Value(product.lowStockThreshold),
-        updatedAt: updatedAt,
-      ),
-    );
-    await queue?.enqueue(
-      OutboxEntry(
-        entity: SyncEntityType.product,
-        entityId: product.id,
-        operation: SyncOperation.upsert,
-        payload: FirestoreSchema.productDocument(
-          product,
+    await database.localWrite(() async {
+      await database.saveProduct(
+        ProductsCompanion.insert(
+          id: product.id,
+          barcode: Value(product.barcode?.trim()),
+          name: product.name,
+          salePrice: product.salePrice,
+          stock: product.stock,
+          costPrice: Value(product.costPrice),
+          category: Value(product.category),
+          unit: Value(product.unit),
+          fixtureId: Value(product.fixtureId),
+          locationLabel: Value(product.locationLabel),
+          lowStockThreshold: Value(product.lowStockThreshold),
           updatedAt: updatedAt,
         ),
-        createdAt: updatedAt,
-      ),
-    );
+      );
+      await queue?.enqueue(
+        OutboxEntry(
+          entity: SyncEntityType.product,
+          entityId: product.id,
+          operation: SyncOperation.upsert,
+          payload: FirestoreSchema.productDocument(
+            product,
+            updatedAt: updatedAt,
+          ),
+          createdAt: updatedAt,
+        ),
+      );
+    });
   }
 
   @override
   Future<void> delete(String id) async {
     final deletedAt = DateTime.now();
-    await database.deleteProduct(id);
-    await queue?.enqueue(
-      OutboxEntry(
-        entity: SyncEntityType.product,
-        entityId: id,
-        operation: SyncOperation.delete,
-        payload: FirestoreSchema.productDeletionDocument(
-          deletedAt: deletedAt,
+    await database.localWrite(() async {
+      await database.deleteProduct(id);
+      await queue?.enqueue(
+        OutboxEntry(
+          entity: SyncEntityType.product,
+          entityId: id,
+          operation: SyncOperation.delete,
+          payload: FirestoreSchema.productDeletionDocument(
+            deletedAt: deletedAt,
+          ),
+          createdAt: deletedAt,
         ),
-        createdAt: deletedAt,
-      ),
-    );
+      );
+    });
   }
 
   @override

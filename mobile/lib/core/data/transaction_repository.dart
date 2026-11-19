@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import 'app_database.dart';
+import 'product_record.dart';
 import 'sync/firestore_schema.dart';
 import 'sync/outbox.dart';
 import 'sync/sync_queue.dart';
@@ -55,8 +56,11 @@ class DailySalesSummary {
 }
 
 abstract interface class TransactionRepository {
-  factory TransactionRepository(AppDatabase database, {SyncQueue? queue}) =
-      DriftTransactionRepository;
+  factory TransactionRepository(
+    AppDatabase database, {
+    SyncQueue? queue,
+    Future<void> Function()? beforeRead,
+  }) = DriftTransactionRepository;
 
   Future<void> checkout({
     required String transactionId,
@@ -86,10 +90,15 @@ abstract interface class TransactionRepository {
 }
 
 class DriftTransactionRepository implements TransactionRepository {
-  const DriftTransactionRepository(this.database, {this.queue});
+  const DriftTransactionRepository(
+    this.database, {
+    this.queue,
+    this.beforeRead,
+  });
 
   final AppDatabase database;
   final SyncQueue? queue;
+  final Future<void> Function()? beforeRead;
 
   @override
   Future<void> checkout({
@@ -120,6 +129,7 @@ class DriftTransactionRepository implements TransactionRepository {
 
   @override
   Future<TransactionRecord?> findById(String id) async {
+    await beforeRead?.call();
     final row = await (database.select(
       database.transactions,
     )..where((row) => row.id.equals(id))).getSingleOrNull();
@@ -167,12 +177,45 @@ class DriftTransactionRepository implements TransactionRepository {
       itemCount: items.fold<int>(0, (sum, item) => sum + item.quantity),
       summaryTitle: _summaryTitle(items),
     );
+    // Snapshot stok ikut outbox atomik, bukan dipotong ulang saat nota diimpor.
+    for (final item in itemRows) {
+      final product = await (database.select(
+        database.products,
+      )..where((p) => p.id.equals(item.productId))).getSingle();
+      await syncQueue.enqueue(
+        OutboxEntry(
+          entity: SyncEntityType.product,
+          entityId: product.id,
+          operation: SyncOperation.upsert,
+          payload: FirestoreSchema.productDocument(
+            ProductRecord(
+              id: product.id,
+              barcode: product.barcode,
+              name: product.name,
+              salePrice: product.salePrice,
+              costPrice: product.costPrice,
+              stock: product.stock,
+              category: product.category,
+              unit: product.unit,
+              fixtureId: product.fixtureId,
+              locationLabel: product.locationLabel,
+              lowStockThreshold: product.lowStockThreshold,
+            ),
+            updatedAt: product.updatedAt,
+          ),
+          createdAt: row.createdAt,
+        ),
+      );
+    }
     await syncQueue.enqueue(
       OutboxEntry(
         entity: SyncEntityType.transaction,
         entityId: row.id,
         operation: SyncOperation.upsert,
-        payload: FirestoreSchema.transactionDocument(record, items),
+        payload: {
+          ...FirestoreSchema.transactionDocument(record, items),
+          'stockQueued': true,
+        },
         createdAt: row.createdAt,
       ),
     );
@@ -187,6 +230,7 @@ class DriftTransactionRepository implements TransactionRepository {
 
   @override
   Future<List<TransactionRecord>> listRecent({int limit = 20}) async {
+    await beforeRead?.call();
     final query = database.select(database.transactions)
       ..orderBy([(row) => OrderingTerm.desc(row.createdAt)])
       ..limit(limit);
@@ -238,10 +282,11 @@ class DriftTransactionRepository implements TransactionRepository {
   Future<List<TransactionRecord>> listForPeriod(
     DateTime start,
     DateTime endExclusive,
-  ) {
+  ) async {
     if (!start.isBefore(endExclusive)) {
       throw ArgumentError('Rentang tanggal tidak valid');
     }
+    await beforeRead?.call();
     final end = endExclusive;
     final transactions = database.transactions;
     final items = database.transactionItems;
@@ -310,6 +355,7 @@ class DriftTransactionRepository implements TransactionRepository {
 
   @override
   Future<DailySalesSummary> summaryForDay(DateTime day) async {
+    await beforeRead?.call();
     final local = day.toLocal();
     final start = DateTime(local.year, local.month, local.day);
     final end = DateTime(local.year, local.month, local.day + 1);

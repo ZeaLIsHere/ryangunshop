@@ -31,6 +31,18 @@ class ProductCatalog extends StatefulWidget {
 class _ProductCatalogState extends State<ProductCatalog> {
   late final CatalogViewModel _viewModel;
   final TextEditingController _searchController = TextEditingController();
+  int? _dataRevision;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final revision = AppSessionScope.maybeOf(context)?.dataRevision;
+    if (_dataRevision != revision) {
+      final hadRevision = _dataRevision != null;
+      _dataRevision = revision;
+      if (hadRevision && _viewModel.isLocal) _viewModel.loadProducts();
+    }
+  }
 
   @override
   void initState() {

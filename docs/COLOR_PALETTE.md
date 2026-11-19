@@ -1,6 +1,6 @@
 # RyanGunshop — Palet Warna (Violet Commerce POS)
 
-Status: **15 November 2026**. Identitas violet tetap dikunci; bukan perubahan
+Status: **19 November 2026**. Identitas violet tetap dikunci; bukan perubahan
 palet. Dokumen ini adalah rujukan token warna yang dipakai `DESIGN.md`. Nilai di sini
 dipasang sebagai token di `mobile/lib/core/theme/app_colors.dart`. Widget tidak
 boleh menulis nilai heksadesimal secara langsung.
@@ -32,6 +32,23 @@ boleh menulis nilai heksadesimal secara langsung.
   `muted` dan tidak dipakai untuk informasi yang wajib terbaca cepat.
 - Warna diambil dari `Theme.of(context).colorScheme` bila perannya sudah tersedia;
   gunakan `AppColors` langsung untuk peran spesifik seperti status atau gradient hero.
+
+## Monitor — penerapan terencana, bukan token baru
+
+Acuan: [Rencana Monitor](monitor-plan.md) dan [DESIGN.md](../DESIGN.md).
+UI Monitor belum aktif; fondasi lokal model/template sudah tersedia. Identitas violet dan token yang ada tetap;
+referensi desain/skills tidak diubah.
+
+- Fixture isometrik 2.5D pasif memakai permukaan netral. Kedalaman tidak boleh
+  mengalahkan label, fokus, atau status; kandidat renderer native tidak menambah
+  palet terpisah atau nilai warna literal di widget.
+- Pilihan fixture, tombol Monitor, serta kontrol Edit memakai primary/primaryLight.
+  Peringatan stok memakai warning/error sebagai aksen, dengan ikon dan teks
+  berkontras cukup; warna tidak menggantikan jumlah jenis produk menipis/habis.
+- Status dihitung dari stok/ambang produk yang ada. Tidak ada label demo pada
+  data impor; tidak ada warna sukses hanya karena SDK siap atau cache tersedia.
+- Uji pasangan warna hasil shading, seleksi, fokus, dan daftar aksesibel pada
+  implementasi nanti. Tabel rasio di bawah bukan bukti kontras kanvas Monitor.
 
 ## Ramp turunan
 

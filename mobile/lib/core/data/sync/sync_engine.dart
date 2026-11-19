@@ -40,11 +40,7 @@ class SyncRunResult {
 /// gagal, lalu entri itu dicoba lagi pada putaran berikutnya. Pemanggil yang
 /// mengatur jadwal (misalnya saat kembali online) dan memberi jeda mundur.
 class SyncEngine {
-  SyncEngine({
-    required this.queue,
-    required this.target,
-    this.batchSize = 20,
-  });
+  SyncEngine({required this.queue, required this.target, this.batchSize = 20});
 
   final SyncQueue queue;
   final SyncTarget target;
@@ -75,8 +71,16 @@ class SyncEngine {
     _running = true;
     var processed = 0;
     try {
-      final entries = await queue.pending(limit: batchSize);
+      final batch = await queue.pending(limit: batchSize);
+      final entries = [
+        ...batch.where((e) => e.entity != SyncEntityType.layout),
+        ...batch.where((e) => e.entity == SyncEntityType.layout),
+      ];
+      SyncFailure? layoutFailure;
       for (final entry in entries) {
+        if (entry.entity == SyncEntityType.layout && layoutFailure != null) {
+          continue;
+        }
         try {
           await target.apply(entry);
           await queue.markSynced(entry);
@@ -84,6 +88,10 @@ class SyncEngine {
         } catch (error) {
           final message = error.toString();
           await queue.markFailed(entry, message);
+          if (entry.entity == SyncEntityType.layout) {
+            layoutFailure = SyncFailure(entry: entry, message: message);
+            continue;
+          }
           return SyncRunResult(
             status: SyncStatus.pending,
             processed: processed,
@@ -97,6 +105,7 @@ class SyncEngine {
         status: remaining == 0 ? SyncStatus.synced : SyncStatus.pending,
         processed: processed,
         remaining: remaining,
+        failure: layoutFailure,
       );
     } finally {
       _running = false;

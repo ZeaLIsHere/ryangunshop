@@ -1,26 +1,33 @@
 # Skema Firestore RyanGunshop
 
-Status: **15 November 2026**. Kontrak payload dan jalur target tulis yang sudah
-ada di kode, bukan bukti skema/aturan sudah dideploy atau unggah cloud berhasil.
-SQLite/Drift tetap sumber POS lokal. Bentuk dokumen didefinisikan di
+Status: **19 November 2026**, acuan kode `a85a159`. Kontrak baca/tulis sudah
+ada di kode: baca native cloud-first, SQLite/Drift cache/fallback, penulisan POS
+lokal lalu outbox. APK cloud-first belum dibangun/dipasang dan baca native
+langsung belum diverifikasi. Impor server berizin sudah terbukti, berbeda dari
+verifikasi integrasi perangkat. Bentuk dokumen didefinisikan di
 `mobile/lib/core/data/sync/firestore_schema.dart` dan diuji di
 `mobile/test/core/data/sync_test.dart`. Target aktual diperiksa pada
 `mobile/lib/core/data/sync/firestore_sync_target.dart`.
 
-Autentikasi Firestore, isolasi tenant, deployment aturan, dan pemulihan cloud
-belum terverifikasi. Peran pemilik/kasir dari Pengaturan bukan login keamanan.
+GET tanpa autentikasi masih HTTP 200: risiko baca publik belum ditutup.
+Autentikasi aplikasi, isolasi tenant, dan pemulihan perangkat baru belum
+terverifikasi. Peran Pengaturan bukan login keamanan. Tidak ada perubahan
+rules/auth atau permintaan login/PIN/Anonymous Auth.
 
 ## Prinsip
 
-1. **Lokal tetap sumber kebenaran saat kasir berjalan.** Nota ditulis ke SQLite
-   lebih dahulu. Firestore menerima salinan, bukan sebaliknya.
+1. **Cloud-first untuk baca native, lokal untuk commit POS.** Server mengisi
+   cache SQLite lewat read-through; offline/gagal memakai cache. Checkout
+   mencatat nota/stok/outbox lokal terlebih dahulu. Guard pending melindungi
+   perubahan lokal yang belum terkirim dari snapshot cloud.
 2. **Jalur target per toko.** Target menulis di `stores/{storeId}`. Struktur
    jalur ini bukan jaminan isolasi tenant; autentikasi dan aturan akses masih
    perlu diuji. `storeId` berasal dari konfigurasi, bukan identitas terverifikasi.
 3. **Nominal berupa bilangan bulat rupiah.** Tidak ada `double`, sehingga tidak
    ada pembulatan yang bergeser antarperangkat.
-4. **ID ditentukan perangkat.** ID produk dan nomor nota (`TRX-...`) dibuat
-   lokal, jadi pengiriman ulang bersifat idempoten.
+4. **ID stabil.** Produk/nota POS (`TRX-...`) dibuat lokal; tool impor memakai
+   ID stabil sendiri dan create-only. Pengiriman/impor ulang tidak menggandakan
+   nota atau menjalankan pengurangan stok checkout lagi.
 5. **Versi skema.** Setiap dokumen menyimpan `schemaVersion`. Perubahan bentuk
    wajib menaikkan `FirestoreSchema.version` dan menambah catatan migrasi di
    bawah.
@@ -30,10 +37,12 @@ belum terverifikasi. Peran pemilik/kasir dari Pengaturan bukan login keamanan.
 ```text
 stores/{storeId}
 ├── products/{productId}
-├── transactions/{transactionId}
-├── meta/sync                     # cadangan kontrak, belum dipakai
-└── members/{uid}                 # usulan akses anggota, bukan bukti deployment
+└── transactions/{transactionId}
 ```
+
+Ini dua koleksi data aktif pada kontrak dan impor terverifikasi. `meta/sync`
+(cadangan kontrak), `members/{uid}` (usulan akses), serta persistensi layout
+Monitor **bukan koleksi aktif yang terverifikasi**.
 
 `cartDrafts` **tidak** disinkronkan. Draft keranjang hanya berarti pada perangkat
 yang sedang dipakai dan sudah tersimpan di SQLite.
@@ -50,16 +59,17 @@ yang sedang dipakai dan sudah tersimpan di SQLite.
 | `stock` | int | ya | Stok tersedia |
 | `category` | string | ya | Kategori tampilan katalog |
 | `unit` | string | ya | Satuan, mis. `pcs`, `botol` |
-| `fixtureId` | string | ya | ID rak pada denah, boleh kosong |
+| `fixtureId` | string | ya | ID lokasi utama produk, boleh kosong; bidang tersedia, bukan bukti persistensi layout Monitor |
 | `locationLabel` | string | ya | Nama lokasi yang dibaca kasir |
 | `lowStockThreshold` | int | ya | Ambang stok menipis |
 | `updatedAt` | timestamp | ya | Waktu perubahan terakhir |
 | `deletedAt` | timestamp \| null | ya | *Soft delete*; `null` berarti aktif |
 
 Target mengirim penghapusan sebagai `deletedAt` dengan merge, bukan menghapus
-dokumen. Helper `fetchProductsFromFirestore()` menyaring `deletedAt == null`.
-Belum ada sinkronisasi dua arah yang terbukti menerapkan penghapusan ke perangkat
-lain; tombstone hanya menyediakan kontrak untuk alur tersebut.
+dokumen. Read-through memvalidasi dan menerapkan tombstone ke SQLite bila produk
+tidak dilindungi outbox pending. Tidak menghapus produk hanya karena ID absen
+dari snapshot. Perilaku kode ini belum diverifikasi langsung lintas perangkat;
+helper `fetchProductsFromFirestore()` bukan jalur read-through utama.
 
 ### `transactions/{transactionId}`
 
@@ -148,28 +158,84 @@ Aturan antrean:
 - Queue dibuat pada native bila database tersedia dan Firebase diaktifkan;
   engine hanya dibuat bila SDK siap. Pemicu berada di `mobile/lib/app/app.dart`.
   Tidak ada jaminan Android background service atau pengiriman saat aplikasi tutup.
-- Produk lama tidak otomatis di-backfill. Web tanpa SQLite, queue, atau sync native.
+- Produk lama tidak otomatis di-backfill. Web hanya preview lokal tanpa SQLite,
+  queue, atau cloud-first native.
+- Ack nota outbox legacy tanpa `stockQueued` mengantrekan rekonsiliasi stok lokal
+  terkait dalam transaksi yang sama dengan penghapusan entri nota. Produk dengan
+  perubahan/hapus tertunda tetap dilindungi; regresi rekonsiliasi sudah diuji.
 
-## Pemulihan cloud: usulan, belum terverifikasi
+## Read-through native dan batas pemulihan
 
-Helper `fetchProductsFromFirestore()` tersedia untuk membaca produk aktif.
-Keberadaan helper bukan alur restore produk dan nota yang sudah terintegrasi.
-Belum ada jaminan pemulihan otomatis atau tombol pemulihan siap pakai.
+`cloud_read_through.dart` membaca produk/nota dengan `Source.server`, memvalidasi
+payload, lalu mengimpor dalam transaksi SQLite. Hasil sukses dipakai ulang
+15 detik, kegagalan backoff 30 detik, timeout 8 detik memakai cache. Fetch native
+tidak dapat dibatalkan; request yang terlambat tetap dilacak agar tidak overlap,
+dan hasil terlambat tidak diimpor. Ini berbeda dari timer outbox 15 detik.
 
-Rancangan berikut masih memerlukan implementasi dan pengujian: autentikasi
-anggota toko, unduh produk/nota yang berhak diakses, validasi payload, tulis ke
-SQLite, serta penanganan konflik dan retry tanpa menggandakan outbox. Jangan
-menjalankannya sebagai prosedur pemulihan produksi berdasarkan dokumen ini.
+Guard pending dan revisi tulis lokal mencegah snapshot menimpa perubahan lokal
+yang sedang/masih diantrekan. Impor nota tidak menjalankan checkout ulang atau
+membuat outbox baru. `dataRevision` menyegarkan UI lintas fitur setelah perubahan.
 
-## Rencana migrasi bertahap
+Full scan memakai halaman 500 dokumen, maksimal **10.000 dokumen per koleksi**.
+Snapshot melebihi batas ditolak, bukan diimpor sebagian. Snapshot antar koleksi/
+halaman tidak atomik meski impor lokal atomik. Pembacaan tetap menimbulkan read
+Firestore. Stok lintas perangkat masih **last-write-wins**, tidak aman serentak.
+Baca native langsung, pemulihan perangkat kosong, dan keamanan tenant belum
+terverifikasi; jangan menjanjikan restore produksi atau tombol pulihkan.
+
+## Bukti impor dan validasi — 19 November 2026
+
+Google Cloud CLI sudah dipasang dan diotorisasi pengguna. Impor OAuth berizin
+pada `iyangunshop`, `stores/toko-utama` menghasilkan **90 dokumen dibuat,
+0 dilewati, 90 read-back sesuai rencana**: 24 produk, 66 nota tunai, 394 unit,
+Rp3.035.800, tanggal 10–24 November 2026 inklusif (15 hari). Create-only,
+tidak menimpa dokumen lama. Asal dicatat internal; tanpa label visual data demo.
+Tidak mencetak/menyalin kredensial; rules/auth tidak diubah.
+
+Validasi terakhir yang dilaporkan: analyzer bersih, **240 test Flutter + 12 test
+Node lulus**, termasuk guard outbox dan rekonsiliasi legacy. Bukan eksekusi ulang
+pada tugas dokumen. Impor admin/read-back bukan bukti baca native, unggah outbox
+APK, atau stok multi-device aman. APK cloud-first belum dibangun/dipasang.
+
+## Monitor — kontrak di kode, belum diverifikasi live
+
+Acuan kanonis: [Rencana Monitor](monitor-plan.md). Pembangunan fondasi lokal
+sudah disetujui: model/template, layout SQLite skema 7 dan UI lokal tersedia.
+Kontrak cloud baru ditulis ke `stores/{storeId}/layouts/main` sebagai
+`{layout, token}`. Layout menyimpan assignments produk→fixture, bukan stok.
+Transaksi Firestore memeriksa baseToken atau token retry, membaca seluruh produk
+terkait lalu memperbarui lokasi dan layout secara atomik. `monitorLocationToken`
+produk mencegah snapshot outbox stok lama mengembalikan lokasi sebelumnya.
+Maksimal 400 penempatan, 450 perubahan lokasi/operasi. Perubahan lokasi tidak
+menulis harga, stok atau nota. Jalur ini belum diuji pada server; rules tidak diubah.
+
+- Satu lokasi utama per produk via `fixtureId`; tanpa salinan stok pada fixture.
+  Produk boleh belum ditempatkan. Penempatan massal memerlukan konfirmasi manual.
+- Layout memuat identitas fixture, jenis rak/kulkas/meja kasir, nama,
+  posisi grid dan rotasi 90°. Outbox layout memakai token/baseToken; konflik
+  tetap pending dan tidak menghambat antrean nota/produk. Rules perlu uji terpisah.
+- Pindah lokasi tidak mengubah stok; hapus rak melepas penempatan, bukan
+  menghapus produk. Simpan/Batal bekerja pada draft; konsistensi perubahan
+  layout dan penempatan harus diuji, bukan diasumsikan atomik di cloud.
+- Jumlah peringatan adalah jenis produk menipis/habis dari stok/ambang yang
+  sudah ada. Tidak menjumlah unit berbeda dan tidak membuat koleksi stok baru.
+
+Tidak deploy rules atau seed layout Monitor. Koleksi layout baru hanya target
+kode, belum bukti dokumen tersimpan server. Migrasi lokal SQLite 6→7 menambah
+`monitor_layouts`; payload lokasi produk menambah token internal opsional.
+
+## Peta lapisan dan pekerjaan berikutnya
+
+Nomor berikut menjaga urutan rencana lama; bukan persetujuan implementasi
+keamanan atau layanan tambahan.
 
 | Tahap | Isi | Status |
 |---|---|---|
 | 1 | Skema dokumen, outbox, mesin sinkronisasi, konfigurasi Firebase | selesai (lapisan) |
-| 2 | Layanan autentikasi + layar masuk, aturan keamanan diuji | belum |
+| 2 | Identitas/keanggotaan toko dan aturan keamanan | belum disetujui; tidak menambah login/PIN/Anonymous Auth |
 | 3 | `flush()` startup, perubahan sesi, timer 15 detik selama aplikasi berjalan | terpasang; unggah nyata belum terverifikasi |
-| 4 | Pemulihan produk dan nota di perangkat baru | belum |
-| 5 | Sinkronisasi dua arah untuk produk (konflik stok) | belum |
+| 4 | Read-through produk/nota ke SQLite | kode dan test ada; baca native/perangkat baru belum live terverifikasi |
+| 5 | Penyelesaian konflik stok beberapa perangkat | belum; last-write-wins tidak aman serentak |
 | 6 | QRIS, foto produk, dan laporan berbasis cloud | belum |
 
 ### Batasan yang harus disepakati sebelum tahap 2
@@ -185,6 +251,13 @@ menjalankannya sebagai prosedur pemulihan produksi berdasarkan dokumen ini.
 - **Hapus produk** mengirim tombstone; penerapan lintas perangkat belum teruji.
 - **Kuota dan biaya:** periksa paket/kuota aktual sebelum operasi cloud. Retry
   dapat menambah pemakaian; kapasitas aman satu warung belum dibuktikan.
+
+## Riwayat kontrak awal
+
+Dokumentasi 15 November 2026 menggambarkan upload-only dan helper baca produk,
+belum read-through terintegrasi. Itu riwayat sebelum `a85a159`, bukan batas kode
+terkini. Usulan `meta/sync`, anggota toko, dan autentikasi tidak menjadi deployed
+hanya karena tercatat dalam rencana lama.
 
 ## Rollback
 

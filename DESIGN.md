@@ -6,10 +6,11 @@ Antarmuka bertema **Violet Commerce POS (Modern Spatial Warung)**: memadukan
 kecepatan operasional terminal kasir ritel dengan estetika modern violet yang bersih,
 elegan, dan tenang. Sistem visual ini dirancang untuk menghilangkan kelelahan mata
 selama shift kerja panjang di lingkungan warung dan toko kelontong, sekaligus memberikan
-kejelasan transaksi, stok, dan analitik lokal di perangkat Android. Denah/panorama
-adalah arsip, bukan navigasi utama.
+kejelasan transaksi, stok, dan analitik di perangkat Android. Denah/panorama
+adalah arsip, bukan navigasi utama. Monitor adalah rencana halaman baru pemilik,
+bukan pengaktifan kembali arsip.
 
-**Status 15 November 2026:** identitas Violet Commerce POS tetap dikunci.
+**Status 19 November 2026, acuan kode `a85a159`:** identitas Violet Commerce POS tetap dikunci.
 Dokumen ini membedakan aturan visual dari kemampuan terpasang; bukan bukti
 seluruh UI fisik atau alur perangkat Android sudah diverifikasi.
 
@@ -102,12 +103,12 @@ Hierarki utama:
   dan CTA sesuai peran. Ekstraksi komponen mempertahankan desain asli kasir.
 - Beranda kasir mempertahankan Hero, aksi laporan, empat bento Aksi Cepat, dan
   nota terkini. Beranda pemilik mempunyai hierarki analitik tersendiri:
-  **Hari ini / 7 hari / 30 hari**, ringkasan, grafik harian, perhatian stok dan
-  aksi kelola, produk terlaris, lalu nota periode. Periode memakai kalender lokal;
+  **Hari ini / 7 hari / 30 hari**, ringkasan, grafik tren harian (*Smooth Area Line Chart* bergradien violet interaktif dengan scrubbing tanggal dan kurva adaptif), Status Stok, **Bento Aksi Kelola** (kartu unggulan Monitor Toko 3D isometrik + 4 action pods), produk terlaris, lalu nota periode. Periode memakai kalender lokal;
   produk terlaris berlabel penjualan kotor sebelum diskon nota, bukan laba.
 - Pod aksi dan baris nota kedua peran juga memakai `dashboard_components.dart`.
   `DashboardShortcutsSection` memulihkan enam **Pintasan Menu** pada keduanya:
   Katalog produk, Keranjang, Riwayat transaksi, Pengaturan, Statistik, Chatbot.
+  Tinggi kartu berpasangan diratakan secara presisi menggunakan `IntrinsicHeight` dan `crossAxisAlignment.stretch`.
 - `QuickActionPods`: Baris kartu aksi 4-up berisi squircle 48×48 dp berlatar warna pastel fungsional
   (`08_pindai_barcode.png`, `02_keranjang.png`, `09_stok_produk.png`, `03_riwayat_transaksi.png`) memuat aksi operasional kasir harian.
 - `ProductScanner`: Layar kamera dengan sudut bidik ungu menyala (*purple glow*), garis laser scan
@@ -121,7 +122,8 @@ Hierarki utama:
   `paid`, `expired`, `failed`). Tunai disimpan nyata; QRIS masih kontrak
   tampilan/simulasi, belum pembayaran nyata terverifikasi.
 - `ProductCatalog`: Judul halaman **Produk**, tanpa tag **Tersimpan di perangkat**.
-  Pencarian, kategori, urutan, dan filter stok memakai repository lokal. Grid baris
+  Pencarian, kategori, urutan, dan filter stok memakai repository cloud-first
+  pada native saat Firebase siap, dengan SQLite sebagai cache/fallback. Grid baris
   lazy (`CustomScrollView`/`SliverList.builder`) diuji dua kolom pada 360 dp,
   tiga pada 600 dp, lima pada 1024 dp, termasuk text scale 1.3. Tinggi kartu
   alami mengikuti isi, bukan aspect ratio tetap. Hilangnya tag bukan bukti cloud.
@@ -141,8 +143,47 @@ Hierarki utama:
   Berbagi bukan jaminan penyimpanan otomatis ke Downloads. Laba historis belum
   dihitung karena nota belum menyimpan snapshot harga modal. Cetak thermal/
   Bluetooth fisik belum terverifikasi; jangan menampilkannya sebagai kemampuan teruji.
+- `StatisticsScreen`: Layar statistik dan performa warung berbasis **Bento Grid Asimetris Fungsional**:
+  Hero Bento Utama memuat Estimasi Nilai Total Aset/Inventaris Toko (`inventoryValue`) dan Omzet Hari Ini;
+  2-Up Bento Cards menyajikan Kesehatan Inventaris (total item, varian, alert restok) dan Efisiensi Margin Laba (rata-rata margin % dan produk termodal);
+  Bento Kategori Produk memuat multi-segment progress bar tonal;
+  kontainer bento terstruktur untuk tren penjualan, metode pembayaran, jam sibuk, produk terlaris/lambat laku, peringkat margin laba, dan daftar perlu restok.
+  Hierarki mengutamakan data nyata dari database/cloud daripada tumpukan kartu kosong.
 - `FloatingBottomNav`: Navigasi bawah berbayang violet lembut dengan urutan Beranda (ikon `beranda.png`), Chatbot, tombol Kasir terangkat di tengah (`02_keranjang.png`), Produk, dan Statistik. Chatbot/Statistik membuka rute yang sudah ada dan kembali ke tab sebelumnya; Statistik kasir tetap diarahkan ke Riwayat Nota. Pengaturan tersedia melalui app bar.
 - `StoreFloorPlan (Arsip)`: Komponen kanvas tata letak 2D berbasis matriks titik (*grid-matrix*) dan panorama 360 zona diarsipkan dari antarmuka utama demi kecepatan alur kasir.
+
+## Monitor — kontrak UI, fondasi lokal tersedia
+
+Rencana kanonis: [Rencana Monitor](docs/monitor-plan.md). Model/template dan
+persistensi lokal, UI isometrik, drag dan penempatan tersedia; visual perangkat
+belum diverifikasi. Kontrak di bawah tetap menjadi acuan penyempurnaan.
+Bagian ini menetapkan kontrak visual/interaksi, bukan bukti fitur atau persistensi
+layout sudah tersedia. Tidak mengubah referensi `contoh-desain/` atau skills.
+
+- Masuk melalui tombol **Monitor** di Beranda pemilik menuju halaman baru;
+  bukan tab utama baru dan bukan perubahan alur kasir.
+- Kandidat renderer native: isometrik 2.5D ringan dengan `CustomPainter` dan
+  `InteractiveViewer`. Tanpa panorama, WebView, atau mesin 3D tambahan.
+  Audit bagian `floor_plan` arsip sebelum memakai ulang model, hit-test,
+  pan/zoom atau semantik; jangan menghidupkan data palsu dan panorama arsip.
+- Setup: pilih salah satu dari tiga template **Dinding**, **Dua baris**,
+  **Dinding + tengah**; lanjutkan penempatan produk secara massal dengan
+  konfirmasi manual. Produk boleh dilewati dan tetap **Belum ditempatkan**.
+- **Pantau** hanya memilih fixture dan pan/zoom; tidak bisa menggeser fixture.
+  **Edit** memakai grid sederhana untuk rak, kulkas, dan meja kasir: tambah,
+  pindah, nama, rotasi 90°, hapus. Sediakan **Simpan**, **Batal**, serta
+  konfirmasi saat keluar dengan perubahan belum disimpan.
+- Satu lokasi utama per produk melalui `fixtureId`. Stok dan ambang dibaca
+  dari `product.stock`/`lowStockThreshold` yang sudah ada, bukan salinan stok
+  pada fixture. Pindah lokasi tidak mengubah stok; hapus rak melepas penempatan,
+  bukan menghapus produk. Persistensi layout masih usulan, bukan koleksi aktif.
+- Peringatan memakai ikon + teks + jumlah **jenis produk** menipis/habis.
+  Jangan menjumlah stok berbeda satuan menjadi satu total yang tidak bermakna.
+  Violet untuk pilihan/aksi; fixture pasif netral, status memakai token tema.
+- Detail fixture memakai bottom sheet di ponsel dan panel samping di tablet.
+  Sediakan daftar aksesibel setara kanvas, reset zoom, reduced motion, state
+  kosong/memuat/error/offline, serta aman pada 360 dp/skala 1.3 dan target 48 dp.
+  Tidak ada klaim audit atau pengujian Monitor lulus sebelum implementasi.
 
 ## Aturan interaksi
 
@@ -153,12 +194,17 @@ Hierarki utama:
 - **Konfirmasi Eksplisit Pemindai:** Pemindai barcode/AI tidak pernah memasukkan barang secara diam-diam;
   selalu tampilkan panel hasil dengan rute rak, kuantitas stepper, dan tombol konfirmasi tegas.
 - **Kejujuran Data & Status Offline:** Setiap layar wajib memiliki state kosong, memuat, offline, dan error.
-  Data contoh ditandai; SQLite nyata tidak dilabeli contoh. Jangan menampilkan
+  Data sintetis untuk presentasi memakai tampilan biasa tanpa label contoh,
+  sintetis, atau demo; asalnya tetap dicatat internal melalui ID/metadata.
+  Simulasi pembayaran tetap dijelaskan sebagai simulasi. Jangan menampilkan
   pembayaran berhasil sebelum penyimpanan dikonfirmasi atau cloud tersinkron
   hanya karena SDK siap. Firebase native memakai outbox dan `SyncEngine` saat
   startup, perubahan sesi, serta timer 15 detik selama aplikasi berjalan, bukan
   layanan latar belakang Android. Produk lama tidak otomatis di-backfill.
-  Web hanya pratinjau tanpa SQLite, queue, atau sinkronisasi native.
+  Baca native mengutamakan server, memakai ulang hasil 15 detik, backoff gagal
+  30 detik, dan timeout 8 detik dengan fallback SQLite. Guard outbox melindungi
+  perubahan tertunda; `dataRevision` memperbarui Beranda, Produk, Statistik, dan
+  laporan. Web hanya pratinjau lokal tanpa SQLite, queue, atau cloud-first native.
 - **Peran:** Pengaturan memilih pemilik/kasir tanpa login/PIN. Guard produk
   diperiksa ulang saat simpan; bukan batas keamanan autentikasi atau isolasi tenant.
 - **IyanBoT:** Groq membaca dan menyiapkan draft. Penyimpanan produk/penjualan
@@ -174,17 +220,32 @@ Hierarki utama:
 ## Batas integrasi dan bukti validasi
 
 Firebase diaktifkan melalui `FIREBASE_ENABLED` dari konfigurasi build privat.
-SDK siap bukan bukti unggah berhasil. Target kode memakai
+SDK siap bukan bukti unggah berhasil. Jalur produk dan nota berada di
 `stores/{storeId}/products/{productId}` dan
-`stores/{storeId}/transactions/{transactionId}`; autentikasi Firestore,
-keamanan/isolasi tenant, deployment aturan, dan pemulihan cloud belum terverifikasi.
+`stores/{storeId}/transactions/{transactionId}`. Impor berizin pada 19 November
+2026 sudah create-only dan read-back terverifikasi: 90 dokumen, 24 produk,
+66 nota tunai, 394 unit, Rp3.035.800, 10–24 November 2026 inklusif (15 hari).
+Asal data tetap metadata internal, tanpa label visual.
+
+APK cloud-first belum dibangun/dipasang; baca native langsung dan pengurasan
+outbox perangkat belum terverifikasi. GET tanpa autentikasi masih HTTP 200:
+risiko baca publik belum ditutup. Tidak ada perubahan rules/auth atau permintaan
+login/PIN/Anonymous Auth. Stok lintas perangkat masih last-write-wins, tidak
+aman untuk penjualan bersamaan. Snapshot lintas koleksi/halaman tidak atomik;
+full scan dibatasi 10.000 dokumen/koleksi dan tetap memakai read Firestore.
+Keamanan tenant dan pemulihan perangkat baru belum terverifikasi.
 Konfigurasi privat tidak dibaca atau disalin untuk dokumentasi. `--dart-define`
 bukan penyimpanan rahasia aman dalam APK.
 
 QRIS nyata, cetak thermal fisik, foto koreksi privat, model TFLite, dan rencana
 restok belum menjadi kemampuan produksi terverifikasi.
 
-Hasil validasi **15 November 2026**: analyzer bersih,
+Validasi terakhir yang dilaporkan **19 November 2026**: analyzer bersih,
+**240 test Flutter + 12 test Node lulus**, termasuk rekonsiliasi stok outbox lama.
+Bukan eksekusi ulang pada tugas dokumentasi; bukan bukti UI Monitor atau baca
+native langsung sudah berjalan.
+
+**Riwayat 15 November 2026, sebelum cloud-first:** analyzer bersih,
 **212 pengujian lulus**, APK dibangun sekitar **51 detik**, dipasang dengan
 `adb install -r`, dan diluncurkan pada Samsung. Bukan hasil uji ulang tugas
 ini. Build/install/launch tidak membuktikan pemeriksaan visual Android fisik

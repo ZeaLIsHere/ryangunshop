@@ -37,7 +37,7 @@ enum DashboardShortcut {
   ),
   chatbot(
     label: 'Chatbot',
-    description: 'Tanya bantuan lewat percakapan',
+    description: 'Bantuan tanya jawab',
     icon: Icons.chat_bubble_outline,
     assetPath: 'assets/icon/06_chatbot.png',
   );

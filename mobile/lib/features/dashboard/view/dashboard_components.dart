@@ -381,25 +381,27 @@ class DashboardShortcutsSection extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.sm),
         for (var index = 0; index < shortcuts.length; index += 2) ...[
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _ShortcutTile(
-                  shortcut: shortcuts[index],
-                  onTap: () => onShortcutSelected(shortcuts[index]),
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _ShortcutTile(
+                    shortcut: shortcuts[index],
+                    onTap: () => onShortcutSelected(shortcuts[index]),
+                  ),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: index + 1 < shortcuts.length
-                    ? _ShortcutTile(
-                        shortcut: shortcuts[index + 1],
-                        onTap: () => onShortcutSelected(shortcuts[index + 1]),
-                      )
-                    : const SizedBox.shrink(),
-              ),
-            ],
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: index + 1 < shortcuts.length
+                      ? _ShortcutTile(
+                          shortcut: shortcuts[index + 1],
+                          onTap: () => onShortcutSelected(shortcuts[index + 1]),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
         ],
@@ -440,9 +442,19 @@ class _ShortcutTile extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
-          Text(shortcut.label, style: theme.textTheme.titleMedium),
+          Text(
+            shortcut.label,
+            style: theme.textTheme.titleMedium,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
           const SizedBox(height: AppSpacing.xxs),
-          Text(shortcut.description, style: theme.textTheme.bodySmall),
+          Text(
+            shortcut.description,
+            style: theme.textTheme.bodySmall,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );
