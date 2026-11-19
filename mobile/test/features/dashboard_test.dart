@@ -3,6 +3,8 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ryangunshop/core/data/app_database.dart';
+import 'package:ryangunshop/core/data/sync/cloud_read_through.dart';
+import 'package:ryangunshop/core/data/sync/firestore_schema.dart';
 import 'package:ryangunshop/core/data/product_record.dart';
 import 'package:ryangunshop/core/data/product_repository.dart';
 import 'package:ryangunshop/core/data/transaction_repository.dart';
@@ -60,6 +62,93 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
+
+  testWidgets(
+    'cloud stock-only dan nota lama membarui dashboard tanpa today count berubah',
+    (tester) async {
+      final database = AppDatabase(NativeDatabase.memory());
+      var stock = 10;
+      var name = 'Nota awal';
+      var calls = 0;
+      final old = DateTime.now().subtract(const Duration(hours: 1));
+      final cloud = CloudReadThrough(
+        database: database,
+        fetch: () async {
+          calls++;
+          return CloudSnapshot(
+            products: {
+              'p': FirestoreSchema.productDocument(
+                ProductRecord(
+                  id: 'p',
+                  name: 'Stok uji',
+                  salePrice: 100,
+                  stock: stock,
+                ),
+                updatedAt: old,
+              ),
+            },
+            transactions: {
+              'r': FirestoreSchema.transactionDocument(
+                TransactionRecord(
+                  id: 'r',
+                  createdAt: old,
+                  totalAmount: 100,
+                  discountAmount: 0,
+                  paymentMethod: 'cash',
+                  cashReceived: 100,
+                  changeAmount: 0,
+                  itemCount: 1,
+                ),
+                [
+                  SoldItem(
+                    productId: 'p',
+                    productName: name,
+                    quantity: 1,
+                    unitPrice: 100,
+                    subtotal: 100,
+                  ),
+                ],
+              ),
+            },
+          );
+        },
+      );
+      session.dispose();
+      await tester.runAsync(() async {
+        session = AppSession(database: database, cloudReadThrough: cloud);
+        await session.loadLocalCart();
+        await session.loadLocalSummary();
+      });
+
+      await host(tester);
+
+      final count = session.todayTransactionCount;
+      await reveal(tester, 'Nota awal');
+
+      stock = 2;
+      name = 'Nota cloud berubah';
+      await tester.runAsync(() async {
+        await session.refreshCloud(force: true);
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+      });
+
+      await tester.pumpAndSettle();
+      await reveal(tester, 'Nota cloud berubah');
+
+      expect(find.text('Nota awal'), findsNothing);
+      expect(session.todayTransactionCount, count);
+      expect(session.lowStockCount, 1);
+      expect(calls, 2);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+      await tester.runAsync(() async {
+        session.dispose();
+        cloud.dispose();
+        await database.close();
+      });
+      session = AppSession();
+    },
+  );
 
   for (final role in UserRole.values) {
     testWidgets(

@@ -95,6 +95,20 @@ class SyncOutboxEntries extends Table {
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
+  int localWriteRevision = 0;
+  int activeLocalWrites = 0;
+
+  Future<T> localWrite<T>(Future<T> Function() action) async {
+    localWriteRevision++;
+    activeLocalWrites++;
+    try {
+      return await transaction(action);
+    } finally {
+      activeLocalWrites--;
+      localWriteRevision++;
+    }
+  }
+
   @override
   int get schemaVersion => 6;
 
@@ -209,7 +223,7 @@ class AppDatabase extends _$AppDatabase {
         changeAmount != cashReceived - totalAmount) {
       throw ArgumentError('Total atau kembalian tidak sesuai rincian');
     }
-    return transaction(() async {
+    return localWrite(() async {
       final checkedProducts = <String, Product>{};
       for (final line in lines) {
         final product = await (select(

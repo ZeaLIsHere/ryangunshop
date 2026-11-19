@@ -41,6 +41,7 @@ class OwnerDashboard extends StatefulWidget {
 class _OwnerDashboardState extends State<OwnerDashboard> {
   Future<_DashboardData>? _data;
   int? _transactionCount;
+  int? _dataRevision;
   bool _adding = false;
   int _days = 1;
 
@@ -50,8 +51,13 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final count = AppSessionScope.maybeOf(context)?.todayTransactionCount;
-    if (_data == null || count != _transactionCount) {
+    final session = AppSessionScope.maybeOf(context);
+    final count = session?.todayTransactionCount;
+    final revision = session?.dataRevision;
+    if (_data == null ||
+        count != _transactionCount ||
+        revision != _dataRevision) {
+      _dataRevision = revision;
       _transactionCount = count;
       _data = _load();
     }
@@ -69,9 +75,14 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
     return (products: products, daily: daily, period: period);
   }
 
-  void _reload() => setState(() {
-    _data = _load();
-  });
+  Future<void> _reload() async {
+    await AppSessionScope.maybeOf(context)?.refreshCloud(force: true);
+    if (mounted) {
+      setState(() {
+        _data = _load();
+      });
+    }
+  }
 
   Future<void> _addProduct() async {
     if (!_owner || _adding) return;

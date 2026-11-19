@@ -95,8 +95,9 @@ mobile/lib/
 - Keadaan yang dipakai lintas fitur, misalnya peran pemilik atau kasir, disimpan di
   `core/session/` dan dibaca lewat `AppSessionScope.of(context)`. Jangan menyalin peran
   ke variabel lokal fitur.
-- Nominal rupiah ditampilkan lewat `formatRupiah` di `core/format/rupiah.dart`, dan
-  setiap nilai contoh ditandai `SampleBadge` dari `core/widgets/`.
+- Nominal rupiah ditampilkan lewat `formatRupiah` di `core/format/rupiah.dart`.
+  Data sintetis yang sengaja dimasukkan ke repository untuk presentasi tidak
+  memerlukan label visual contoh, sintetis, atau demo.
 - Nama berkas memakai `snake_case`, kelas memakai `PascalCase`.
 - Gunakan satu ViewModel per fitur. Gunakan `ChangeNotifier` bawaan Flutter kecuali tim
   menyepakati pustaka lain, agar tidak menambah dependensi tanpa kebutuhan.
@@ -140,9 +141,12 @@ lebar 360 dp.
 **State dan kejujuran data.** Setiap layar yang menampilkan data wajib punya state kosong,
 memuat, error, dan offline, bukan hanya jalur bahagia. Empty state selalu menyediakan
 tindakan lanjutan. Jangan pernah menampilkan pembayaran berhasil, stok tersedia, atau data
-tersinkron yang belum dikonfirmasi. Data SQLite nyata tidak diberi label contoh;
-data pratinjau/simulasi tetap ditandai. Badge lokal pada judul Produk sudah dihapus;
-itu tidak berarti produk sudah tersimpan di cloud.
+tersinkron yang belum dikonfirmasi. Data sintetis yang disimpan untuk presentasi
+boleh tampil melalui komponen dan perhitungan biasa tanpa label contoh, sintetis,
+atau demo. Asal data tetap dicatat secara internal melalui ID atau metadata agar
+impor bisa diulang dan dibersihkan dengan aman. Pengecualian label ini tidak
+mengizinkan status pembayaran atau sinkronisasi palsu. Badge lokal pada judul
+Produk sudah dihapus; itu tidak berarti produk sudah tersimpan di cloud.
 
 **Motion.** Splash memakai satu signature motion sekitar 1,45 detik dengan crossfade 280
 ms, dan `disableAnimations` menghasilkan transisi instan. Sediakan reduced motion pada

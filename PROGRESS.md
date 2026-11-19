@@ -73,7 +73,135 @@ berkas checklist terpisah.
 | Chatbot asisten AI (IyanBoT) | `mobile/lib/features/chatbot/` | Tim | review |
 | Analitik & statistik penjualan | `mobile/lib/features/statistics/` | Tim | review |
 
+## Validasi sebelum commit cloud-first — 19 November 2026
+
+- `flutter analyze --no-pub` bersih; seluruh 240 test Flutter lulus.
+- 12 test Node alat impor lulus. Nama akumulator test diselaraskan agar tidak
+  berbenturan dengan simbol Drift. Tidak mengubah perilaku aplikasi.
+- Commit mencakup kode cloud-first, tool impor, test dan dokumentasi; tidak
+  memasukkan kredensial lokal Google. APK belum dibangun/dipasang ulang.
+
+## Impor Firestore terverifikasi — 19 November 2026
+
+- Google Cloud CLI dipasang di komputer, pengguna mengotorisasi akun melalui
+  browser. Token OAuth hanya dipakai di memori proses, tidak dicetak/disimpan
+  ke repository. Tidak menambahkan login aplikasi atau mengubah rules Firestore.
+- Tool impor dijalankan dengan akses OAuth: `read-back-verified`, 90 dokumen
+  dibuat, 0 dilewati, 90 terbaca ulang sesuai rencana pada proyek `iyangunshop`,
+  `stores/toko-utama`. Hasil: 24 produk, 66 nota tunai, 394 unit, Rp3.035.800,
+  tanggal 10–24 November 2026. Tidak menimpa dokumen lama.
+- Data memakai komponen normal tanpa label visual; metadata asal tetap internal.
+  Belum membangun/memasang APK cloud-first atau memverifikasi tampilan data ini
+  di HP. Browser aplikasi tetap jalur preview tanpa cloud-first native.
+- Rules masih mempunyai risiko akses baca publik; impor berhasil tidak berarti
+  keamanan tenant atau stok bersamaan lintas perangkat sudah terverifikasi.
+  Catatan penghambat akses OAuth sebelumnya di bawah adalah riwayat, kini teratasi.
+
+## Impor dan transaksi lanjutan — 19 November 2026
+
+- Pengguna menegaskan tampilan data tanpa label dan transaksi baru tetap normal;
+  tidak menyetujui tambahan login/PIN/Anonymous Auth. Rules tidak diubah.
+- Regresi baru memakai seluruh 24 produk/66 nota dari generator, lalu checkout
+  nyata lewat Drift: 67 nota, stok berkurang sesuai jumlah, nominal dan outbox
+  benar. Refresh cloud usang tidak menimpa penjualan tertunda; impor ulang tidak
+  menggandakan nota atau mengurangi stok ulang. Test cloud read-through 19/19 lulus.
+- Injeksi tetap belum berjalan: tidak tersedia OAuth admin lokal. Jalur dipilih
+  adalah Cloud Shell dengan akun pengguna yang memiliki izin proyek; token tidak
+  dikirim lewat chat atau dimasukkan ke repository. Upload tool dan otorisasi akun
+  memerlukan interaksi pengguna. Tidak mengubah rules publik atau menguji tulis
+  tanpa autentikasi sebagai jalan pintas.
+
+## Lanjutan cloud-first — 19 November 2026, menunggu akses cloud
+
+- Perbaikan setelah jeda sudah tersimpan: hasil server digunakan ulang 15 detik,
+  kegagalan diberi backoff 30 detik, timeout 8 detik memakai cache. Request native
+  yang terlambat tetap dilacak agar tidak overlap; hasil terlambat tidak diimpor.
+- Ack outbox nota lama kini atomik dengan antrean rekonsiliasi stok terkait.
+  Perubahan produk/hapus yang masih tertunda tetap dilindungi dari cache cloud.
+  Revisi data sesi memperbarui dashboard, katalog, statistik, dan laporan tanpa
+  bergantung hanya pada jumlah nota hari ini; tidak mengulang checkout impor.
+- Validasi ulang: `flutter analyze --no-pub` bersih (6 detik),
+  `flutter test --no-pub --reporter expanded` 239/239 lulus (45 detik).
+  `node --test mobile/tool/seed_firestore_november.test.mjs` 12/12 lulus;
+  `node mobile/tool/seed_firestore_november.mjs --check-only` berhasil tanpa tulis.
+  Dataset tetap 24 produk dan 66 transaksi selama 10–24 November 2026.
+- Probe tanpa autentikasi masih HTTP 200 untuk koleksi produk. Credential OAuth
+  lokal/ADC/CLI belum tersedia pada lokasi yang diperiksa. Injeksi belum dijalankan;
+  jangan melaporkan statistik cloud terisi. Perlu persetujuan autentikasi perangkat
+  tanpa layar login dan pemberian izin anggota toko, serta akses admin lokal yang sah.
+- Batas yang belum diselesaikan: stok multi-device masih last-write-wins, snapshot
+  lintas koleksi/page tidak atomik, batas 10.000 dokumen/koleksi, fetch native tidak
+  dapat dibatalkan (retry menunggu selesai), dan web masih preview lokal. Full scan
+  memakai read Firestore sesuai jumlah dokumen meskipun dibatasi reuse 15 detik.
+  Tidak build/install APK, commit/push, mengubah rules, atau menulis Firestore.
+
+## Checkpoint jeda — 16 November 2026
+
+Pengguna meminta berhenti dan melanjutkan nanti. Perubahan tetap di working tree,
+belum commit/push. Branch `feat/ui-shell-owner-barcode`; commit terakhir yang
+sudah di-push: `8231ce9` (`Rapikan navigasi dan antarmuka laporan`).
+
+### Keputusan yang sudah disetujui
+
+- Isi Firestore proyek `iyangunshop`, toko `toko-utama`, dengan produk dan
+  transaksi 10–24 November 2026 inklusif (15 hari, termasuk tanggal mendatang).
+  Minimal tiga transaksi per hari; ID yang sudah ada dilewati, bukan diperbarui.
+- Tidak ada label visual contoh/sintetis/demo untuk data impor. Asal tetap
+  tercatat internal lewat ID/metadata; aturan aktif dokumentasi sudah diselaraskan.
+- Cloud-first saat online, SQLite sebagai cache dan fallback offline. Tanpa
+  penambahan login UI; autentikasi/rules baru memerlukan konfirmasi pengguna.
+
+### Berkas dan hasil sementara
+
+- Implementasi awal `mobile/lib/core/data/sync/cloud_read_through.dart`, parser
+  Firestore, repository, outbox, serta wiring app/session sudah ditulis.
+  Perubahan lanjutan invalidasi UI/reuse refresh mungkin sudah sebagian tersimpan
+  saat agen dibatalkan; tinjau diff aktual sebelum meneruskan.
+- Hasil uji terakhir yang dilaporkan agen sebelum review lanjutan: analyzer bersih,
+  231/231 test Flutter lulus. Ini bukan validasi final semua perubahan saat jeda.
+- Tool `mobile/tool/seed_firestore_november.mjs` beserta test sudah dibuat:
+  24 produk, 66 nota tunai, 394 unit, total Rp3.035.800; 3–6 nota per hari.
+  Default dry-run, create-only, skip existing, read-back wajib. Agen melaporkan
+  12/12 test Node lulus. Belum menjalankan `--apply` atau menulis data Firestore.
+- Belum build/install APK, commit, atau push untuk perubahan cloud/data ini.
+
+### Penghambat dan langkah lanjut
+
+1. Probe GET REST produk tanpa autentikasi menghasilkan HTTP 200; konten dokumen
+   tidak dicetak. Ini membuktikan koleksi produk dapat dibaca publik, bukan bukti
+   izin tulis publik. Rules repository mensyaratkan anggota terautentikasi,
+   sehingga konfigurasi deployment perlu diperiksa sebelum injeksi.
+2. Firebase CLI, gcloud, ADC, dan konfigurasi credential environment tidak ditemukan
+   pada lokasi yang diperiksa. Jangan meminta token/key lewat chat. Siapkan akses
+   OAuth lokal atau Cloud Shell yang sah dan konfirmasi rancangan auth/rules.
+   Jangan membuka rules publik demi menjalankan aplikasi tanpa login UI.
+3. Review cloud-first menemukan pembacaan seluruh dua koleksi pada setiap read
+   berurutan: perlu reuse refresh/backoff agar tidak boros read dan menunggu 8 detik
+   berulang saat offline. Pastikan timeout tidak melahirkan fetch tumpang tindih.
+4. Pastikan outbox transaksi lama yang belum membawa snapshot stok direkonsiliasi
+   sebelum acknowledgment; jangan sampai cache cloud mengembalikan stok lama.
+5. Periksa invalidasi dashboard berdasarkan revisi data, bukan hanya jumlah nota
+   hari ini, agar stok dan nota periode lama yang diunduh memperbarui layar.
+6. Stok lintas perangkat masih last-write-wins; upload stok absolut dapat kehilangan
+   pengurangan bersamaan. Snapshot lintas koleksi/page bukan snapshot server atomik.
+   Batas fetch awal 10.000 dokumen per koleksi. Jangan klaim konsistensi multi-device
+   atau kesiapan produksi sebelum masalah ini ditangani dan diuji.
+7. Setelah perbaikan, jalankan analyzer, seluruh test Flutter, serta test Node tool;
+   baru lakukan dry-run/import autentikasi dan verifikasi read-back. Web masih jalur
+   preview, bukan cloud-first native yang sudah diverifikasi.
+
 ## Catatan per tugas
+
+**Tariq / aturan lintas fitur disetujui pengguna — Data presentasi (2026-11-16).**
+
+- Kewajiban label visual contoh/sintetis/demo dihapus untuk data sintetis yang
+  diimpor ke repository. Komponen, angka, dan perhitungan memakai alur biasa.
+  ID atau metadata internal tetap menyimpan asal untuk impor ulang aman dan
+  pembersihan; ini bukan izin status pembayaran/sinkronisasi palsu.
+- Aturan aktif pada AGENTS, DESIGN, PRODUCT, TEAM dan panduan terkait diselaraskan.
+  Catatan historis di bawah tetap merekam keputusan saat tugasnya dikerjakan.
+  Perubahan ini hanya dokumentasi: belum membuat/mengimpor data atau mengubah
+  pembacaan Firestore menjadi cloud-first. Tidak commit/push pada tugas ini.
 
 **Tariq / lingkup lintas fitur disetujui pengguna — Perapian antarmuka (2026-11-16), review.**
 
@@ -771,8 +899,9 @@ Rencana kerja teknis terstruktur untuk membawa prototipe UI RyanGunshop menjadi 
   pull request.
 - Halaman utama aplikasi adalah **"Beranda"** (`ShellDestination.floorPlan` / `home`). Fitur denah telah dilepas dari antarmuka operasional harian.
 - Aset ikon 3D resmi tersedia lengkap di `mobile/assets/icon/` (`01` s/d `10` dan `beranda.png`). Selalu gunakan aset ini.
-- Nominal rupiah lewat `formatRupiah` di `core/format/rupiah.dart`, dan data contoh
-  ditandai `SampleBadge` dari `core/widgets/widgets.dart`.
+- Nominal rupiah lewat `formatRupiah` di `core/format/rupiah.dart`. Data sintetis
+  yang diimpor untuk presentasi tidak perlu label visual; asal tetap tercatat
+  melalui ID atau metadata internal.
 - Alur pembuka aplikasi: splash menuju perkenalan (sekali per sesi), lalu kerangka utama.
   Rutenya terdaftar di `mobile/lib/app/routing/app_router.dart`.
 - Tab Kasir memakai `CartCheckoutScreen`; pada Android, nota tunai dan stok disimpan

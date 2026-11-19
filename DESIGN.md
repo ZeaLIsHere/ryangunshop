@@ -153,7 +153,9 @@ Hierarki utama:
 - **Konfirmasi Eksplisit Pemindai:** Pemindai barcode/AI tidak pernah memasukkan barang secara diam-diam;
   selalu tampilkan panel hasil dengan rute rak, kuantitas stepper, dan tombol konfirmasi tegas.
 - **Kejujuran Data & Status Offline:** Setiap layar wajib memiliki state kosong, memuat, offline, dan error.
-  Data contoh ditandai; SQLite nyata tidak dilabeli contoh. Jangan menampilkan
+  Data sintetis untuk presentasi memakai tampilan biasa tanpa label contoh,
+  sintetis, atau demo; asalnya tetap dicatat internal melalui ID/metadata.
+  Simulasi pembayaran tetap dijelaskan sebagai simulasi. Jangan menampilkan
   pembayaran berhasil sebelum penyimpanan dikonfirmasi atau cloud tersinkron
   hanya karena SDK siap. Firebase native memakai outbox dan `SyncEngine` saat
   startup, perubahan sesi, serta timer 15 detik selama aplikasi berjalan, bukan

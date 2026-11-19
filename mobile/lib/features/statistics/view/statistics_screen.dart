@@ -21,11 +21,16 @@ class StatisticsScreen extends StatefulWidget {
 
 class _StatisticsScreenState extends State<StatisticsScreen> {
   List<CatalogProduct>? _localProducts;
+  int? _dataRevision;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _loadLocalProducts();
+    final revision = AppSessionScope.maybeOf(context)?.dataRevision;
+    if (_localProducts == null || revision != _dataRevision) {
+      _dataRevision = revision;
+      _loadLocalProducts();
+    }
   }
 
   Future<void> _loadLocalProducts() async {

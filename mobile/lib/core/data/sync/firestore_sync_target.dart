@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../product_record.dart';
 import 'firestore_schema.dart';
 import 'outbox.dart';
 import 'sync_engine.dart';
@@ -54,9 +53,7 @@ class FirestoreSyncTarget implements SyncTarget {
 
   /// Mengubah milidetik pada payload menjadi `Timestamp` Firestore.
   Map<String, dynamic> _withTimestamps(Map<String, Object?> payload) =>
-      payload.map(
-        (key, value) => MapEntry(key, _convertField(key, value)),
-      );
+      payload.map((key, value) => MapEntry(key, _convertField(key, value)));
 
   Object? _convertField(String field, Object? value) {
     if (value is int &&
@@ -75,20 +72,4 @@ class FirestoreSyncTarget implements SyncTarget {
     }
     return value;
   }
-}
-
-/// Membaca seluruh produk dari Firestore, dipakai saat memulihkan data pada
-/// perangkat baru.
-Future<List<ProductRecord>> fetchProductsFromFirestore({
-  required FirebaseFirestore firestore,
-  String storeId = FirestoreSchema.defaultStoreId,
-}) async {
-  final snapshot = await firestore
-      .collection(FirestoreSchema.productsPath(storeId))
-      .where('deletedAt', isNull: true)
-      .get();
-  return [
-    for (final document in snapshot.docs)
-      FirestoreSchema.productFromDocument(document.id, document.data()),
-  ];
 }

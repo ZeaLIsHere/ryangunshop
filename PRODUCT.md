@@ -82,7 +82,10 @@ Praktis, tenang, jelas, dapat dipercaya. Identitas violet `#7C3AED` dan
 - Nominal memakai `int` rupiah; tampilkan lewat `formatRupiah`.
 - State kosong, memuat, error, dan offline harus jelas serta punya jalan lanjut.
 - Target sentuh minimal 48 dp, lebar 360 dp dan text scale 1.3 tetap dapat dipakai.
-- Data contoh dan QRIS simulasi ditandai; status cloud hanya berdasarkan bukti.
+- Data sintetis yang diimpor untuk presentasi tampil seperti data repository
+  lainnya, tanpa label contoh/sintetis/demo; ID atau metadata internal menyimpan
+  asalnya untuk impor ulang dan pembersihan. QRIS simulasi tetap dijelaskan
+  sebagai simulasi; status cloud hanya berdasarkan bukti.
 
 ## Bukti dan pekerjaan berikutnya
 

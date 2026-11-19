@@ -56,7 +56,9 @@ Produk / kamera / input manual
 Produk, stok, nota, dan draft keranjang tersimpan lewat SQLite/Drift pada native.
 Penyimpanan transaksi tunai nyata bukan simulasi sesi. Status berhasil hanya
 boleh muncul setelah penyimpanan berhasil. State memuat, kosong, error/retry,
-dan offline harus tetap dapat dipakai; data pratinjau diberi label contoh.
+dan offline harus tetap dapat dipakai. Data sintetis yang diimpor untuk
+presentasi memakai UI biasa tanpa label contoh/sintetis/demo; asalnya dicatat
+melalui ID/metadata internal, bukan penanda di layar.
 
 QRIS belum terverifikasi sebagai pembayaran nyata. State `creating`,
 `awaitingPayment`, `paid`, `expired`, `failed` adalah kontrak tampilan/simulasi,

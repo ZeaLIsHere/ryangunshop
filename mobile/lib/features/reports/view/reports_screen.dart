@@ -30,6 +30,7 @@ class ReportsScreen extends StatefulWidget {
 class _ReportsScreenState extends State<ReportsScreen> {
   late final ReportsViewModel _model;
   bool _initialized = false;
+  int? _dataRevision;
   bool _showAll = false;
   bool _exporting = false;
   String? _exportError;
@@ -80,7 +81,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_initialized) return;
+    final revision = AppSessionScope.maybeOf(context)?.dataRevision;
+    if (_initialized) {
+      if (widget.repository == null && revision != _dataRevision) _model.load();
+      _dataRevision = revision;
+      return;
+    }
+    _dataRevision = revision;
     _initialized = true;
     final repository =
         widget.repository ??

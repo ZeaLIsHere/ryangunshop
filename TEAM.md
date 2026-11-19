@@ -187,8 +187,9 @@ Sebuah tugas dianggap selesai bila seluruh poin berikut terpenuhi:
 1. Layar dapat dipreview di emulator atau perangkat Android dan tidak menimbulkan
    error analyzer.
 2. Semua state terlihat, bukan hanya jalur bahagia: kosong, memuat, error, dan status
-   offline. Data nyata dibaca dari repository; hanya pratinjau/simulasi diberi
-   label contoh, bukan seluruh data SQLite.
+   offline. Data dibaca dari repository; data sintetis untuk presentasi tidak
+   memerlukan label visual. Asalnya tetap tercatat lewat ID/metadata internal.
+   Simulasi pembayaran dan status integrasi tetap disampaikan sesuai bukti.
 3. Layout aman pada text scale 1.3 dan lebar 360 dp, target sentuh minimal 48 dp, dan
    status memakai kombinasi ikon, teks, serta warna.
 4. Tidak ada layar yang menampilkan pembayaran berhasil atau data tersinkron seolah
