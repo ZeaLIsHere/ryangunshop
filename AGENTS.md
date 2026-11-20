@@ -48,7 +48,7 @@ Tahap UI-only sudah dilewati. Cakupan yang disetujui pengguna mencakup:
   di-backfill; SDK siap bukan bukti unggah cloud berhasil.
 - Impor Firestore proyek `iyangunshop`, toko `toko-utama`, terverifikasi:
   90 dokumen dibuat dan terbaca ulang, terdiri dari 24 produk dan 66 nota tunai,
-  394 unit, Rp3.035.800. Rentang 10–24 November 2026 inklusif: 15 hari,
+  394 unit, Rp3.035.800. Rentang 6–20 November 2026 inklusif: 15 hari sampai hari ini,
   3–6 nota/hari. Data presentasi tanpa label visual; asalnya tetap metadata internal.
 - Monitor mulai dibangun: model, tiga template, validasi grid/JSON, repository
   layout lokal dan migrasi SQLite 6→7 tersedia. Setup/editor ortografik lokal

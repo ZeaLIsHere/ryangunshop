@@ -53,7 +53,7 @@ test('dataset deterministik: 24 produk, 66 nota, 15 hari WIB, 3–6 nota/hari', 
   assert.equal(summary.receipts, 66);
   assert.equal(records.length, 90);
   assert.equal(new Set(records.map((record) => record.id)).size, 90);
-  assert.deepEqual(Object.keys(summary.perDay), Array.from({ length: 15 }, (_, i) => `2026-11-${10 + i}`));
+  assert.deepEqual(Object.keys(summary.perDay), Array.from({ length: 15 }, (_, i) => `2026-11-${String(6 + i).padStart(2, '0')}`));
   for (const day of Object.values(summary.perDay)) assert.ok(day.receipts >= 3 && day.receipts <= 6);
   for (const record of records) {
     assert.equal(record.data.seedBatchId, BATCH);
@@ -65,8 +65,8 @@ test('dataset deterministik: 24 produk, 66 nota, 15 hari WIB, 3–6 nota/hari', 
       .toISOString().replace('Z', '+07:00')));
     assert.match(record.id, new RegExp(`^TRX-${record.data.seedLocalDate.replaceAll('-', '')}-`));
   }
-  assert.equal(localDay(Date.parse('2026-11-10T00:00:00+07:00')), '2026-11-10');
-  assert.equal(localDay(Date.parse('2026-11-24T23:59:59+07:00')), '2026-11-24');
+  assert.equal(localDay(Date.parse('2026-11-06T00:00:00+07:00')), '2026-11-06');
+  assert.equal(localDay(Date.parse('2026-11-20T23:59:59+07:00')), '2026-11-20');
 });
 
 test('barcode RG unik, saldo stok akhir, harga modal dan snapshot nota konsisten', () => {

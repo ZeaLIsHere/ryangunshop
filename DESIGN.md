@@ -224,7 +224,7 @@ SDK siap bukan bukti unggah berhasil. Jalur produk dan nota berada di
 `stores/{storeId}/products/{productId}` dan
 `stores/{storeId}/transactions/{transactionId}`. Impor berizin pada 19 November
 2026 sudah create-only dan read-back terverifikasi: 90 dokumen, 24 produk,
-66 nota tunai, 394 unit, Rp3.035.800, 10–24 November 2026 inklusif (15 hari).
+66 nota tunai, 394 unit, Rp3.035.800, 6–20 November 2026 inklusif (15 hari sampai hari ini).
 Asal data tetap metadata internal, tanpa label visual.
 
 APK cloud-first belum dibangun/dipasang; baca native langsung dan pengurasan

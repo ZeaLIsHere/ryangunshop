@@ -22,8 +22,8 @@ berjalan tanpa harus menebak dari riwayat commit.
   backoff gagal 30 detik, timeout 8 detik, fallback SQLite. Outbox dan revisi data
   melindungi perubahan lokal serta memperbarui UI. Web masih preview lokal.
 - Impor Firestore `iyangunshop` / `toko-utama` terverifikasi create-only/read-back:
-  24 produk, 66 nota tunai, 394 unit, Rp3.035.800, 10–24 November 2026 inklusif
-  (15 hari, 3–6 nota/hari). Data tampil normal tanpa label visual, metadata internal.
+  24 produk, 66 nota tunai, 394 unit, Rp3.035.800, 6–20 November 2026 inklusif
+  (15 hari sampai hari ini, 3–6 nota/hari). Data tampil normal tanpa label visual, metadata internal.
 - Validasi tahap Monitor: analyzer bersih, 268 test Flutter dan 12 test Node lulus.
 - APK debug cloud-first + Monitor berhasil dibangun (50 detik) dan telah dipasang
   ulang via `adb install -r` serta dijalankan pada Samsung SM_A366B (serial RRGYC07G09Z)
@@ -101,6 +101,16 @@ berkas checklist terpisah.
 | Chatbot asisten AI (IyanBoT) | `mobile/lib/features/chatbot/` | Tim | review |
 | Analitik & statistik penjualan | `mobile/lib/features/statistics/` | Tim | review |
 | Monitor pemilik (tata letak isometrik & stok) | `mobile/lib/features/monitor/` | Koordinasi pada `TEAM.md` | review |
+
+## Penyelarasan Tanggal Transaksi Firestore (6–20 November 2026) — 20 November 2026, review
+
+- Sesuai instruksi pengguna agar tidak ada transaksi di masa depan dan seluruh transaksi masuk ke grafik 7/30 hari:
+  1. 18 transaksi masa depan (tanggal 21–24 November) dihapus dari Firestore `iyangunshop`, `stores/toko-utama`.
+  2. 18 transaksi baru untuk tanggal 6–9 November diinjeksi via create-only.
+  3. Rentang transaksi kini pas 15 hari kalender ke belakang sampai hari ini (6 s/d 20 November 2026).
+  4. Total tetap konsisten: 24 produk, 66 nota tunai, 394 unit, Rp3.035.800. Hari ini (20 Nov) memiliki 5 nota transaksi.
+  5. Seluruh 90 dokumen dibaca ulang dan divalidasi (*read-back-verified*).
+- Validasi: 12/12 test Node lulus, 268/268 test Flutter lulus.
 
 ## Editor Tata Letak Toko Fullscreen & Etalase — 20 November 2026, review
 

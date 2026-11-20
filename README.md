@@ -33,8 +33,8 @@ Laba historis belum dihitung karena snapshot harga modal transaksi belum tersedi
 Produk terlaris menampilkan penjualan kotor sebelum diskon nota, bukan laba.
 Impor Firestore `iyangunshop` / `stores/toko-utama` terverifikasi: 90 dokumen
 dibuat dan terbaca ulang, 24 produk, 66 nota tunai, 394 unit, Rp3.035.800.
-Rentang data presentasi 10–24 November 2026 inklusif (15 hari, 3–6 nota/hari),
-termasuk tanggal setelah hari verifikasi. Tanpa label visual demo; metadata asal
+Rentang data presentasi 6–20 November 2026 inklusif (15 hari sampai hari ini,
+3–6 nota/hari). Tanpa label visual demo; metadata asal
 internal. Ini bukan klaim penjualan aktual atau bukti unduh data lewat aplikasi.
 
 Produk lama tidak otomatis masuk outbox; belum ada jaminan backfill atau
