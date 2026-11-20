@@ -46,7 +46,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   int? _transactionCount;
   int? _dataRevision;
   bool _adding = false;
-  int _days = 1;
+  int _days = 7;
 
   bool get _owner =>
       mounted && AppSessionScope.maybeOf(context)?.role == UserRole.owner;

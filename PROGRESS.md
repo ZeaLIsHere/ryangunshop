@@ -111,6 +111,12 @@ berkas checklist terpisah.
   4. Komposisi Metode Pembayaran: menghitung pembagian Tunai vs QRIS aktual dari riwayat nota.
   5. Jam Sibuk (Waktu Transaksi Terbanyak): mengelompokkan jam transaksi nyata ke dalam kategori Pagi (05-11), Siang (11-15), Sore (15-18), dan Malam (18-05).
   6. Produk Terlaris & Lambat Laku: merangking produk paling laku berdasarkan kuantitas barang terjual nyata, dan mendeteksi produk dengan perputaran stok rendah.
+- Beranda Owner (`OwnerDashboard`):
+  - Penjualan Bersih dan grafik Penjualan Harian disetel default ke `7 hari` (seminggu terakhir), menyajikan kurva tren mulus dan total transaksi seminggu secara langsung saat beranda dibuka.
+- Validasi:
+  - Analyzer bersih (0 error).
+  - 269/269 test Flutter dan 12/12 test Node lulus.
+  - APK debug dibangun ulang (17 detik), diinstal ke Samsung SM_A366B (`RRGYC07G09Z`), dan diluncurkan langsung.
 - Validasi:
   - Analyzer bersih (0 error).
   - 269/269 test Flutter dan 12/12 test Node lulus.

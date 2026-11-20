@@ -447,12 +447,11 @@ void main() {
     final source = _PeriodRepository();
     session = _PeriodSession(source);
     await host(tester);
-    for (final days in [1, 7, 30]) {
-      if (days != 1) {
-        await tester.ensureVisible(find.text('$days hari'));
-        await tester.tap(find.text('$days hari'));
-        await tester.pumpAndSettle();
-      }
+    for (final days in [7, 1, 30]) {
+      final chipText = days == 1 ? 'Hari ini' : '$days hari';
+      await tester.ensureVisible(find.text(chipText));
+      await tester.tap(find.text(chipText));
+      await tester.pumpAndSettle();
       final expected = DashboardPeriod(DateTime.now(), days);
       expect(source.start, expected.start);
       expect(source.end, expected.end);
