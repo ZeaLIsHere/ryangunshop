@@ -139,6 +139,47 @@ void main() {
     expect(saved?.category, 'Lainnya');
     expect(saved?.unit, 'dus');
   });
+
+  testWidgets(
+    'tombol dinamis buat barcode dan lihat barcode pada formulir produk',
+    (tester) async {
+      // 1. Produk tanpa barcode menampilkan tombol "Buat barcode"
+      const withoutBarcode = CatalogProduct(
+        id: 'p-no-code',
+        name: 'Kerupuk Ikan',
+        price: 5000,
+        stock: 10,
+        unit: 'bungkus',
+        fixtureId: '',
+        locationLabel: 'Etalase',
+        category: 'Makanan',
+      );
+      await _showForm(tester, initialProduct: withoutBarcode);
+
+      final buatBtn = find.text('Buat barcode');
+      await tester.ensureVisible(buatBtn);
+      expect(buatBtn, findsOneWidget);
+      expect(find.text('Lihat Barcode'), findsNothing);
+
+      // 2. Ketuk "Buat barcode" menghasilkan barcode RG dan mengubah tombol menjadi "Lihat Barcode"
+      await tester.tap(buatBtn);
+      await tester.pumpAndSettle();
+
+      final lihatBtn = find.text('Lihat Barcode');
+      expect(lihatBtn, findsOneWidget);
+      expect(find.text('Buat barcode'), findsNothing);
+
+      // 3. Ketuk "Lihat Barcode" membuka modal barcode
+      await tester.tap(lihatBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Kerupuk Ikan'), findsWidgets);
+      expect(find.text('Tutup'), findsOneWidget);
+      await tester.tap(find.text('Tutup'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
 
 Finder _field(String label) =>

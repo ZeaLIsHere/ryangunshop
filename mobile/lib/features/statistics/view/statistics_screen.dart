@@ -8,6 +8,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/sales_line_chart.dart';
 import '../../../core/widgets/sample_badge.dart';
 import '../../catalog/model/catalog_product.dart';
 import '../../dashboard/model/dashboard_period.dart';
@@ -25,7 +26,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   List<CatalogProduct>? _localProducts;
   List<TransactionRecord>? _transactions;
   int? _dataRevision;
-  int _days = 30;
 
   @override
   void didChangeDependencies() {
@@ -109,22 +109,18 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       ];
 
       // 3. Tren Penjualan 7 Hari Terakhir Dinamis (Mundur dari hari ini)
+      final weeklyPeriod = DashboardPeriod(DateTime.now(), 7);
+      final trendPoints = weeklyPeriod.dailyTotals(txs);
       final dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
-      final trend = <SalesPoint>[];
-      final now = DateTime.now();
-      for (var i = 6; i >= 0; i--) {
-        final day = DateTime(now.year, now.month, now.day - i);
-        final nextDay = DateTime(day.year, day.month, day.day + 1);
-        final dayTotal = txs
-            .where(
-              (t) =>
-                  !t.createdAt.toLocal().isBefore(day) &&
-                  t.createdAt.toLocal().isBefore(nextDay),
-            )
-            .fold<int>(0, (sum, t) => sum + t.totalAmount);
-        final label = i == 0 ? 'Hari ini' : dayNames[day.weekday - 1];
-        trend.add(SalesPoint(label: label, total: dayTotal));
-      }
+      final trend = [
+        for (var i = 0; i < trendPoints.length; i++)
+          SalesPoint(
+            label: i == trendPoints.length - 1
+                ? 'Hari ini'
+                : dayNames[trendPoints[i].date.weekday - 1],
+            total: trendPoints[i].total,
+          ),
+      ];
 
       // 4. Produk Terlaris
       final soldMap = <String, ({String name, int sold, String unit})>{};
@@ -177,19 +173,20 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         peakHours: peakHours,
         trendTitle: 'Tren penjualan',
         trend: trend,
+        trendPoints: trendPoints,
         topProducts: topProducts,
         slowMoving: slowMoving,
       );
     } else {
+      final weeklyPeriod = DashboardPeriod(DateTime.now(), 7);
+      final emptyTrendPoints = weeklyPeriod.dailyTotals(const []);
       final dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
-      final now = DateTime.now();
       final emptyTrend = [
-        for (var i = 6; i >= 0; i--)
+        for (var i = 0; i < emptyTrendPoints.length; i++)
           SalesPoint(
-            label: i == 0
+            label: i == emptyTrendPoints.length - 1
                 ? 'Hari ini'
-                : dayNames[DateTime(now.year, now.month, now.day - i).weekday -
-                      1],
+                : dayNames[emptyTrendPoints[i].date.weekday - 1],
             total: 0,
           ),
       ];
@@ -209,6 +206,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         ],
         trendTitle: 'Tren penjualan',
         trend: emptyTrend,
+        trendPoints: emptyTrendPoints,
         topProducts: const [],
         slowMoving: const [],
       );
@@ -289,28 +287,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               ),
               const SizedBox(height: AppSpacing.md),
 
-              // Filter Periode
-              Wrap(
-                spacing: AppSpacing.xs,
-                children: [
-                  for (final entry in {
-                    1: 'Hari ini',
-                    7: '7 hari',
-                    30: '30 hari',
-                  }.entries)
-                    ChoiceChip(
-                      label: Text(entry.value),
-                      selected: _days == entry.key,
-                      materialTapTargetSize: MaterialTapTargetSize.padded,
-                      onSelected: (_) {
-                        setState(() => _days = entry.key);
-                        _loadData();
-                      },
-                    ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.md),
-
               // BENTO 1: Hero Nilai Stok & Omzet (Featured Big Card)
               _BentoHeroCard(
                 inventoryValue: inventoryValue,
@@ -356,7 +332,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               _BentoSectionContainer(
                 title: data.trendTitle,
                 subtitle: 'Aktivitas 7 hari terakhir sampai hari ini',
-                child: _WeeklyChart(points: data.trend),
+                child: SalesLineChart(
+                  points: data.trendPoints,
+                  wrapCard: false,
+                ),
               ),
               const SizedBox(height: AppSpacing.sm),
 
@@ -921,89 +900,6 @@ class _BentoSectionContainer extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           child,
-        ],
-      ),
-    );
-  }
-}
-
-class _WeeklyChart extends StatelessWidget {
-  const _WeeklyChart({required this.points});
-
-  final List<SalesPoint> points;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final maxTotal = points.fold<int>(
-      1,
-      (max, p) => p.total > max ? p.total : max,
-    );
-
-    return SizedBox(
-      height: 140,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          for (final point in points)
-            Expanded(
-              child: Semantics(
-                label: '${point.label}: ${formatRupiah(point.total)}',
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    const Spacer(),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        point.total == 0
-                            ? '-'
-                            : (point.total >= 1000000
-                                  ? '${(point.total / 1000000).toStringAsFixed(1)}jt'
-                                  : '${(point.total / 1000).round()}rb'),
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: point.total > 0
-                              ? AppColors.ink
-                              : AppColors.muted,
-                          fontSize: 10,
-                          fontWeight: point.total > 0
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                          fontFeatures: AppTypography.tabularFigures,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      width: 18,
-                      height: point.total == 0
-                          ? 4.0
-                          : ((point.total / maxTotal) * 72).clamp(6.0, 72.0),
-                      decoration: BoxDecoration(
-                        color: point.label == 'Hari ini'
-                            ? AppColors.primary
-                            : (point.total > 0
-                                  ? AppColors.accent
-                                  : AppColors.borderSubtle),
-                        borderRadius: AppRadius.fixtureBorder,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      point.label,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: point.label == 'Hari ini'
-                            ? AppColors.primary
-                            : AppColors.muted,
-                        fontWeight: point.label == 'Hari ini'
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
         ],
       ),
     );

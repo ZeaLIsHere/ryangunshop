@@ -102,6 +102,35 @@ berkas checklist terpisah.
 | Analitik & statistik penjualan | `mobile/lib/features/statistics/` | Tim | review |
 | Monitor pemilik (tata letak isometrik & stok) | `mobile/lib/features/monitor/` | Koordinasi pada `TEAM.md` | review |
 
+## Fitur Barcode Produk: Tombol Dinamis Form & Cetak Melayang — 20 November 2026, review
+
+- Formulir Edit Produk (`ProductFormScreen`):
+  1. Tombol Dinamis Barcode: tombol diletakkan tepat di bawah field barcode; jika produk belum memiliki barcode, label adalah **"Buat barcode"**; jika produk sudah memiliki barcode, label otomatis beralih menjadi **"Lihat Barcode"**.
+  2. Generator Barcode Otomatis: menekan "Buat barcode" menghasilkan barcode internal Code128 format `RG...` via `internalBarcode` bebas tabrakan dan langsung mengisi field serta mengubah tombol menjadi "Lihat Barcode".
+  3. Pratinjau Barcode Modal: menekan "Lihat Barcode" membuka modal bottom sheet interaktif yang merender batang garis Code128 presisi, kode angka monospaced, dan nama produk.
+- Layar Katalog Produk (`ProductCatalog`):
+  1. Tombol Melayang "Cetak Barcode": tombol melayang (FAB pill) di sebelah kiri bawah berpasangan dengan "Tambah Produk" di sebelah kanan bawah.
+  2. Menekan "Cetak Barcode" langsung membuka layar `BarcodeLabelsScreen` untuk memilih jumlah label, pratinjau, dan ekspor/cetak dokumen PDF A4.
+  3. Layout bebas tabrakan dengan adaptasi `FittedBox` yang aman pada layar 360 dp dan skala teks 1.3.
+- Validasi:
+  - Analyzer bersih (0 error).
+  - 271/271 test Flutter lulus (termasuk 2 widget test baru).
+  - 12/12 test Node lulus.
+  - APK debug dibangun dan terpasang di Samsung SM-A366B (`RRGYC07G09Z`).
+
+## Penyelarasan Diagram Garis Tren Penjualan & Pemurnian Nota Terbaru — 20 November 2026, review
+
+- Pemurnian Nota Terbaru Beranda (`OwnerDashboard` & `CashierDashboard`):
+  1. Mengeliminasi transaksi berstempel masa depan (`createdAt.isAfter(DateTime.now())`) yang sebelumnya berasal dari seed sintetis sore hari (17:10).
+  2. Memprioritaskan transaksi nyata kasir (`TRX-...` non-sintetis) pada daftar "Nota terbaru": bila pengguna telah melakukan transaksi riil di kasir, nota riil tersebut langsung tampil di posisi teratas tanpa tersisip atau tergeser data sintetis.
+  3. Memperbarui subtitle menjadi "Nota transaksi kasir terbaru".
+- Komponen bersama `SalesLineChart` (`mobile/lib/core/widgets/sales_line_chart.dart`): mengekstrak *Smooth Area Line Chart* interaktif bergradien violet lengkap dengan touch-scrubbing, badge tanggal, dan garis pemandu ke komponen inti `core/widgets/`.
+- Layar Statistik (`StatisticsScreen`): mengubah visual tren penjualan 7 hari terakhir dari diagram batang menjadi diagram garis area mulus yang selaras dengan Beranda Owner, menampilkan penjualan bersih harian seminggu terakhir dengan interaksi sentuh dinamis, serta menghapus chip filter periode atas permintaan pengguna.
+- Beranda Owner (`OwnerDashboard`): beralih ke `SalesLineChart` bersama, memangkas lebih dari 340 baris kode redundan.
+- Validasi:
+  - Analyzer bersih (0 error).
+  - 269/269 test Flutter lulus.
+
 ## Integrasi Data Transaksi Nyata pada Layar Statistik — 20 November 2026, review
 
 - Halaman Statistik (`StatisticsScreen`):
