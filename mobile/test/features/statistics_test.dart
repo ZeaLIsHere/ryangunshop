@@ -75,4 +75,65 @@ void main() {
     expect(find.text('Rp 150.000'), findsOneWidget);
     expect(find.text('10'), findsWidgets);
   });
+
+  testWidgets(
+    'statistik menghitung transaksi nyata untuk tren, metode bayar dan produk terlaris',
+    (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+
+      final database = AppDatabase(NativeDatabase.memory());
+      addTearDown(database.close);
+      await database.saveProduct(
+        ProductsCompanion.insert(
+          id: 'p-kopi',
+          name: 'Kopi Susu Sachet',
+          salePrice: 3000,
+          costPrice: const Value(2000),
+          stock: 50,
+          category: const Value('Minuman'),
+          updatedAt: DateTime.now(),
+        ),
+      );
+      await database.completeCheckout(
+        transactionId: 'TRX-STAT-01',
+        paymentMethod: 'cash',
+        totalAmount: 6000,
+        cashReceived: 10000,
+        changeAmount: 4000,
+        lines: const [
+          CheckoutLine(
+            productId: 'p-kopi',
+            quantity: 2,
+            unitPrice: 3000,
+            subtotal: 6000,
+          ),
+        ],
+      );
+
+      final session = AppSession(database: database);
+      addTearDown(session.dispose);
+
+      await tester.pumpWidget(
+        AppSessionScope(
+          session: session,
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            home: const StatisticsScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Verifikasi data nyata terhitung
+      expect(find.text('Rp 6.000'), findsWidgets);
+      expect(find.text('Kopi Susu Sachet'), findsWidgets);
+      expect(find.text('Tunai'), findsOneWidget);
+      expect(find.textContaining('100%'), findsWidgets);
+      expect(find.text('Belum ada data transaksi produk'), findsNothing);
+      expect(find.text('Belum ada data metode pembayaran'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

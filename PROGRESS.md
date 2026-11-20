@@ -102,6 +102,20 @@ berkas checklist terpisah.
 | Analitik & statistik penjualan | `mobile/lib/features/statistics/` | Tim | review |
 | Monitor pemilik (tata letak isometrik & stok) | `mobile/lib/features/monitor/` | Koordinasi pada `TEAM.md` | review |
 
+## Integrasi Data Transaksi Nyata pada Layar Statistik — 20 November 2026, review
+
+- Halaman Statistik (`StatisticsScreen`):
+  1. Integrasi Penuh Transaksi Repository: menghubungkan `session.transactionRepository.listForPeriod` dengan perhitungan dinamis 100% data nyata dari database/cloud.
+  2. Filter Periode Dinamis: pilihan chip `Hari ini`, `7 hari`, `30 hari` (default `30 hari` agar langsung menyajikan seluruh 15 hari riwayat transaksi).
+  3. Tren Penjualan Harian: batang diagram mingguan/bulanan terisi nominal penjualan nyata per hari.
+  4. Komposisi Metode Pembayaran: menghitung pembagian Tunai vs QRIS aktual dari riwayat nota.
+  5. Jam Sibuk (Waktu Transaksi Terbanyak): mengelompokkan jam transaksi nyata ke dalam kategori Pagi (05-11), Siang (11-15), Sore (15-18), dan Malam (18-05).
+  6. Produk Terlaris & Lambat Laku: merangking produk paling laku berdasarkan kuantitas barang terjual nyata, dan mendeteksi produk dengan perputaran stok rendah.
+- Validasi:
+  - Analyzer bersih (0 error).
+  - 269/269 test Flutter dan 12/12 test Node lulus.
+  - APK debug dibangun ulang (18,2 detik), diinstal ke Samsung SM_A366B (`RRGYC07G09Z`), dan diluncurkan langsung.
+
 ## Penyelarasan Tanggal Transaksi Firestore (6–20 November 2026) — 20 November 2026, review
 
 - Sesuai instruksi pengguna agar tidak ada transaksi di masa depan dan seluruh transaksi masuk ke grafik 7/30 hari:

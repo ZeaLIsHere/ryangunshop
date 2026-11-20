@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/data/transaction_repository.dart';
 import '../../../core/format/rupiah.dart';
 import '../../../core/session/app_session.dart';
 import '../../../core/theme/app_colors.dart';
@@ -9,6 +10,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_card.dart';
 import '../../../core/widgets/sample_badge.dart';
 import '../../catalog/model/catalog_product.dart';
+import '../../dashboard/model/dashboard_period.dart';
 import '../sample/statistics_sample.dart';
 
 /// Layar statistik penjualan dan stok berbasis Bento Grid.
@@ -21,7 +23,9 @@ class StatisticsScreen extends StatefulWidget {
 
 class _StatisticsScreenState extends State<StatisticsScreen> {
   List<CatalogProduct>? _localProducts;
+  List<TransactionRecord>? _transactions;
   int? _dataRevision;
+  int _days = 30;
 
   @override
   void didChangeDependencies() {
@@ -29,18 +33,25 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     final revision = AppSessionScope.maybeOf(context)?.dataRevision;
     if (_localProducts == null || revision != _dataRevision) {
       _dataRevision = revision;
-      _loadLocalProducts();
+      _loadData();
     }
   }
 
-  Future<void> _loadLocalProducts() async {
-    final repo = AppSessionScope.maybeOf(context)?.productRepository;
-    if (repo == null) return;
+  Future<void> _loadData() async {
+    final session = AppSessionScope.maybeOf(context);
+    if (session == null) return;
     try {
-      final records = await repo.listProducts();
+      final records = await session.productRepository.listProducts();
+      final now = DateTime.now();
+      final period = DashboardPeriod(now, _days);
+      final txs = await session.transactionRepository.listForPeriod(
+        period.start,
+        period.end,
+      );
       if (!mounted) return;
       setState(() {
         _localProducts = records.map(CatalogProduct.fromRecord).toList();
+        _transactions = txs;
       });
     } catch (_) {}
   }
@@ -51,40 +62,129 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     final session = AppSessionScope.maybeOf(context);
     final isLocal = session?.productRepository != null;
 
+    final products = _localProducts ?? const <CatalogProduct>[];
+    final txs = _transactions ?? const <TransactionRecord>[];
+
     final StatisticsDataSet data;
-    if (session != null) {
-      final todayTotal = session.todayRevenue;
-      final todayCount = session.todayTransactionCount;
-      final itemsSold = session.recentTransactions.fold<int>(
-        0,
-        (sum, tx) => sum + tx.itemCount,
-      );
+    if (session != null && txs.isNotEmpty) {
+      final total = txs.fold<int>(0, (sum, t) => sum + t.totalAmount);
+      final count = txs.length;
+      final itemsSold = txs.fold<int>(0, (sum, t) => sum + t.itemCount);
+
+      // 1. Metode Pembayaran
+      final cashTotal = txs
+          .where((t) => t.paymentMethod == 'cash')
+          .fold<int>(0, (sum, t) => sum + t.totalAmount);
+      final qrisTotal = txs
+          .where((t) => t.paymentMethod == 'qris')
+          .fold<int>(0, (sum, t) => sum + t.totalAmount);
+      final payments = <PaymentSlice>[
+        if (cashTotal > 0) PaymentSlice(label: 'Tunai', total: cashTotal),
+        if (qrisTotal > 0) PaymentSlice(label: 'QRIS', total: qrisTotal),
+      ];
+
+      // 2. Waktu Transaksi Terbanyak (Jam Sibuk)
+      var pagi = 0;
+      var siang = 0;
+      var sore = 0;
+      var malam = 0;
+      for (final t in txs) {
+        final h = t.createdAt.toLocal().hour;
+        if (h >= 5 && h < 11) {
+          pagi++;
+        } else if (h >= 11 && h < 15) {
+          siang++;
+        } else if (h >= 15 && h < 18) {
+          sore++;
+        } else {
+          malam++;
+        }
+      }
+      final peakHours = [
+        HourBucket(label: 'Pagi', transactions: pagi),
+        HourBucket(label: 'Siang', transactions: siang),
+        HourBucket(label: 'Sore', transactions: sore),
+        HourBucket(label: 'Malam', transactions: malam),
+      ];
+
+      // 3. Tren Penjualan Harian
+      final dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+      final trend = <SalesPoint>[];
+      final now = DateTime.now();
+      final numDays = _days == 1 ? 7 : _days;
+      final startDay = DateTime(now.year, now.month, now.day - numDays + 1);
+      final periodStep = numDays <= 7 ? 1 : (numDays <= 14 ? 2 : 4);
+      for (var i = 0; i < numDays; i += periodStep) {
+        final day = DateTime(startDay.year, startDay.month, startDay.day + i);
+        final nextDay = DateTime(day.year, day.month, day.day + periodStep);
+        final dayTotal = txs
+            .where(
+              (t) =>
+                  !t.createdAt.toLocal().isBefore(day) &&
+                  t.createdAt.toLocal().isBefore(nextDay),
+            )
+            .fold<int>(0, (sum, t) => sum + t.totalAmount);
+        final label = numDays <= 7
+            ? (day.day == now.day && day.month == now.month
+                  ? 'Hari ini'
+                  : dayNames[day.weekday - 1])
+            : '${day.day}/${day.month}';
+        trend.add(SalesPoint(label: label, total: dayTotal));
+      }
+
+      // 4. Produk Terlaris
+      final soldMap = <String, ({String name, int sold, String unit})>{};
+      for (final t in txs) {
+        for (final item in t.items) {
+          final existing = soldMap[item.productId];
+          soldMap[item.productId] = (
+            name: existing?.name ?? item.productName,
+            sold: (existing?.sold ?? 0) + item.quantity,
+            unit: existing?.unit ?? 'pcs',
+          );
+        }
+      }
+      final sortedSold = soldMap.values.toList()
+        ..sort((a, b) => b.sold.compareTo(a.sold));
+      final topProducts = sortedSold
+          .take(5)
+          .map((s) => TopProduct(name: s.name, sold: s.sold, unit: s.unit))
+          .toList();
+
+      // 5. Produk Lambat Laku
+      final slowMoving = <TopProduct>[];
+      if (products.isNotEmpty) {
+        final withSales =
+            products
+                .map(
+                  (p) => (
+                    name: p.name,
+                    sold: soldMap[p.id]?.sold ?? 0,
+                    unit: p.unit,
+                  ),
+                )
+                .toList()
+              ..sort((a, b) => a.sold.compareTo(b.sold));
+        for (final item in withSales.take(3)) {
+          slowMoving.add(
+            TopProduct(name: item.name, sold: item.sold, unit: item.unit),
+          );
+        }
+      }
+
       data = StatisticsDataSet(
-        total: todayTotal,
+        total: total,
         previousTotal: 0,
-        transactions: todayCount,
+        transactions: count,
         itemsSold: itemsSold,
         grossProfit: 0,
-        payments: const [],
+        payments: payments,
         peakTitle: 'Waktu transaksi terbanyak',
-        peakHours: const [
-          HourBucket(label: 'Pagi', transactions: 0),
-          HourBucket(label: 'Siang', transactions: 0),
-          HourBucket(label: 'Sore', transactions: 0),
-          HourBucket(label: 'Malam', transactions: 0),
-        ],
+        peakHours: peakHours,
         trendTitle: 'Tren penjualan',
-        trend: [
-          const SalesPoint(label: 'Sen', total: 0),
-          const SalesPoint(label: 'Sel', total: 0),
-          const SalesPoint(label: 'Rab', total: 0),
-          const SalesPoint(label: 'Kam', total: 0),
-          const SalesPoint(label: 'Jum', total: 0),
-          const SalesPoint(label: 'Sab', total: 0),
-          SalesPoint(label: 'Hari ini', total: todayTotal),
-        ],
-        topProducts: const [],
-        slowMoving: const [],
+        trend: trend,
+        topProducts: topProducts,
+        slowMoving: slowMoving,
       );
     } else {
       data = const StatisticsDataSet(
@@ -115,8 +215,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         slowMoving: [],
       );
     }
-
-    final products = _localProducts ?? const <CatalogProduct>[];
 
     final lowStock = products
         .where((p) => p.stockStatus == ProductStockStatus.low)
@@ -189,6 +287,28 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       ],
                     ),
                   ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // Filter Periode
+              Wrap(
+                spacing: AppSpacing.xs,
+                children: [
+                  for (final entry in {
+                    1: 'Hari ini',
+                    7: '7 hari',
+                    30: '30 hari',
+                  }.entries)
+                    ChoiceChip(
+                      label: Text(entry.value),
+                      selected: _days == entry.key,
+                      materialTapTargetSize: MaterialTapTargetSize.padded,
+                      onSelected: (_) {
+                        setState(() => _days = entry.key);
+                        _loadData();
+                      },
+                    ),
                 ],
               ),
               const SizedBox(height: AppSpacing.md),
