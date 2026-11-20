@@ -43,7 +43,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     try {
       final records = await session.productRepository.listProducts();
       final now = DateTime.now();
-      final period = DashboardPeriod(now, _days);
+      // Mengambil 30 hari transaksi agar seluruh statistik mencakup data toko yang ada
+      final period = DashboardPeriod(now, 30);
       final txs = await session.transactionRepository.listForPeriod(
         period.start,
         period.end,
@@ -107,16 +108,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         HourBucket(label: 'Malam', transactions: malam),
       ];
 
-      // 3. Tren Penjualan Harian
+      // 3. Tren Penjualan 7 Hari Terakhir Dinamis (Mundur dari hari ini)
       final dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
       final trend = <SalesPoint>[];
       final now = DateTime.now();
-      final numDays = _days == 1 ? 7 : _days;
-      final startDay = DateTime(now.year, now.month, now.day - numDays + 1);
-      final periodStep = numDays <= 7 ? 1 : (numDays <= 14 ? 2 : 4);
-      for (var i = 0; i < numDays; i += periodStep) {
-        final day = DateTime(startDay.year, startDay.month, startDay.day + i);
-        final nextDay = DateTime(day.year, day.month, day.day + periodStep);
+      for (var i = 6; i >= 0; i--) {
+        final day = DateTime(now.year, now.month, now.day - i);
+        final nextDay = DateTime(day.year, day.month, day.day + 1);
         final dayTotal = txs
             .where(
               (t) =>
@@ -124,11 +122,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   t.createdAt.toLocal().isBefore(nextDay),
             )
             .fold<int>(0, (sum, t) => sum + t.totalAmount);
-        final label = numDays <= 7
-            ? (day.day == now.day && day.month == now.month
-                  ? 'Hari ini'
-                  : dayNames[day.weekday - 1])
-            : '${day.day}/${day.month}';
+        final label = i == 0 ? 'Hari ini' : dayNames[day.weekday - 1];
         trend.add(SalesPoint(label: label, total: dayTotal));
       }
 
@@ -187,32 +181,36 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         slowMoving: slowMoving,
       );
     } else {
-      data = const StatisticsDataSet(
+      final dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+      final now = DateTime.now();
+      final emptyTrend = [
+        for (var i = 6; i >= 0; i--)
+          SalesPoint(
+            label: i == 0
+                ? 'Hari ini'
+                : dayNames[DateTime(now.year, now.month, now.day - i).weekday -
+                      1],
+            total: 0,
+          ),
+      ];
+      data = StatisticsDataSet(
         total: 0,
         previousTotal: 0,
         transactions: 0,
         itemsSold: 0,
         grossProfit: 0,
-        payments: [],
+        payments: const [],
         peakTitle: 'Waktu transaksi terbanyak',
-        peakHours: [
+        peakHours: const [
           HourBucket(label: 'Pagi', transactions: 0),
           HourBucket(label: 'Siang', transactions: 0),
           HourBucket(label: 'Sore', transactions: 0),
           HourBucket(label: 'Malam', transactions: 0),
         ],
         trendTitle: 'Tren penjualan',
-        trend: [
-          SalesPoint(label: 'Sen', total: 0),
-          SalesPoint(label: 'Sel', total: 0),
-          SalesPoint(label: 'Rab', total: 0),
-          SalesPoint(label: 'Kam', total: 0),
-          SalesPoint(label: 'Jum', total: 0),
-          SalesPoint(label: 'Sab', total: 0),
-          SalesPoint(label: 'Hari ini', total: 0),
-        ],
-        topProducts: [],
-        slowMoving: [],
+        trend: emptyTrend,
+        topProducts: const [],
+        slowMoving: const [],
       );
     }
 
@@ -354,10 +352,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 const SizedBox(height: AppSpacing.sm),
               ],
 
-              // BENTO 4: Tren Penjualan & Pembayaran (Row / Bento)
+              // BENTO 4: Tren Penjualan 7 Hari Terakhir & Pembayaran (Row / Bento)
               _BentoSectionContainer(
                 title: data.trendTitle,
-                subtitle: 'Aktivitas penjualan periode mingguan',
+                subtitle: 'Aktivitas 7 hari terakhir sampai hari ini',
                 child: _WeeklyChart(points: data.trend),
               ),
               const SizedBox(height: AppSpacing.sm),
@@ -955,21 +953,51 @@ class _WeeklyChart extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     const Spacer(),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        point.total == 0
+                            ? '-'
+                            : (point.total >= 1000000
+                                  ? '${(point.total / 1000000).toStringAsFixed(1)}jt'
+                                  : '${(point.total / 1000).round()}rb'),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: point.total > 0
+                              ? AppColors.ink
+                              : AppColors.muted,
+                          fontSize: 10,
+                          fontWeight: point.total > 0
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                          fontFeatures: AppTypography.tabularFigures,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
                     Container(
                       width: 18,
-                      height: (point.total / maxTotal) * 88,
+                      height: point.total == 0
+                          ? 4.0
+                          : ((point.total / maxTotal) * 72).clamp(6.0, 72.0),
                       decoration: BoxDecoration(
-                        color: point.total == maxTotal
+                        color: point.label == 'Hari ini'
                             ? AppColors.primary
-                            : AppColors.primaryLight,
+                            : (point.total > 0
+                                  ? AppColors.accent
+                                  : AppColors.borderSubtle),
                         borderRadius: AppRadius.fixtureBorder,
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.xs),
+                    const SizedBox(height: 6),
                     Text(
                       point.label,
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: AppColors.muted,
+                        color: point.label == 'Hari ini'
+                            ? AppColors.primary
+                            : AppColors.muted,
+                        fontWeight: point.label == 'Hari ini'
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                       ),
                     ),
                   ],

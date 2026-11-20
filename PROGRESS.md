@@ -106,8 +106,8 @@ berkas checklist terpisah.
 
 - Halaman Statistik (`StatisticsScreen`):
   1. Integrasi Penuh Transaksi Repository: menghubungkan `session.transactionRepository.listForPeriod` dengan perhitungan dinamis 100% data nyata dari database/cloud.
-  2. Filter Periode Dinamis: pilihan chip `Hari ini`, `7 hari`, `30 hari` (default `30 hari` agar langsung menyajikan seluruh 15 hari riwayat transaksi).
-  3. Tren Penjualan Harian: batang diagram mingguan/bulanan terisi nominal penjualan nyata per hari.
+  2. Tren Penjualan 7 Hari Terakhir: terkunci murni pada 7 hari kalender terakhir mundur sampai hari ini (tanpa filter periode yang membingungkan). Sumbu hari otomatis berubah mengikuti hari ini (`Sab, Min, Sen, Sel, Rab, Kam, Hari ini`).
+  3. Visual Diagram Mingguan: nominal angka ringkas (mis. `207rb`) tercetak tepat di atas tiap batang, warna aktif membedakan transaksi hari ini, dan layout responsif bebas overflow.
   4. Komposisi Metode Pembayaran: menghitung pembagian Tunai vs QRIS aktual dari riwayat nota.
   5. Jam Sibuk (Waktu Transaksi Terbanyak): mengelompokkan jam transaksi nyata ke dalam kategori Pagi (05-11), Siang (11-15), Sore (15-18), dan Malam (18-05).
   6. Produk Terlaris & Lambat Laku: merangking produk paling laku berdasarkan kuantitas barang terjual nyata, dan mendeteksi produk dengan perputaran stok rendah.
