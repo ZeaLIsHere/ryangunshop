@@ -27,6 +27,8 @@ class MonitorProjection {
       ? unit * 2
       : f.type == MonitorFixtureType.shelf
       ? unit * 1.5
+      : f.type == MonitorFixtureType.showcase
+      ? unit * 1.2
       : unit;
   Path top(MonitorFixture f, [double? z]) => Path()
     ..moveTo(
@@ -175,108 +177,111 @@ class _MonitorCanvasState extends State<MonitorCanvas> {
   @override
   Widget build(BuildContext context) => Column(
     children: [
-      Wrap(
-        spacing: AppSpacing.xs,
-        children: [
-          IconButton(
-            tooltip: 'Perbesar',
-            onPressed: () {
-              final scale = transform.value.getMaxScaleOnAxis();
-              if (scale < 4) {
-                transform.value = transform.value.clone()
-                  ..scaleByDouble(
-                    (4 / scale).clamp(1, 1.25),
-                    (4 / scale).clamp(1, 1.25),
-                    1,
-                    1,
-                  );
-              }
-            },
-            icon: const Icon(Icons.zoom_in),
-          ),
-          IconButton(
-            tooltip: 'Perkecil',
-            onPressed: () {
-              final scale = transform.value.getMaxScaleOnAxis();
-              if (scale > 1) {
-                transform.value = transform.value.clone()
-                  ..scaleByDouble(
-                    (1 / scale).clamp(.8, 1),
-                    (1 / scale).clamp(.8, 1),
-                    1,
-                    1,
-                  );
-              }
-            },
-            icon: const Icon(Icons.zoom_out),
-          ),
-          TextButton.icon(
-            onPressed: () => transform.value = Matrix4.identity(),
-            icon: const Icon(Icons.center_focus_strong),
-            label: const Text('Reset tampilan'),
-          ),
-        ],
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+        child: Wrap(
+          spacing: AppSpacing.xs,
+          children: [
+            IconButton(
+              tooltip: 'Perbesar',
+              onPressed: () {
+                final scale = transform.value.getMaxScaleOnAxis();
+                if (scale < 4) {
+                  transform.value = transform.value.clone()
+                    ..scaleByDouble(
+                      (4 / scale).clamp(1, 1.25),
+                      (4 / scale).clamp(1, 1.25),
+                      1,
+                      1,
+                    );
+                }
+              },
+              icon: const Icon(Icons.zoom_in),
+            ),
+            IconButton(
+              tooltip: 'Perkecil',
+              onPressed: () {
+                final scale = transform.value.getMaxScaleOnAxis();
+                if (scale > 1) {
+                  transform.value = transform.value.clone()
+                    ..scaleByDouble(
+                      (1 / scale).clamp(.8, 1),
+                      (1 / scale).clamp(.8, 1),
+                      1,
+                      1,
+                    );
+                }
+              },
+              icon: const Icon(Icons.zoom_out),
+            ),
+            TextButton.icon(
+              onPressed: () => transform.value = Matrix4.identity(),
+              icon: const Icon(Icons.center_focus_strong),
+              label: const Text('Reset tampilan'),
+            ),
+          ],
+        ),
       ),
-      LayoutBuilder(
-        builder: (context, constraints) {
-          final size = Size(
-            constraints.maxWidth,
-            constraints.maxWidth * .65 + AppSpacing.xl * 3,
-          );
-          final projection = MonitorProjection(widget.layout, size);
-          return SizedBox(
-            height: size.height,
-            child: _viewport(
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTapUp: (d) {
-                  final f = projection.hit(d.localPosition);
-                  if (f != null) widget.onSelect(f.id);
-                },
-                onPanDown: widget.editing
-                    ? (d) {
-                        dragged = projection.hit(d.localPosition);
-                        start = projection.inverse(d.localPosition);
-                      }
-                    : null,
-                onPanStart: widget.editing
-                    ? (d) {
-                        if (dragged != null) widget.onSelect(dragged!.id);
-                      }
-                    : null,
-                onPanUpdate: widget.editing
-                    ? (d) {
-                        final f = dragged, s = start;
-                        if (f == null || s == null) return;
-                        final p = projection.inverse(d.localPosition);
-                        widget.onMove(
-                          f.id,
-                          f.x + (p.dx - s.dx).round(),
-                          f.y + (p.dy - s.dy).round(),
-                        );
-                      }
-                    : null,
-                onPanEnd: widget.editing
-                    ? (_) {
-                        dragged = null;
-                        start = null;
-                      }
-                    : null,
-                child: CustomPaint(
-                  key: const ValueKey('monitor-isometric-paint'),
-                  size: size,
-                  painter: _MonitorPainter(
-                    projection,
-                    widget.selectedId,
-                    widget.counts,
-                    Theme.of(context).textTheme.bodySmall!,
-                    MediaQuery.textScalerOf(context),
+      Expanded(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final size = Size(constraints.maxWidth, constraints.maxHeight);
+            final projection = MonitorProjection(widget.layout, size);
+            return SizedBox(
+              width: size.width,
+              height: size.height,
+              child: _viewport(
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTapUp: (d) {
+                    final f = projection.hit(d.localPosition);
+                    if (f != null) widget.onSelect(f.id);
+                  },
+                  onPanDown: widget.editing
+                      ? (d) {
+                          dragged = projection.hit(d.localPosition);
+                          start = projection.inverse(d.localPosition);
+                        }
+                      : null,
+                  onPanStart: widget.editing
+                      ? (d) {
+                          if (dragged != null) widget.onSelect(dragged!.id);
+                        }
+                      : null,
+                  onPanUpdate: widget.editing
+                      ? (d) {
+                          final f = dragged, s = start;
+                          if (f == null || s == null) return;
+                          final p = projection.inverse(d.localPosition);
+                          widget.onMove(
+                            f.id,
+                            f.x + (p.dx - s.dx).round(),
+                            f.y + (p.dy - s.dy).round(),
+                          );
+                        }
+                      : null,
+                  onPanEnd: widget.editing
+                      ? (_) {
+                          dragged = null;
+                          start = null;
+                        }
+                      : null,
+                  child: CustomPaint(
+                    key: const ValueKey('monitor-isometric-paint'),
+                    size: size,
+                    painter: _MonitorPainter(
+                      projection,
+                      widget.selectedId,
+                      widget.counts,
+                      Theme.of(context).textTheme.bodySmall!,
+                      MediaQuery.textScalerOf(context),
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     ],
   );

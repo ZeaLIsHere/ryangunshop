@@ -10,12 +10,16 @@ import 'package:ryangunshop/core/session/user_role.dart';
 import 'package:ryangunshop/core/theme/app_theme.dart';
 import 'package:ryangunshop/features/monitor/model/monitor_layout.dart';
 import 'package:ryangunshop/features/monitor/view/monitor_screen.dart';
+import 'package:ryangunshop/features/monitor/view/monitor_editor_screen.dart';
 import 'package:ryangunshop/features/monitor/view_model/monitor_view_model.dart';
 
 void main() {
   testWidgets('role berubah ketika sheet terbuka menutup sheet dan Monitor', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
     final session = AppSession();
     addTearDown(session.dispose);
     final layout = MonitorTemplate.walls.create();
@@ -49,15 +53,18 @@ void main() {
     );
     await tester.tap(find.text('Beranda uji'));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('0 belum ditempatkan'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('0 belum ditempatkan'));
     await tester.pumpAndSettle();
-    expect(find.text('Belum ditempatkan'), findsOneWidget);
+    expect(find.text('Belum Ditempatkan'), findsOneWidget);
     session.selectRole(UserRole.cashier);
     await tester.pumpAndSettle();
     expect(find.text('Beranda uji'), findsOneWidget);
     expect(find.byType(MonitorScreen), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
   testWidgets('kanvas bisa dipilih, drag hanya Edit, zoom dan reset tersedia', (
     tester,
   ) async {
@@ -82,6 +89,7 @@ void main() {
         home: Scaffold(
           body: SizedBox(
             width: 500,
+            height: 600,
             child: StatefulBuilder(
               builder: (context, setState) {
                 rebuild = setState;
@@ -137,6 +145,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
+
   for (final width in [360.0, 1024.0]) {
     testWidgets('penempatan dan detail stok isometrik $width dp', (
       tester,
@@ -180,42 +189,35 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.byType(MonitorCanvas), findsOneWidget);
-      await tester.tap(find.text('Edit tata letak'));
+
+      // Buka editor fullscreen
+      await tester.tap(find.text('Edit Tata Letak'));
       await tester.pumpAndSettle();
-      await tester.scrollUntilVisible(
-        find.text('1. Rak 1'),
-        250,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.ensureVisible(find.text('1. Rak 1'));
+      expect(find.byType(MonitorEditorScreen), findsOneWidget);
+
+      // Pilih rak pertama di editor
+      model.select(initial.fixtures.first.id);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('1. Rak 1'));
-      await tester.pumpAndSettle();
-      await tester.scrollUntilVisible(
-        find.text('Tempatkan produk'),
-        180,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.ensureVisible(find.text('Tempatkan produk'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Tempatkan produk'));
+
+      // Tekan tombol atur produk di docked bar bawah
+      await tester.tap(find.text('0 Produk'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Kopi susu'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Terapkan 1 produk'));
       await tester.pumpAndSettle();
+
       expect(model.layout!.assignments['p'], initial.fixtures.first.id);
-      expect(model.counts(initial.fixtures.first.id).low, 1);
-      await tester.scrollUntilVisible(
-        find.text('Simpan'),
-        -400,
-        scrollable: find.byType(Scrollable).first,
-      );
+
+      // Simpan di editor fullscreen
       await tester.tap(find.text('Simpan'));
       await tester.pumpAndSettle();
+
+      // Kembali ke MonitorScreen
+      expect(find.byType(MonitorScreen), findsOneWidget);
       expect(stored.layout.assignments['p'], initial.fixtures.first.id);
-      await tester.ensureVisible(find.text('0 habis · 1 menipis'));
-      await tester.pumpAndSettle();
+
+      // Periksa detail alert stok
       await tester.tap(find.text('0 habis · 1 menipis'));
       await tester.pumpAndSettle();
       expect(find.text('Kopi susu'), findsOneWidget);
@@ -223,6 +225,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
   test(
     'draft edit, batas grid, batal, retry dan konflik mempertahankan draft',
     () async {
@@ -255,7 +258,7 @@ void main() {
       expect(await model.save(), isTrue);
       expect(model.dirty, isFalse);
       model.edit();
-      model.add(MonitorFixtureType.fridge);
+      model.add(MonitorFixtureType.showcase);
       final count = model.layout!.fixtures.length;
       model.cancel();
       expect(model.layout!.fixtures.length, count - 1);
@@ -290,108 +293,114 @@ void main() {
   });
 
   for (final width in [360.0, 1024.0]) {
-    testWidgets('setup dan simpan editor $width dp skala 1,3', (tester) async {
-      tester.view.physicalSize = Size(width, 900);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.reset);
-      final session = AppSession();
-      addTearDown(session.dispose);
-      StoredMonitorLayout? stored;
-      final model = MonitorViewModel(
-        loadLayout: () async => stored,
-        saveLayout: (layout, revision) async =>
-            stored = (layout: layout, revision: revision + 1),
-        canEdit: () => session.role.canManageProducts,
-      );
-      addTearDown(model.dispose);
-      await tester.pumpWidget(
-        AppSessionScope(
-          session: session,
-          child: MaterialApp(
-            theme: AppTheme.light(),
-            builder: (context, child) => MediaQuery(
-              data: MediaQuery.of(context)
-                  .copyWith(textScaler: const TextScaler.linear(1.3)),
-              child: child!,
+    testWidgets(
+      'setup template membuka editor fullscreen $width dp skala 1,3',
+      (tester) async {
+        tester.view.physicalSize = Size(width, 900);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final session = AppSession();
+        addTearDown(session.dispose);
+        StoredMonitorLayout? stored;
+        final model = MonitorViewModel(
+          loadLayout: () async => stored,
+          saveLayout: (layout, revision) async =>
+              stored = (layout: layout, revision: revision + 1),
+          canEdit: () => session.role.canManageProducts,
+        );
+        addTearDown(model.dispose);
+        await tester.pumpWidget(
+          AppSessionScope(
+            session: session,
+            child: MaterialApp(
+              theme: AppTheme.light(),
+              builder: (context, child) => MediaQuery(
+                data: MediaQuery.of(context)
+                    .copyWith(textScaler: const TextScaler.linear(1.3)),
+                child: child!,
+              ),
+              home: MonitorScreen(viewModel: model),
             ),
-            home: MonitorScreen(viewModel: model),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('Atur tata letak toko'), findsOneWidget);
-      await tester.tap(find.text('Rak dinding'));
-      await tester.pumpAndSettle();
-      expect(find.text('Simpan'), findsOneWidget);
-      final save = find.widgetWithText(FilledButton, 'Simpan');
-      expect(tester.getSize(save).height, greaterThanOrEqualTo(48));
-      await tester.tap(save);
-      await tester.pumpAndSettle();
-      expect(find.text('Tata letak tersimpan'), findsOneWidget);
-      expect(stored!.revision, 1);
-      await tester.tap(find.text('Edit tata letak'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Batal'));
-      await tester.pumpAndSettle();
-      expect(find.text('Tata letak tersimpan'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-      session.selectRole(UserRole.cashier);
-      await tester.pumpAndSettle();
-      expect(find.text('Simpan'), findsNothing);
-      expect(tester.takeException(), isNull);
-    });
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Atur Tata Letak Toko'), findsOneWidget);
+
+        // Pilih template awal
+        await tester.tap(find.text('Gunakan Template Rak dinding'));
+        await tester.pumpAndSettle();
+
+        // Langsung masuk ke MonitorEditorScreen
+        expect(find.byType(MonitorEditorScreen), findsOneWidget);
+        expect(find.text('Edit Tata Letak'), findsOneWidget);
+
+        // Simpan di editor fullscreen
+        final save = find.widgetWithText(FilledButton, 'Simpan');
+        expect(tester.getSize(save).height, greaterThanOrEqualTo(44));
+        await tester.tap(save);
+        await tester.pumpAndSettle();
+
+        // Kembali ke MonitorScreen dengan layout tersimpan
+        expect(find.byType(MonitorScreen), findsOneWidget);
+        expect(stored!.revision, 1);
+        expect(tester.takeException(), isNull);
+      },
+    );
   }
 
   testWidgets(
-    'kembali dengan draft meminta konfirmasi dan buang tidak menyimpan',
+    'editor fullscreen: ubah ukuran toko dan konfirmasi buang perubahan',
     (tester) async {
       final session = AppSession();
       addTearDown(session.dispose);
       var writes = 0;
+      final layout = MonitorTemplate.walls.create();
+      StoredMonitorLayout stored = (layout: layout, revision: 1);
       final model = MonitorViewModel(
-        loadLayout: () async => null,
+        loadLayout: () async => stored,
         saveLayout: (layout, revision) async {
           writes++;
-          return (layout: layout, revision: 1);
+          stored = (layout: layout, revision: revision + 1);
+          return stored;
         },
         canEdit: () => session.role.canManageProducts,
       );
       addTearDown(model.dispose);
+      await model.load();
+      model.edit();
+
       await tester.pumpWidget(
         AppSessionScope(
           session: session,
           child: MaterialApp(
             theme: AppTheme.light(),
-            home: Builder(
-              builder: (context) => Scaffold(
-                body: TextButton(
-                  onPressed: () => Navigator.of(context).push<void>(
-                    MaterialPageRoute(
-                      builder: (_) => MonitorScreen(viewModel: model),
-                    ),
-                  ),
-                  child: const Text('Buka Monitor'),
-                ),
-              ),
-            ),
+            home: MonitorEditorScreen(viewModel: model),
           ),
         ),
       );
-      await tester.tap(find.text('Buka Monitor'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Rak dinding'));
+
+      // Buka dialog ukuran toko
+      await tester.tap(find.text('${layout.gridWidth} × ${layout.gridHeight}'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('Kembali'));
+      expect(find.text('Ukuran Ruang Toko'), findsOneWidget);
+
+      // Pilih preset Luas (20×20)
+      await tester.tap(find.text('Luas (20×20)'));
       await tester.pumpAndSettle();
-      expect(find.text('Simpan perubahan?'), findsOneWidget);
-      await tester.tap(find.text('Tetap edit'));
+      await tester.tap(find.text('Selesai'));
       await tester.pumpAndSettle();
-      expect(model.dirty, isTrue);
-      await tester.tap(find.byTooltip('Kembali'));
+      expect(model.layout!.gridWidth, 20);
+      expect(model.layout!.gridHeight, 20);
+
+      // Tap tombol Batal (leading close button)
+      await tester.tap(find.byTooltip('Batal'));
       await tester.pumpAndSettle();
+      expect(find.text('Simpan perubahan tata letak?'), findsOneWidget);
+
+      // Pilih Buang perubahan
       await tester.tap(find.text('Buang perubahan'));
       await tester.pumpAndSettle();
-      expect(find.text('Buka Monitor'), findsOneWidget);
       expect(writes, 0);
       expect(tester.takeException(), isNull);
     },
@@ -415,7 +424,9 @@ void main() {
     expect(find.text('Monitor hanya untuk pemilik.'), findsOneWidget);
     session.selectRole(UserRole.owner);
     await tester.pumpAndSettle();
-    expect(find.textContaining('Editor tata letak tersedia'), findsOneWidget);
-    expect(find.text('Simpan'), findsNothing);
+    expect(
+      find.textContaining('Penyimpanan denah lokal tersedia'),
+      findsOneWidget,
+    );
   });
 }

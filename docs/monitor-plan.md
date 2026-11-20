@@ -1,40 +1,30 @@
 # Monitor — Rencana implementasi
 
-Status: **19 November 2026 — Monitor isometrik, penempatan dan jalur sync tersedia di kode**.
-Tombol Monitor owner membuka setup tiga template dan kanvas isometrik ringan.
-Pantau/Edit terpisah; drag snap grid, tombol langkah, pan/zoom/reset, penempatan
-massal dengan pencarian/kategori, detail rak, daftar belum ditempatkan dan alert
-stok repository tersedia. Hapus objek melepas penempatan, bukan menghapus produk.
-Simpan/Batal/konfirmasi keluar, retry dan role guard sebelum commit tersedia.
+Status: **20 November 2026 — Monitor isometrik, editor fullscreen & penempatan produk selesai**.
+Halaman utama Monitor berfokus murni untuk pemantauan stok 2.5D, detail rak, dan alert.
+Halaman khusus `MonitorEditorScreen` menyediakan kanvas fullscreen, pengaturan ukuran toko
+(preset & slider), 4 tipe objek (Rak, Kulkas, Etalase, Meja Kasir), penempatan produk massal,
+kontrol jempol (dock bawah), dan proteksi simpan/batal/konflik.
 Jalur cloud layout ditulis tetapi belum diuji pada server/perangkat nyata.
 Tidak ada dependensi baru/deployment. Browser tanpa SQLite memberi penjelasan,
 bukan penyimpanan sementara yang disamarkan sebagai layout permanen.
 
-Fondasi saat ini: `MonitorLayout`/`MonitorFixture`, tiga `MonitorTemplate`,
-validasi grid dan JSON, `MonitorLayoutRepository`, tabel Drift `monitor_layouts`
-(migrasi 6→7), serta revisi lokal optimistic untuk menolak edit usang. Penyimpanan
-layout dan penempatan atomik, tidak mengubah stok/harga/nota/keranjang.
-Penempatan kanonis di snapshot layout (tambahan opsional pada JSON v1, file lama
-masih terbaca); `fixtureId`/`locationLabel` produk menjadi proyeksi lokasi utama.
-Ini menyempurnakan usulan kontrak awal di bawah: maksimum 400 penempatan,
-maksimum 450 perubahan lokasi per operasi untuk batas transaksi Firestore.
-Outbox jenis layout menyimpan token/baseToken; cloud target
-`stores/{storeId}/layouts/main`. Transaksi server membaca revisi dan produk,
-memperbarui hanya lokasi+token lokasi, lalu layout secara atomik. Stok/harga tidak
-ikut payload lokasi. Write stok produk menjaga lokasi yang telah diberi token
-Monitor. Konflik layout tetap pending, tidak memblokir antrean produk/nota POS.
+Fondasi saat ini: `MonitorLayout`/`MonitorFixture`, empat tipe fixture (termasuk Etalase),
+tiga `MonitorTemplate`, validasi grid dan JSON, `MonitorLayoutRepository`, tabel Drift
+`monitor_layouts` (migrasi 6→7), serta revisi lokal optimistic untuk menolak edit usang.
+Penyimpanan layout dan penempatan atomik, tidak mengubah stok/harga/nota/keranjang.
+Penempatan kanonis di snapshot layout; `fixtureId`/`locationLabel` produk menjadi proyeksi lokasi utama.
+Maksimum 400 penempatan, maksimum 450 perubahan lokasi per operasi untuk batas transaksi Firestore.
+Outbox jenis layout menyimpan token/baseToken; cloud target `stores/{storeId}/layouts/main`.
+Transaksi server membaca revisi dan produk, memperbarui hanya lokasi+token lokasi, lalu layout secara atomik.
+Stok/harga tidak ikut payload lokasi. Write stok produk menjaga lokasi yang telah diberi token Monitor.
+Konflik layout tetap pending, tidak memblokir antrean produk/nota POS.
 Tombol Periksa cloud membedakan belum aktif, gagal, pending, dan read berhasil;
 memuat versi cloud dengan membuang perubahan lokal perlu konfirmasi eksplisit.
-Tidak ada perubahan rules; server dapat menolak koleksi layout sesuai izin saat ini.
-Sinkronisasi layout dipicu saat buka/muat ulang, unggah mengikuti engine aplikasi;
-bukan editor kolaboratif real-time atau background service.
 
-Validasi 20 November: analyzer bersih, 265 test Flutter + 12 test Node lulus.
-Render widget pada 360/1024 dp skala 1,3 tersedia di folder build. APK debug
-cloud-first + Monitor berhasil dibangun (147,3 detik), belum dipasang karena
-Android tidak tersambung dan emulator tidak tersedia. GET `layouts/main` masih
-404; tidak menulis denah rekaan untuk menguji. Render fisik Android serta
-transaksi Firestore nyata layout belum diverifikasi. Belum commit/push.
+Validasi 20 November: analyzer bersih, 268 test Flutter + 12 test Node lulus.
+APK debug cloud-first + Monitor (dengan editor fullscreen dan etalase) berhasil dibangun (137 detik).
+Render fisik Android serta transaksi Firestore nyata layout belum diverifikasi.
 Bagian berikut tetap target implementasi; bukan klaim semua tahap selesai.
 
 ## 1. Tujuan dan keputusan

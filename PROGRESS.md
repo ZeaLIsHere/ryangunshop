@@ -102,6 +102,25 @@ berkas checklist terpisah.
 | Analitik & statistik penjualan | `mobile/lib/features/statistics/` | Tim | review |
 | Monitor pemilik (tata letak isometrik & stok) | `mobile/lib/features/monitor/` | Koordinasi pada `TEAM.md` | review |
 
+## Editor Tata Letak Toko Fullscreen & Etalase — 20 November 2026, review
+
+- Halaman Khusus Editor Fullscreen (`MonitorEditorScreen`):
+  1. Kanvas Isometrik 100% Layar: menghilangkan kanvas terjepit; pan & pinch-zoom bebas serta drag & drop snap-to-grid langsung pada viewport penuh.
+  2. Floating HUD Ukuran Toko: tombol mengambang di pojok atas membuka sheet penyesuaian ukuran ruang toko. Tersedia preset instan (Kecil `12×12`, Standar `16×16`, Luas `20×20`, Memanjang `12×24`) dan slider manual (`8–32` petak) dengan proteksi batas objek.
+  3. Objek Baru "Etalase" (`MonitorFixtureType.showcase`): ukuran 2×1 dengan visual tinggi dan aksen khas etalase/kaca toko. Total 4 tipe objek: Rak, Kulkas, Etalase, Meja Kasir.
+  4. Dock Bawah Ergonomis (Thumb-Zone Optimization):
+     - Saat tidak ada objek dipilih: bar horizontal tambah objek (`+ Rak`, `+ Kulkas`, `+ Etalase`, `+ Meja Kasir`).
+     - Saat objek dipilih: panel kontekstual memuat nama, tombol putar 90°, ubah nama, hapus, tombol atur produk langsung, dan pad geser 1 petak (*Nudge D-pad*) untuk presisi jempol tanpa harus drag.
+  5. Top Bar Ringkas: tombol Batal dengan dialog konfirmasi jika kotor, dan tombol Simpan (FilledButton).
+- Pembersihan `MonitorScreen` (Mode Pantau Murni):
+  1. Halaman utama Monitor fokus 100% untuk memantau stok dan alert toko, dengan tombol `Edit Tata Letak` di AppBar.
+  2. Mengetuk rak langsung membuka sheet/dialog rincian stok produk di rak tersebut.
+  3. Chip alert stok di atas menyaring daftar peringatan secara instan.
+- Validasi:
+  - Analyzer bersih (0 peringatan/error).
+  - 268/268 test Flutter dan 12/12 test Node lulus.
+  - APK debug baru berhasil dibangun (137 detik) di `mobile/build/app/outputs/flutter-apk/app-debug.apk`.
+
 ## Penyempurnaan Bento Dashboard, Grafik Kurva dan Bento Statistik — 20 November 2026, review
 
 - Beranda Owner:

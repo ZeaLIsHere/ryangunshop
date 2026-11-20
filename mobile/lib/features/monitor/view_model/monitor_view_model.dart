@@ -112,6 +112,22 @@ class MonitorViewModel extends ChangeNotifier {
     }
   }
 
+  bool resizeGrid(int newWidth, int newHeight) {
+    if (!canEdit() || !editing || saving || conflict || draft == null) {
+      return false;
+    }
+    try {
+      draft = draft!.copyWith(gridWidth: newWidth, gridHeight: newHeight);
+      error = null;
+      _notify();
+      return true;
+    } on FormatException catch (e) {
+      error = e.message.toString();
+      _notify();
+      return false;
+    }
+  }
+
   void chooseTemplate(MonitorTemplate template) {
     if (!canEdit() || saving || loading || _stored != null) return;
     draft = template.create();

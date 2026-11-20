@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../core/config/firebase_bootstrap.dart';
-import '../../../core/data/sync/monitor_sync.dart';
-import 'monitor_canvas.dart';
-
 import '../../../core/data/monitor_layout_repository.dart';
+import '../../../core/data/sync/monitor_sync.dart';
 import '../../../core/session/app_session.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -13,21 +11,25 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/app_card.dart';
 import '../model/monitor_layout.dart';
 import '../view_model/monitor_view_model.dart';
+import 'monitor_canvas.dart';
+import 'monitor_editor_screen.dart';
 
+/// Halaman Monitor Toko (Mode Pantau Spasial 2.5D Isometrik & Alert Stok).
 class MonitorScreen extends StatefulWidget {
   const MonitorScreen({this.viewModel, super.key});
   final MonitorViewModel? viewModel;
+
   @override
   State<MonitorScreen> createState() => _MonitorScreenState();
 }
 
 class _MonitorScreenState extends State<MonitorScreen> {
   MonitorViewModel? _model;
-  bool _allowPop = false;
   int? _dataRevision;
   MonitorLayoutRepository? _repository;
   bool _leavingRole = false;
   bool _checkingCloud = false;
+
   bool get _owner =>
       mounted && AppSessionScope.of(context).role.canManageProducts;
 
@@ -82,7 +84,6 @@ class _MonitorScreenState extends State<MonitorScreen> {
         }
         final route = ModalRoute.of(context);
         final navigator = Navigator.of(context);
-        // Tutup juga dialog/sheet di atas Monitor, bukan hanya route paling atas.
         navigator.popUntil(
           (candidate) => candidate == route || candidate.isFirst,
         );
@@ -99,131 +100,20 @@ class _MonitorScreenState extends State<MonitorScreen> {
     super.dispose();
   }
 
-  Future<void> _leave() async {
+  Future<void> _openEditor() async {
     final model = _model;
-    if (model?.saving ?? false) return;
-    if (model?.dirty ?? false) {
-      final choice = await showDialog<String>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Simpan perubahan?'),
-          content: const Text('Perubahan tata letak belum disimpan.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, 'stay'),
-              child: const Text('Tetap edit'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, 'discard'),
-              child: const Text('Buang perubahan'),
-            ),
-            FilledButton(
-              onPressed: model!.conflict
-                  ? null
-                  : () => Navigator.pop(context, 'save'),
-              child: const Text('Simpan'),
-            ),
-          ],
-        ),
-      );
-      if (!mounted || choice == null || choice == 'stay') return;
-      if (choice == 'save' && !await model!.save()) return;
-    }
-    if (!mounted) return;
-    setState(() => _allowPop = true);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) Navigator.of(context).pop();
-    });
-  }
-
-  Future<void> _cancel() async {
-    final model = _model!;
-    if (model.dirty) {
-      final discard = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Buang perubahan tata letak?'),
-          content: const Text(
-            'Tata letak yang sudah tersimpan tetap dipertahankan.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Tetap edit'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Buang perubahan'),
-            ),
-          ],
-        ),
-      );
-      if (discard != true || !mounted) return;
-    }
-    final hadConflict = model.conflict;
-    model.cancel();
-    if (hadConflict) await model.load();
-  }
-
-  Future<void> _rename() async {
-    final model = _model!;
-    final fixture = model.selected;
-    if (fixture == null) return;
-    var name = fixture.name;
-    final value = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Nama objek'),
-        content: TextFormField(
-          initialValue: name,
-          onChanged: (value) => name = value,
-          maxLength: 80,
-          decoration: const InputDecoration(labelText: 'Nama rak atau objek'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, name.trim()),
-            child: const Text('Terapkan'),
-          ),
-        ],
-      ),
+    if (model == null || !_owner) return;
+    model.edit();
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(builder: (_) => MonitorEditorScreen(viewModel: model)),
     );
-
-    if (mounted && _owner && value != null) model.change(name: value);
-  }
-
-  Future<void> _delete() async {
-    final model = _model!;
-    final selected = model.selected;
-    if (selected == null) return;
-    final yes = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Hapus ${selected.name}?'),
-        content: const Text(
-          'Produk tidak dihapus. Penempatannya dilepas saat Simpan; stok tidak berubah.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Hapus objek'),
-          ),
-        ],
-      ),
-    );
-    if (mounted && _owner && yes == true) model.remove();
+    if (mounted) {
+      await model.load();
+    }
   }
 
   Future<void> _checkCloud() async {
-    if (!_owner || _checkingCloud || _model!.editing || _model!.saving) return;
+    if (_checkingCloud || _model == null) return;
     _checkingCloud = true;
     final repo = _repository!;
     await repo.refresh();
@@ -235,7 +125,7 @@ class _MonitorScreenState extends State<MonitorScreen> {
     final answer = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Status layout cloud'),
+        title: const Text('Status Layout Cloud'),
         content: Text(
           error != null
               ? 'Cloud belum tersedia. Layout lokal tetap aman. Periksa jaringan dan izin toko.'
@@ -250,9 +140,7 @@ class _MonitorScreenState extends State<MonitorScreen> {
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Tutup'),
           ),
-          if (pending.isNotEmpty &&
-              repo.fetchRemote != null &&
-              !_model!.editing)
+          if (pending.isNotEmpty && repo.fetchRemote != null)
             TextButton(
               onPressed: () => Navigator.pop(context, true),
               child: const Text('Buang lokal, muat cloud'),
@@ -262,126 +150,7 @@ class _MonitorScreenState extends State<MonitorScreen> {
     );
     if (!mounted) return;
     if (answer == true && _owner) await repo.refresh(discardPending: true);
-    if (mounted && _owner && !_model!.editing) await _model!.load();
-  }
-
-  Future<void> _assignProducts() async {
-    final model = _model!;
-    final fixture = model.selected;
-    if (!_owner || fixture == null || !model.editing) return;
-    await model.refreshProducts();
-    if (!mounted || !_owner || model.productsError != null) return;
-    final chosen = model.productsAt(fixture.id).map((p) => p.id).toSet();
-    var query = '';
-    String? category;
-    final confirmed = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setSheet) => SafeArea(
-          child: Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.viewInsetsOf(context).bottom,
-            ),
-            child: SizedBox(
-              height:
-                  (MediaQuery.sizeOf(context).height -
-                      MediaQuery.viewInsetsOf(context).bottom) *
-                  .85,
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.screen),
-                child: Column(
-                  children: [
-                    Text(
-                      'Produk di ${fixture.name}',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const Text(
-                      'Produk dari rak lain dipindahkan setelah konfirmasi dan Simpan.',
-                    ),
-                    TextField(
-                      decoration: const InputDecoration(
-                        labelText: 'Cari produk',
-                      ),
-                      onChanged: (v) => setSheet(() => query = v.toLowerCase()),
-                    ),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          ChoiceChip(
-                            label: const Text('Semua'),
-                            selected: category == null,
-                            onSelected: (_) => setSheet(() => category = null),
-                          ),
-                          for (final c
-                              in model.products.map((p) => p.category).toSet())
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                left: AppSpacing.xs,
-                              ),
-                              child: ChoiceChip(
-                                label: Text(c),
-                                selected: category == c,
-                                onSelected: (_) => setSheet(() => category = c),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: ListView(
-                        children: [
-                          for (final p in model.products.where(
-                            (p) =>
-                                p.name.toLowerCase().contains(query) &&
-                                (category == null || p.category == category),
-                          ))
-                            CheckboxListTile(
-                              title: Text(p.name),
-                              subtitle: Text(
-                                '${p.stock} ${p.unit} · ${p.locationLabel}',
-                              ),
-                              value: chosen.contains(p.id),
-                              onChanged: (value) => setSheet(() {
-                                if (value == true) {
-                                  chosen.add(p.id);
-                                } else {
-                                  chosen.remove(p.id);
-                                }
-                              }),
-                            ),
-                        ],
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Batal'),
-                        ),
-                        Expanded(
-                          child: FilledButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            child: Text('Terapkan ${chosen.length} produk'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-    if (!mounted || !_owner || confirmed != true) return;
-    model.assign({
-      for (final e in model.layout!.assignments.entries)
-        if (e.value != fixture.id && !chosen.contains(e.key)) e.key: e.value,
-      for (final id in chosen) id: fixture.id,
-    });
+    if (mounted && _owner) await _model!.load();
   }
 
   Future<void> _productDetails(
@@ -390,15 +159,17 @@ class _MonitorScreenState extends State<MonitorScreen> {
   }) async {
     if (!_owner) return;
     final model = _model!;
-    source() =>
+    List<dynamic> source() =>
         (fixtureId == null && alertsOnly
                 ? model.products
                 : model.productsAt(fixtureId))
             .where((p) => !alertsOnly || p.stock <= p.lowStockThreshold)
             .toList();
-    final fixture = model.layout!.fixtures
+
+    final fixture = model.layout?.fixtures
         .where((f) => f.id == fixtureId)
         .firstOrNull;
+
     Widget content(BuildContext context) => ListenableBuilder(
       listenable: model,
       builder: (context, _) {
@@ -409,52 +180,118 @@ class _MonitorScreenState extends State<MonitorScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  alertsOnly
-                      ? 'Stok perlu perhatian'
-                      : fixture?.name ?? 'Belum ditempatkan',
-                  style: Theme.of(context).textTheme.titleLarge,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        alertsOnly
+                            ? 'Stok Perlu Perhatian'
+                            : fixture?.name ?? 'Belum Ditempatkan',
+                        style: Theme.of(context).textTheme.titleLarge
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Tutup',
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 2),
                 const Text(
-                  'Stok total tercatat produk, bukan hitungan fisik per rak.',
+                  'Stok total produk tercatat di sistem, bukan sensor fisik rak.',
+                  style: TextStyle(color: AppColors.muted, fontSize: 12),
                 ),
-                if (model.productsError != null) Text(model.productsError!),
+                if (model.productsError != null) ...[
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    model.productsError!,
+                    style: const TextStyle(
+                      color: AppColors.error,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.sm),
                 Expanded(
                   child: items.isEmpty
                       ? const Center(
-                          child: Text('Belum ada produk pada daftar ini.'),
+                          child: Text(
+                            'Belum ada produk pada daftar ini.',
+                            style: TextStyle(color: AppColors.muted),
+                          ),
                         )
-                      : ListView(
-                          children: [
-                            for (final p in items)
-                              ListTile(
-                                leading: Icon(
-                                  p.stock == 0
-                                      ? Icons.error_outline
-                                      : p.stock <= p.lowStockThreshold
-                                      ? Icons.warning_amber_outlined
+                      : ListView.separated(
+                          itemCount: items.length,
+                          separatorBuilder: (context, index) =>
+                              const Divider(height: 1),
+                          itemBuilder: (context, idx) {
+                            final p = items[idx];
+                            final isOut = p.stock == 0;
+                            final isLow =
+                                p.stock > 0 && p.stock <= p.lowStockThreshold;
+
+                            return ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: isOut
+                                      ? AppColors.error.withValues(alpha: 0.12)
+                                      : isLow
+                                      ? AppColors.warning.withValues(
+                                          alpha: 0.12,
+                                        )
+                                      : AppColors.primarySubtle,
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.squircle,
+                                  ),
+                                ),
+                                child: Icon(
+                                  isOut
+                                      ? Icons.remove_shopping_cart_outlined
+                                      : isLow
+                                      ? Icons.warning_amber_rounded
                                       : Icons.inventory_2_outlined,
+                                  color: isOut
+                                      ? AppColors.error
+                                      : isLow
+                                      ? AppColors.warning
+                                      : AppColors.primary,
+                                  size: 20,
                                 ),
-                                title: Text(p.name),
-                                subtitle: Text(
-                                  '${p.stock} ${p.unit} · ${p.stock == 0
-                                      ? 'Habis'
-                                      : p.stock <= p.lowStockThreshold
-                                      ? 'Menipis'
-                                      : 'Tersedia'}',
-                                ),
-                                onTap: () {
-                                  final id = model.layout!.assignments[p.id];
-                                  if (id != null) model.select(id);
-                                  Navigator.pop(context);
-                                },
                               ),
-                          ],
+                              title: Text(
+                                p.name,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              subtitle: Text(
+                                '${p.category} · ${p.locationLabel}',
+                              ),
+                              trailing: Text(
+                                '${p.stock} ${p.unit}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: isOut
+                                      ? AppColors.error
+                                      : isLow
+                                      ? AppColors.warning
+                                      : AppColors.ink,
+                                ),
+                              ),
+                              onTap: () {
+                                final id = model.layout?.assignments[p.id];
+                                if (id != null) model.select(id);
+                                Navigator.pop(context);
+                              },
+                            );
+                          },
                         ),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Tutup'),
                 ),
               ],
             ),
@@ -462,6 +299,7 @@ class _MonitorScreenState extends State<MonitorScreen> {
         );
       },
     );
+
     if (MediaQuery.sizeOf(context).width >= AppSpacing.minTouchTarget * 16) {
       await showDialog<void>(
         context: context,
@@ -486,390 +324,339 @@ class _MonitorScreenState extends State<MonitorScreen> {
     }
   }
 
-  Widget _button(String label, IconData icon, VoidCallback? action) =>
-      OutlinedButton.icon(
-        style: OutlinedButton.styleFrom(
-          minimumSize: const Size(
-            AppSpacing.minTouchTarget,
-            AppSpacing.minTouchTarget,
-          ),
-        ),
-        onPressed: action,
-        icon: Icon(icon),
-        label: Text(label),
-      );
+  IconData _fixtureIcon(MonitorFixtureType type) => switch (type) {
+    MonitorFixtureType.fridge => Icons.kitchen_outlined,
+    MonitorFixtureType.showcase => Icons.storefront_outlined,
+    MonitorFixtureType.cashCounter => Icons.point_of_sale_outlined,
+    MonitorFixtureType.shelf => Icons.shelves,
+  };
 
   @override
   Widget build(BuildContext context) {
     final model = _model;
-    return PopScope(
-      canPop:
-          !_owner ||
-          _allowPop ||
-          (!(_model?.dirty ?? false) && !(_model?.saving ?? false)),
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _leave();
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Monitor'),
-          leading: IconButton(
-            tooltip: 'Kembali',
-            onPressed: _leave,
-            icon: const Icon(Icons.arrow_back),
+
+    if (!_owner) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Monitor Toko')),
+        body: const Center(child: Text('Monitor hanya untuk pemilik.')),
+      );
+    }
+    if (model == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Monitor Toko')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.screen),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.phone_android_outlined,
+                  size: 36,
+                  color: AppColors.muted,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                const Text(
+                  'Penyimpanan denah lokal tersedia pada aplikasi Android.',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Kembali'),
+                ),
+              ],
+            ),
           ),
         ),
-        body: !_owner
-            ? const Center(child: Text('Monitor hanya untuk pemilik.'))
-            : model == null
-            ? Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.screen),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.phone_android_outlined),
-                      const SizedBox(height: AppSpacing.sm),
-                      const Text(
-                        'Editor tata letak tersedia pada aplikasi Android dengan penyimpanan lokal.',
+      );
+    }
+
+    return ListenableBuilder(
+      listenable: model,
+      builder: (context, _) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Monitor Toko'),
+            actions: [
+              if (model.layout != null)
+                Padding(
+                  padding: const EdgeInsets.only(right: AppSpacing.sm),
+                  child: FilledButton.tonalIcon(
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(0, AppSpacing.minTouchTarget - 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
                       ),
-                      TextButton(
-                        onPressed: _leave,
-                        child: const Text('Kembali'),
+                    ),
+                    onPressed: _openEditor,
+                    icon: const Icon(Icons.edit_outlined, size: 16),
+                    label: const Text('Edit Tata Letak'),
+                  ),
+                ),
+            ],
+          ),
+          body: () {
+            if (model.loading) {
+              return const Center(
+                child: CircularProgressIndicator(
+                  semanticsLabel: 'Memuat tata letak toko',
+                ),
+              );
+            }
+
+            // 1. KASUS PERTAMA KALI (Belum ada layout tersimpan): Tampilkan Wizard Template
+            if (model.layout == null) {
+              return ListView(
+                padding: const EdgeInsets.all(AppSpacing.screen),
+                children: [
+                  Text(
+                    'Atur Tata Letak Toko',
+                    style: Theme.of(context).textTheme.headlineSmall
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  const Text(
+                    'Pilih salah satu susunan awal toko Anda. Anda bisa memindahkan, menambah rak, kulkas, dan etalase kapan saja.',
+                    style: TextStyle(color: AppColors.muted),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  for (final template in MonitorTemplate.values) ...[
+                    AppCard(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(AppRadius.card),
+                            child: AspectRatio(
+                              aspectRatio: 2,
+                              child: ColoredBox(
+                                color: AppColors.primarySubtle,
+                                child: CustomPaint(
+                                  painter: _LayoutPreview(template.create()),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          FilledButton.icon(
+                            style: FilledButton.styleFrom(
+                              minimumSize: const Size(
+                                0,
+                                AppSpacing.minTouchTarget,
+                              ),
+                            ),
+                            onPressed: () {
+                              model.chooseTemplate(template);
+                              _openEditor();
+                            },
+                            icon: const Icon(
+                              Icons.grid_view_outlined,
+                              size: 18,
+                            ),
+                            label: Text('Gunakan Template ${template.label}'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                ],
+              );
+            }
+
+            // 2. KASUS TATA LETAK SUDAH ADA: Tampilan Pantau Spasial 2.5D
+            final layout = model.layout!;
+            final counts = model.counts(null);
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Baris Alert Chips & Navigasi Pantau
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.screen,
+                    vertical: AppSpacing.xs,
+                  ),
+                  color: AppColors.surface,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        ActionChip(
+                          avatar: Icon(
+                            counts.out > 0
+                                ? Icons.error_outline
+                                : Icons.warning_amber_outlined,
+                            size: 16,
+                            color: counts.out > 0
+                                ? AppColors.error
+                                : AppColors.warning,
+                          ),
+                          label: Text(
+                            '${counts.out} habis · ${counts.low} menipis',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: counts.out > 0
+                                  ? AppColors.error
+                                  : AppColors.warning,
+                            ),
+                          ),
+                          backgroundColor:
+                              (counts.out > 0
+                                      ? AppColors.error
+                                      : AppColors.warning)
+                                  .withValues(alpha: 0.12),
+                          side: BorderSide.none,
+                          onPressed: () =>
+                              _productDetails(null, alertsOnly: true),
+                        ),
+                        const SizedBox(width: AppSpacing.xs),
+                        ActionChip(
+                          avatar: const Icon(
+                            Icons.inventory_2_outlined,
+                            size: 16,
+                          ),
+                          label: Text(
+                            '${model.productsAt(null).length} belum ditempatkan',
+                          ),
+                          backgroundColor: AppColors.primarySubtle,
+                          side: BorderSide.none,
+                          onPressed: () => _productDetails(null),
+                        ),
+                        if (_repository != null) ...[
+                          const SizedBox(width: AppSpacing.xs),
+                          ActionChip(
+                            avatar: const Icon(
+                              Icons.cloud_sync_outlined,
+                              size: 16,
+                            ),
+                            label: const Text('Status Cloud'),
+                            backgroundColor: AppColors.canvas,
+                            side: const BorderSide(
+                              color: AppColors.borderSubtle,
+                            ),
+                            onPressed: _checkCloud,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                const Divider(height: 1),
+
+                // Kanvas Isometrik Utama
+                Expanded(
+                  child: MonitorCanvas(
+                    layout: layout,
+                    selectedId: model.selectedId,
+                    editing: false,
+                    counts: model.counts,
+                    onSelect: (id) {
+                      model.select(id);
+                      _productDetails(id);
+                    },
+                    onMove: (id, x, y) {},
+                  ),
+                ),
+
+                // Daftar Aksesibel Cepat di Bawah (Dapat Digulir Horizontal)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.screen,
+                    vertical: AppSpacing.xs,
+                  ),
+                  decoration: const BoxDecoration(
+                    color: AppColors.surface,
+                    border: Border(
+                      top: BorderSide(color: AppColors.borderSubtle),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Daftar Objek (${layout.fixtures.length})',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.xs),
+                          Text(
+                            'Detail stok',
+                            style: TextStyle(
+                              color: AppColors.muted,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      SizedBox(
+                        height: 48,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: layout.fixtures.length,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(width: AppSpacing.xs),
+                          itemBuilder: (context, idx) {
+                            final f = layout.fixtures[idx];
+                            final n = model.counts(f.id);
+                            final isSelected = f.id == model.selectedId;
+
+                            return ActionChip(
+                              avatar: Icon(
+                                _fixtureIcon(f.type),
+                                size: 16,
+                                color: isSelected
+                                    ? AppColors.surface
+                                    : AppColors.primary,
+                              ),
+                              label: Text(
+                                '${idx + 1}. ${f.name}${n.out + n.low > 0 ? " (!)" : ""}',
+                                style: TextStyle(
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.w600,
+                                  color: isSelected
+                                      ? AppColors.surface
+                                      : AppColors.ink,
+                                ),
+                              ),
+                              backgroundColor: isSelected
+                                  ? AppColors.primary
+                                  : AppColors.primarySubtle,
+                              side: BorderSide.none,
+                              onPressed: () {
+                                model.select(f.id);
+                                _productDetails(f.id);
+                              },
+                            );
+                          },
+                        ),
                       ),
                     ],
                   ),
                 ),
-              )
-            : ListenableBuilder(
-                listenable: model,
-                builder: (context, _) {
-                  if (model.loading) {
-                    return const Center(
-                      child: CircularProgressIndicator(
-                        semanticsLabel: 'Memuat tata letak',
-                      ),
-                    );
-                  }
-                  return Align(
-                    alignment: Alignment.topCenter,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        maxWidth: AppSpacing.minTouchTarget * 22,
-                      ),
-                      child: ListView(
-                        padding: const EdgeInsets.all(AppSpacing.screen),
-                        children: [
-                          if (model.error != null) ...[
-                            AppCard(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  const Icon(
-                                    Icons.error_outline,
-                                    color: AppColors.error,
-                                  ),
-                                  Text(model.error!),
-                                  if (!model.editing)
-                                    TextButton(
-                                      onPressed: model.load,
-                                      child: const Text('Coba lagi'),
-                                    ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.md),
-                          ],
-                          if (model.layout == null && model.error == null) ...[
-                            Text(
-                              'Atur tata letak toko',
-                              style: Theme.of(context).textTheme.headlineSmall,
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
-                            const Text(
-                              'Pilih susunan awal, lalu sesuaikan rak dan objek. Produk serta stok tidak berubah.',
-                            ),
-                            const SizedBox(height: AppSpacing.lg),
-                            for (final template in MonitorTemplate.values) ...[
-                              AppCard(
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    AspectRatio(
-                                      aspectRatio: 2,
-                                      child: CustomPaint(
-                                        painter: _LayoutPreview(
-                                          template.create(),
-                                        ),
-                                      ),
-                                    ),
-                                    _button(
-                                      template.label,
-                                      Icons.grid_view_outlined,
-                                      () => model.chooseTemplate(template),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: AppSpacing.md),
-                            ],
-                          ],
-                          if (model.layout != null) ...[
-                            Wrap(
-                              spacing: AppSpacing.xs,
-                              runSpacing: AppSpacing.xs,
-                              children: [
-                                if (!model.editing)
-                                  _button(
-                                    'Edit tata letak',
-                                    Icons.edit_outlined,
-                                    model.edit,
-                                  ),
-                                if (!model.editing)
-                                  _button(
-                                    'Muat ulang',
-                                    Icons.refresh,
-                                    model.load,
-                                  ),
-                                if (model.editing)
-                                  FilledButton.icon(
-                                    style: FilledButton.styleFrom(
-                                      minimumSize: const Size(
-                                        AppSpacing.minTouchTarget,
-                                        AppSpacing.minTouchTarget,
-                                      ),
-                                    ),
-                                    onPressed: model.saving || model.conflict
-                                        ? null
-                                        : model.save,
-                                    icon: Icon(
-                                      model.saving
-                                          ? Icons.hourglass_top
-                                          : Icons.check,
-                                    ),
-                                    label: Text(
-                                      model.saving ? 'Menyimpan…' : 'Simpan',
-                                    ),
-                                  ),
-                                if (model.editing)
-                                  _button(
-                                    'Batal',
-                                    Icons.close,
-                                    model.saving ? null : _cancel,
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: AppSpacing.md),
-                            Text(
-                              model.editing
-                                  ? 'Edit tata letak'
-                                  : 'Tata letak tersimpan',
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
-                            const Text(
-                              'Stok total produk menurut lokasi utama; bukan hitungan fisik per rak. Tersimpan lokal; status cloud diperiksa terpisah.',
-                            ),
-                            const SizedBox(height: AppSpacing.md),
-                            if (model.productsError != null)
-                              Text(model.productsError!),
-                            Wrap(
-                              spacing: AppSpacing.xs,
-                              children: [
-                                _button(
-                                  '${model.counts(null).out} habis · ${model.counts(null).low} menipis',
-                                  Icons.warning_amber_outlined,
-                                  () => _productDetails(null, alertsOnly: true),
-                                ),
-                                _button(
-                                  '${model.productsAt(null).length} belum ditempatkan',
-                                  Icons.inventory_2_outlined,
-                                  () => _productDetails(null),
-                                ),
-                                if (_repository != null)
-                                  _button(
-                                    'Periksa cloud',
-                                    Icons.cloud_sync_outlined,
-                                    model.editing || model.saving
-                                        ? null
-                                        : _checkCloud,
-                                  ),
-                              ],
-                            ),
-                            MonitorCanvas(
-                              layout: model.layout!,
-                              selectedId: model.selectedId,
-                              editing:
-                                  model.editing &&
-                                  !model.saving &&
-                                  !model.conflict,
-                              counts: model.counts,
-                              onSelect: (id) {
-                                model.select(id);
-                                if (!model.editing) _productDetails(id);
-                              },
-                              onMove: (id, x, y) {
-                                model.select(id);
-                                final f = model.selected!;
-                                model.change(dx: x - f.x, dy: y - f.y);
-                              },
-                            ),
-                            const SizedBox(height: AppSpacing.md),
-                            Text(
-                              'Objek toko',
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                            if (model.editing)
-                              Wrap(
-                                spacing: AppSpacing.xs,
-                                children: [
-                                  for (final type in MonitorFixtureType.values)
-                                    _button(
-                                      'Tambah ${type.label.toLowerCase()}',
-                                      Icons.add,
-                                      model.saving || model.conflict
-                                          ? null
-                                          : () => model.add(type),
-                                    ),
-                                ],
-                              ),
-                            if (model.layout!.fixtures.isEmpty)
-                              const Text(
-                                'Belum ada objek. Tambahkan rak, kulkas, atau meja kasir.',
-                              ),
-                            for (final fixture in model.layout!.fixtures)
-                              Semantics(
-                                label:
-                                    '${fixture.type.label}, ${fixture.name}, ${model.productsAt(fixture.id).length} jenis produk, ${model.counts(fixture.id).out} habis, ${model.counts(fixture.id).low} menipis',
-                                selected: fixture.id == model.selectedId,
-                                child: ListTile(
-                                  selected: fixture.id == model.selectedId,
-                                  leading: Icon(
-                                    fixture.type == MonitorFixtureType.fridge
-                                        ? Icons.kitchen_outlined
-                                        : fixture.type ==
-                                              MonitorFixtureType.cashCounter
-                                        ? Icons.point_of_sale
-                                        : Icons.shelves,
-                                  ),
-                                  title: Text(
-                                    '${model.layout!.fixtures.indexOf(fixture) + 1}. ${fixture.name}',
-                                  ),
-                                  subtitle: Text(
-                                    '${fixture.type.label} · ${model.productsAt(fixture.id).length} jenis produk · ${model.counts(fixture.id).out} habis · ${model.counts(fixture.id).low} menipis',
-                                  ),
-                                  trailing: model.editing
-                                      ? const Icon(Icons.edit_outlined)
-                                      : null,
-                                  onTap: model.saving
-                                      ? null
-                                      : () {
-                                          model.select(fixture.id);
-                                          if (!model.editing) {
-                                            _productDetails(fixture.id);
-                                          }
-                                        },
-                                ),
-                              ),
-                            if (model.selected != null && model.editing) ...[
-                              const SizedBox(height: AppSpacing.md),
-                              AppCard(
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    Text(
-                                      'Atur ${model.selected!.name}',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium,
-                                    ),
-                                    const Text(
-                                      'Pindahkan satu petak. Posisi bertumpuk atau di luar area ditolak.',
-                                    ),
-                                    if (model.selected!.type !=
-                                        MonitorFixtureType.cashCounter)
-                                      _button(
-                                        'Tempatkan produk',
-                                        Icons.inventory_2_outlined,
-                                        model.saving || model.conflict
-                                            ? null
-                                            : _assignProducts,
-                                      ),
-                                    Wrap(
-                                      spacing: AppSpacing.xs,
-                                      runSpacing: AppSpacing.xs,
-                                      children: [
-                                        _button(
-                                          'Kiri',
-                                          Icons.arrow_back,
-                                          model.saving || model.conflict
-                                              ? null
-                                              : () => model.change(dx: -1),
-                                        ),
-                                        _button(
-                                          'Kanan',
-                                          Icons.arrow_forward,
-                                          model.saving || model.conflict
-                                              ? null
-                                              : () => model.change(dx: 1),
-                                        ),
-                                        _button(
-                                          'Atas',
-                                          Icons.arrow_upward,
-                                          model.saving || model.conflict
-                                              ? null
-                                              : () => model.change(dy: -1),
-                                        ),
-                                        _button(
-                                          'Bawah',
-                                          Icons.arrow_downward,
-                                          model.saving || model.conflict
-                                              ? null
-                                              : () => model.change(dy: 1),
-                                        ),
-                                        _button(
-                                          'Putar 90°',
-                                          Icons.rotate_right,
-                                          model.saving || model.conflict
-                                              ? null
-                                              : () =>
-                                                    model.change(rotate: true),
-                                        ),
-                                        _button(
-                                          'Ubah nama',
-                                          Icons.drive_file_rename_outline,
-                                          model.saving || model.conflict
-                                              ? null
-                                              : _rename,
-                                        ),
-                                        _button(
-                                          'Hapus objek',
-                                          Icons.delete_outline,
-                                          model.saving || model.conflict
-                                              ? null
-                                              : _delete,
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ],
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-      ),
+              ],
+            );
+          }(),
+        );
+      },
     );
   }
 }
 
-/// Preview ortografik editor; painter isometrik dan hit-test masuk tahap Pantau.
+/// Preview ortografik editor sederhana untuk wizard pemilihan template awal
 class _LayoutPreview extends CustomPainter {
   _LayoutPreview(this.layout);
   final MonitorLayout layout;
@@ -942,5 +729,5 @@ class _LayoutPreview extends CustomPainter {
 
   @override
   bool shouldRepaint(_LayoutPreview oldDelegate) =>
-      oldDelegate.layout != layout || oldDelegate.selectedId != selectedId;
+      oldDelegate.layout != layout;
 }

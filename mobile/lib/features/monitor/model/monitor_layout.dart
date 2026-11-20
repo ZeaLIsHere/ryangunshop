@@ -2,6 +2,7 @@
 enum MonitorFixtureType {
   shelf('Rak', 3, 1),
   fridge('Kulkas', 2, 2),
+  showcase('Etalase', 2, 1),
   cashCounter('Meja kasir', 3, 2);
 
   const MonitorFixtureType(this.label, this.width, this.height);
@@ -150,11 +151,13 @@ final class MonitorLayout {
   final Map<String, String> assignments;
 
   MonitorLayout copyWith({
+    int? gridWidth,
+    int? gridHeight,
     Iterable<MonitorFixture>? fixtures,
     Map<String, String>? assignments,
   }) => MonitorLayout(
-    gridWidth: gridWidth,
-    gridHeight: gridHeight,
+    gridWidth: gridWidth ?? this.gridWidth,
+    gridHeight: gridHeight ?? this.gridHeight,
     fixtures: fixtures ?? this.fixtures,
     assignments: assignments ?? this.assignments,
   );
@@ -242,6 +245,7 @@ enum MonitorTemplate {
             shelves[i].$3,
           ),
         fixture('fridge', MonitorFixtureType.fridge, 'Kulkas', 12, 1),
+        fixture('showcase', MonitorFixtureType.showcase, 'Etalase', 7, 12),
         fixture(
           'counter',
           MonitorFixtureType.cashCounter,
