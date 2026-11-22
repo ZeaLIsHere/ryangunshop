@@ -209,7 +209,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             const SizedBox(height: AppSpacing.sm),
                             AppTextField(
                               label: 'Nama Lengkap',
-                              hint: 'Nama Anda',
+                              hintText: 'Nama Anda',
                               controller: _nameController,
                               textInputAction: TextInputAction.next,
                               onChanged: (_) => vm?.clearError(),
@@ -217,7 +217,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             const SizedBox(height: AppSpacing.md),
                             AppTextField(
                               label: 'Email',
-                              hint: 'alamat@email.com',
+                              hintText: 'alamat@email.com',
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
                               textInputAction: TextInputAction.next,
@@ -253,7 +253,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               const SizedBox(height: AppSpacing.sm),
                               AppTextField(
                                 label: 'Nama Toko',
-                                hint: 'Contoh: Warung Berkah Ryan',
+                                hintText: 'Contoh: Warung Berkah Ryan',
                                 controller: _storeNameController,
                                 textInputAction: TextInputAction.next,
                                 onChanged: (_) => vm?.clearError(),
@@ -261,7 +261,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               const SizedBox(height: AppSpacing.md),
                               AppTextField(
                                 label: 'Alamat Toko (Opsional)',
-                                hint: 'Jl. Contoh No. 123',
+                                hintText: 'Jl. Contoh No. 123',
                                 controller: _storeAddressController,
                                 textInputAction: TextInputAction.done,
                               ),
@@ -313,8 +313,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const SizedBox(height: AppSpacing.md),
 
                       // Link ke Login
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(
                             'Sudah memiliki akun? ',

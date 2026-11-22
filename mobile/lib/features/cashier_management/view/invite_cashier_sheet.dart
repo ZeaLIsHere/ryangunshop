@@ -114,7 +114,7 @@ class _InviteCashierSheetState extends State<InviteCashierSheet> {
           ],
           AppTextField(
             label: 'Email Kasir',
-            hint: 'kasir@email.com',
+            hintText: 'kasir@email.com',
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.done,

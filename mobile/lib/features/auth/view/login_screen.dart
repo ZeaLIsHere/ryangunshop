@@ -155,7 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           children: [
                             AppTextField(
                               label: 'Email Pengguna',
-                              hint: 'contoh@warung.com',
+                              hintText: 'contoh@warung.com',
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
                               textInputAction: TextInputAction.next,
@@ -235,8 +235,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: AppSpacing.lg),
 
                       // Link ke Registrasi
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(
                             'Belum memiliki akun? ',
