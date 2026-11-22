@@ -28,11 +28,9 @@ class _CashierManagementScreenState extends State<CashierManagementScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_viewModel == null) {
-      _viewModel = CashierManagementViewModel(
-        session: AppSessionScope.of(context),
-      )..load();
-    }
+    _viewModel ??= CashierManagementViewModel(
+      session: AppSessionScope.of(context),
+    )..load();
   }
 
   @override

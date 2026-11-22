@@ -368,7 +368,9 @@ class AppSession extends ChangeNotifier {
       _currentStore = null;
     } finally {
       _authReady = true;
-      notifyListeners();
+      if (!_disposed) {
+        notifyListeners();
+      }
     }
   }
 
@@ -381,7 +383,9 @@ class AppSession extends ChangeNotifier {
     } else {
       _currentStore = null;
     }
-    notifyListeners();
+    if (!_disposed) {
+      notifyListeners();
+    }
     return user;
   }
 
@@ -404,7 +408,9 @@ class AppSession extends ChangeNotifier {
     if (user.activeStoreId != null) {
       _currentStore = await _authRepository.getStore(user.activeStoreId!);
     }
-    notifyListeners();
+    if (!_disposed) {
+      notifyListeners();
+    }
     return user;
   }
 
@@ -421,7 +427,9 @@ class AppSession extends ChangeNotifier {
     _currentUser = user;
     _role = user.role;
     _currentStore = null;
-    notifyListeners();
+    if (!_disposed) {
+      notifyListeners();
+    }
     return user;
   }
 
@@ -429,7 +437,9 @@ class AppSession extends ChangeNotifier {
     await _authRepository.logout();
     _currentUser = null;
     _currentStore = null;
-    notifyListeners();
+    if (!_disposed) {
+      notifyListeners();
+    }
   }
 
   Future<void> refreshCurrentUser() async {
@@ -443,7 +453,9 @@ class AppSession extends ChangeNotifier {
       } else {
         _currentStore = null;
       }
-      notifyListeners();
+      if (!_disposed) {
+        notifyListeners();
+      }
     }
   }
 
