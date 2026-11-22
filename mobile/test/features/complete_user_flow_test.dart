@@ -24,6 +24,12 @@ void main() {
 
       final session = AppSession();
       addTearDown(session.dispose);
+      await session.registerOwner(
+        name: 'Pemilik Toko',
+        email: 'pemilik@toko.com',
+        password: 'password123',
+        storeName: 'Toko Ryan',
+      );
       await tester.pumpWidget(RyanGunshopApp(session: session));
       expect(find.text('RyanGunshop'), findsOneWidget);
 
@@ -148,6 +154,12 @@ void main() {
 
       final session = AppSession();
       addTearDown(session.dispose);
+      await session.registerOwner(
+        name: 'Pemilik Toko',
+        email: 'pemilik@toko.com',
+        password: 'password123',
+        storeName: 'Toko Ryan',
+      );
       await session.productRepository.save(
         const ProductRecord(
           id: 'contoh-produk-1',
@@ -201,6 +213,12 @@ void main() {
 
       final session = AppSession();
       addTearDown(session.dispose);
+      await session.registerOwner(
+        name: 'Pemilik Toko',
+        email: 'pemilik@toko.com',
+        password: 'password123',
+        storeName: 'Toko Ryan',
+      );
 
       await tester.pumpWidget(RyanGunshopApp(session: session));
       await tester.pumpAndSettle();
