@@ -14,6 +14,11 @@ import '../data/sync/cloud_read_through.dart';
 import '../data/transaction_repository.dart';
 import '../../features/checkout/model/cart_item.dart';
 import '../../features/checkout/view_model/cart_view_model.dart';
+import '../../features/auth/model/user_account.dart';
+import '../../features/auth/model/store_info.dart';
+import '../data/auth_repository.dart';
+import '../data/drift_auth_repository.dart';
+import '../data/in_memory_auth_repository.dart';
 import 'completed_transaction.dart';
 import 'user_role.dart';
 
@@ -22,16 +27,25 @@ import 'user_role.dart';
 /// Dipisahkan dari fitur agar denah, pengaturan, dan kasir membaca peran dari satu
 /// sumber yang sama.
 class AppSession extends ChangeNotifier {
-  AppSession({this.database, this.syncQueue, this.cloudReadThrough})
-    : _inMemoryProducts = InMemoryProductRepository([]),
-      cart = CartViewModel(withSampleItems: false),
-      _todayRevenue = 0,
-      _todayTransactionCount = 0,
-      _lowStockCount = 0,
-      _recentTransactions = [] {
+  AppSession({
+    this.database,
+    this.syncQueue,
+    this.cloudReadThrough,
+    AuthRepository? authRepository,
+  })  : _inMemoryProducts = InMemoryProductRepository([]),
+        cart = CartViewModel(withSampleItems: false),
+        _todayRevenue = 0,
+        _todayTransactionCount = 0,
+        _lowStockCount = 0,
+        _recentTransactions = [] {
+    _authRepository = authRepository ??
+        (database != null
+            ? DriftAuthRepository(database!)
+            : InMemoryAuthRepository());
     _inMemoryTransactions = InMemoryTransactionRepository(
       productRepository: _inMemoryProducts,
     );
+    unawaited(restoreAuthSession());
     if (database != null) {
       cart.addListener(_onCartChanged);
       unawaited(loadLocalCart());
@@ -55,6 +69,22 @@ class AppSession extends ChangeNotifier {
   }
 
   final AppDatabase? database;
+  late final AuthRepository _authRepository;
+
+  AuthRepository get authRepository => _authRepository;
+
+  UserAccount? _currentUser;
+  StoreInfo? _currentStore;
+  bool _authReady = false;
+
+  UserAccount? get currentUser => _currentUser;
+  StoreInfo? get currentStore => _currentStore;
+  bool get isAuthenticated => _currentUser != null;
+  bool get isAuthReady => _authReady;
+  bool get isOwner => _currentUser?.isOwner ?? (_role == UserRole.owner);
+  bool get isCashier => _currentUser?.isCashier ?? (_role == UserRole.cashier);
+  bool get isCashierLinkedToStore =>
+      isCashier && (_currentUser?.hasActiveStore ?? false);
 
   /// Antrean Firestore. Kosong berarti aplikasi berjalan lokal saja.
   final SyncQueue? syncQueue;
@@ -317,6 +347,104 @@ class AppSession extends ChangeNotifier {
     }
     _role = role;
     notifyListeners();
+  }
+
+  Future<void> restoreAuthSession() async {
+    try {
+      final user = await _authRepository.getCurrentUser();
+      _currentUser = user;
+      if (user != null) {
+        _role = user.role;
+        if (user.activeStoreId != null) {
+          _currentStore = await _authRepository.getStore(user.activeStoreId!);
+        } else {
+          _currentStore = null;
+        }
+      } else {
+        _currentStore = null;
+      }
+    } catch (_) {
+      _currentUser = null;
+      _currentStore = null;
+    } finally {
+      _authReady = true;
+      notifyListeners();
+    }
+  }
+
+  Future<UserAccount> login(String email, String password) async {
+    final user = await _authRepository.login(email: email, password: password);
+    _currentUser = user;
+    _role = user.role;
+    if (user.activeStoreId != null) {
+      _currentStore = await _authRepository.getStore(user.activeStoreId!);
+    } else {
+      _currentStore = null;
+    }
+    notifyListeners();
+    return user;
+  }
+
+  Future<UserAccount> registerOwner({
+    required String name,
+    required String email,
+    required String password,
+    required String storeName,
+    String? storeAddress,
+  }) async {
+    final user = await _authRepository.registerOwner(
+      name: name,
+      email: email,
+      password: password,
+      storeName: storeName,
+      storeAddress: storeAddress,
+    );
+    _currentUser = user;
+    _role = user.role;
+    if (user.activeStoreId != null) {
+      _currentStore = await _authRepository.getStore(user.activeStoreId!);
+    }
+    notifyListeners();
+    return user;
+  }
+
+  Future<UserAccount> registerCashier({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    final user = await _authRepository.registerCashier(
+      name: name,
+      email: email,
+      password: password,
+    );
+    _currentUser = user;
+    _role = user.role;
+    _currentStore = null;
+    notifyListeners();
+    return user;
+  }
+
+  Future<void> logout() async {
+    await _authRepository.logout();
+    _currentUser = null;
+    _currentStore = null;
+    notifyListeners();
+  }
+
+  Future<void> refreshCurrentUser() async {
+    if (_currentUser == null) return;
+    final updated = await _authRepository.getCurrentUser();
+    if (updated != null) {
+      _currentUser = updated;
+      _role = updated.role;
+      if (updated.activeStoreId != null) {
+        _currentStore = await _authRepository.getStore(updated.activeStoreId!);
+      } else {
+        _currentStore = null;
+      }
+      notifyListeners();
+    }
   }
 
   @override
