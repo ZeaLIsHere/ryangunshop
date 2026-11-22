@@ -122,13 +122,70 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
+
+  Future<void> _createAuthTables() async {
+    await customStatement('''
+      CREATE TABLE IF NOT EXISTS app_users (
+        id TEXT PRIMARY KEY,
+        email TEXT NOT NULL UNIQUE,
+        name TEXT NOT NULL,
+        password_hash TEXT NOT NULL,
+        salt TEXT NOT NULL,
+        role TEXT NOT NULL,
+        active_store_id TEXT,
+        created_at TEXT NOT NULL
+      );
+    ''');
+    await customStatement('''
+      CREATE TABLE IF NOT EXISTS app_stores (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        owner_id TEXT NOT NULL,
+        address TEXT,
+        created_at TEXT NOT NULL
+      );
+    ''');
+    await customStatement('''
+      CREATE TABLE IF NOT EXISTS app_store_memberships (
+        id TEXT PRIMARY KEY,
+        store_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        role TEXT NOT NULL,
+        joined_at TEXT NOT NULL,
+        is_active INTEGER NOT NULL DEFAULT 1
+      );
+    ''');
+    await customStatement('''
+      CREATE TABLE IF NOT EXISTS app_cashier_invitations (
+        id TEXT PRIMARY KEY,
+        store_id TEXT NOT NULL,
+        store_name TEXT NOT NULL,
+        owner_id TEXT NOT NULL,
+        owner_email TEXT NOT NULL,
+        cashier_email TEXT NOT NULL,
+        status TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        responded_at TEXT
+      );
+    ''');
+    await customStatement('''
+      CREATE TABLE IF NOT EXISTS app_active_sessions (
+        id INTEGER PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        logged_in_at TEXT NOT NULL
+      );
+    ''');
+  }
 
   // Versi 1 di branch ini memiliki dua bentuk: hanya products, atau seluruh
   // tabel transaksi. Periksa tabel sebelum membuatnya agar kedua bentuk aman.
   @override
   MigrationStrategy get migration => MigrationStrategy(
-    onCreate: (m) => m.createAll(),
+    onCreate: (m) async {
+      await m.createAll();
+      await _createAuthTables();
+    },
     onUpgrade: (m, from, to) async {
       await transaction(() async {
         var createdTransactions = false;
@@ -172,6 +229,9 @@ class AppDatabase extends _$AppDatabase {
         }
         if (from < 7) {
           await m.createTable(monitorLayouts);
+        }
+        if (from < 8) {
+          await _createAuthTables();
         }
       });
     },
