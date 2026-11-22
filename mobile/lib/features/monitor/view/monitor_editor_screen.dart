@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -383,6 +384,37 @@ class _MonitorEditorScreenState extends State<MonitorEditorScreen> {
                         ],
                       ),
                     ),
+                    if (category != null) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            ActionChip(
+                              avatar: const Icon(Icons.playlist_add_check, size: 16),
+                              label: Text('Pilih Semua $category'),
+                              onPressed: () => setSheet(() {
+                                final matching = _model.products.where((p) => p.category == category);
+                                for (final p in matching) {
+                                  chosen.add(p.id);
+                                }
+                              }),
+                            ),
+                            const SizedBox(width: AppSpacing.xs),
+                            ActionChip(
+                              avatar: const Icon(Icons.remove_circle_outline, size: 16),
+                              label: Text('Lepas Semua $category'),
+                              onPressed: () => setSheet(() {
+                                final matching = _model.products.where((p) => p.category == category);
+                                for (final p in matching) {
+                                  chosen.remove(p.id);
+                                }
+                              }),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: AppSpacing.xs),
                     Expanded(
                       child: ListView(
@@ -687,7 +719,10 @@ class _MonitorEditorScreenState extends State<MonitorEditorScreen> {
                     ),
                     onPressed: _model.saving || _model.conflict
                         ? null
-                        : () => _model.add(type),
+                        : () {
+                            HapticFeedback.mediumImpact();
+                            _model.add(type);
+                          },
                   ),
                 ),
             ],
@@ -784,7 +819,10 @@ class _MonitorEditorScreenState extends State<MonitorEditorScreen> {
               ),
               onPressed: _model.saving || _model.conflict
                   ? null
-                  : () => _model.change(rotate: true),
+                  : () {
+                      HapticFeedback.selectionClick();
+                      _model.change(rotate: true);
+                    },
               icon: const Icon(Icons.rotate_right, size: 16),
               label: const Text('Putar 90°'),
             ),
@@ -836,7 +874,10 @@ class _MonitorEditorScreenState extends State<MonitorEditorScreen> {
                 visualDensity: VisualDensity.compact,
                 onPressed: _model.saving || _model.conflict
                     ? null
-                    : () => _model.change(dx: -1),
+                    : () {
+                        HapticFeedback.selectionClick();
+                        _model.change(dx: -1);
+                      },
                 icon: const Icon(Icons.arrow_back, size: 18),
               ),
               IconButton(
@@ -844,7 +885,10 @@ class _MonitorEditorScreenState extends State<MonitorEditorScreen> {
                 visualDensity: VisualDensity.compact,
                 onPressed: _model.saving || _model.conflict
                     ? null
-                    : () => _model.change(dy: -1),
+                    : () {
+                        HapticFeedback.selectionClick();
+                        _model.change(dy: -1);
+                      },
                 icon: const Icon(Icons.arrow_upward, size: 18),
               ),
               IconButton(
@@ -852,7 +896,10 @@ class _MonitorEditorScreenState extends State<MonitorEditorScreen> {
                 visualDensity: VisualDensity.compact,
                 onPressed: _model.saving || _model.conflict
                     ? null
-                    : () => _model.change(dy: 1),
+                    : () {
+                        HapticFeedback.selectionClick();
+                        _model.change(dy: 1);
+                      },
                 icon: const Icon(Icons.arrow_downward, size: 18),
               ),
               IconButton(
@@ -860,7 +907,10 @@ class _MonitorEditorScreenState extends State<MonitorEditorScreen> {
                 visualDensity: VisualDensity.compact,
                 onPressed: _model.saving || _model.conflict
                     ? null
-                    : () => _model.change(dx: 1),
+                    : () {
+                        HapticFeedback.selectionClick();
+                        _model.change(dx: 1);
+                      },
                 icon: const Icon(Icons.arrow_forward, size: 18),
               ),
             ],

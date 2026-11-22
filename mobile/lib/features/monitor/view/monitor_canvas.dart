@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../model/monitor_layout.dart';
 
@@ -99,6 +100,8 @@ class MonitorCanvas extends StatefulWidget {
     required this.editing,
     required this.counts,
     this.selectedId,
+    this.filterAlertsOnly = false,
+    this.highlightedId,
     super.key,
   });
   final MonitorLayout layout;
@@ -106,6 +109,8 @@ class MonitorCanvas extends StatefulWidget {
   final void Function(String, int, int) onMove;
   final bool editing;
   final String? selectedId;
+  final bool filterAlertsOnly;
+  final String? highlightedId;
   final ({int low, int out}) Function(String) counts;
   @override
   State<MonitorCanvas> createState() => _MonitorCanvasState();
@@ -275,6 +280,8 @@ class _MonitorCanvasState extends State<MonitorCanvas> {
                       widget.counts,
                       Theme.of(context).textTheme.bodySmall!,
                       MediaQuery.textScalerOf(context),
+                      filterAlertsOnly: widget.filterAlertsOnly,
+                      highlightedId: widget.highlightedId,
                     ),
                   ),
                 ),
@@ -293,13 +300,18 @@ class _MonitorPainter extends CustomPainter {
     this.selected,
     this.counts,
     this.style,
-    this.scaler,
-  );
+    this.scaler, {
+    this.filterAlertsOnly = false,
+    this.highlightedId,
+  });
   final MonitorProjection projection;
   final String? selected;
   final ({int low, int out}) Function(String) counts;
   final TextStyle style;
   final TextScaler scaler;
+  final bool filterAlertsOnly;
+  final String? highlightedId;
+
   void label(Canvas c, String text, Offset p, double width, Color color) {
     final painter = TextPainter(
       text: TextSpan(
@@ -318,6 +330,34 @@ class _MonitorPainter extends CustomPainter {
   void paint(Canvas c, Size size) {
     final p = projection, l = p.layout;
     c.drawColor(AppColors.canvas, BlendMode.src);
+
+    // 1. Dinding batas ruangan isometrik (Low back walls) untuk kedalaman 3D
+    final wallH = p.unit * 0.9;
+    final leftWall = Path()
+      ..addPolygon([
+        p.project(0, 0, 0),
+        p.project(0, l.gridHeight.toDouble(), 0),
+        p.project(0, l.gridHeight.toDouble(), wallH),
+        p.project(0, 0, wallH),
+      ], true);
+    c.drawPath(
+      leftWall,
+      Paint()..color = AppColors.borderSubtle.withValues(alpha: 0.5),
+    );
+
+    final rightWall = Path()
+      ..addPolygon([
+        p.project(0, 0, 0),
+        p.project(l.gridWidth.toDouble(), 0, 0),
+        p.project(l.gridWidth.toDouble(), 0, wallH),
+        p.project(0, 0, wallH),
+      ], true);
+    c.drawPath(
+      rightWall,
+      Paint()..color = AppColors.borderSubtle.withValues(alpha: 0.35),
+    );
+
+    // 2. Lantai ruangan toko (Floor grid)
     final floor = Path()
       ..addPolygon([
         p.project(0, 0),
@@ -325,9 +365,10 @@ class _MonitorPainter extends CustomPainter {
         p.project(l.gridWidth.toDouble(), l.gridHeight.toDouble()),
         p.project(0, l.gridHeight.toDouble()),
       ], true);
-    c.drawPath(floor, Paint()..color = AppColors.primarySubtle);
+    c.drawPath(floor, Paint()..color = AppColors.primarySubtle.withValues(alpha: 0.6));
+
     final line = Paint()
-      ..color = AppColors.borderSubtle
+      ..color = AppColors.borderSubtle.withValues(alpha: 0.6)
       ..strokeWidth = 1;
     for (var x = 0; x <= l.gridWidth; x++) {
       c.drawLine(
@@ -343,51 +384,154 @@ class _MonitorPainter extends CustomPainter {
         line,
       );
     }
+
+    // 3. Bayangan kontak halus di lantai (Soft Contact Shadows)
+    for (final f in p.ordered) {
+      final x = f.x.toDouble(),
+          y = f.y.toDouble(),
+          w = f.width.toDouble(),
+          h = f.height.toDouble();
+      final shadow = Path()
+        ..addPolygon([
+          p.project(x + 0.08, y + 0.08),
+          p.project(x + w + 0.12, y + 0.08),
+          p.project(x + w + 0.12, y + h + 0.12),
+          p.project(x + 0.08, y + h + 0.12),
+        ], true);
+      c.drawPath(
+        shadow,
+        Paint()
+          ..color = AppColors.ink.withValues(alpha: 0.12)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
+      );
+    }
+
+    // 4. Render Objek Toko 3D Isometrik Berkarakter (Thematic Fixture Rendering)
     for (final f in p.ordered) {
       final x = f.x.toDouble(),
           y = f.y.toDouble(),
           w = f.width.toDouble(),
           h = f.height.toDouble(),
           z = p.height(f);
-      final active = f.id == selected;
-      c.drawShadow(p.top(f, 0), AppColors.ink, AppSpacing.xxs, false);
-      for (final side in [
-        (
-          points: [
-            p.project(x + w, y, z),
-            p.project(x + w, y + h, z),
-            p.project(x + w, y + h),
-            p.project(x + w, y),
-          ],
-          color: active ? AppColors.primaryDark : AppColors.muted,
-        ),
-        (
-          points: [
-            p.project(x, y + h, z),
-            p.project(x + w, y + h, z),
-            p.project(x + w, y + h),
-            p.project(x, y + h),
-          ],
-          color: active ? AppColors.primary : AppColors.borderSubtle,
-        ),
-      ]) {
+      final active = f.id == selected || f.id == highlightedId;
+      final n = counts(f.id);
+      final isOut = n.out > 0;
+      final isLow = !isOut && n.low > 0;
+      final isSafe = !isOut && !isLow;
+      final isDimmed = filterAlertsOnly && isSafe && !active;
+      final alpha = isDimmed ? 0.35 : 1.0;
+
+      // Palet warna kontekstual per jenis objek
+      Color rightColor;
+      Color frontColor;
+      Color topColor;
+
+      switch (f.type) {
+        case MonitorFixtureType.shelf:
+          rightColor = active ? AppColors.primaryDark : const Color(0xFF8C7A65).withValues(alpha: alpha);
+          frontColor = active ? AppColors.primary : const Color(0xFFA8947D).withValues(alpha: alpha);
+          topColor = active ? AppColors.primaryLight : const Color(0xFFC4B39D).withValues(alpha: alpha);
+        case MonitorFixtureType.fridge:
+          rightColor = active ? AppColors.primaryDark : const Color(0xFF64748B).withValues(alpha: alpha);
+          frontColor = active ? AppColors.primary : const Color(0xFFA5B4FC).withValues(alpha: 0.9 * alpha);
+          topColor = active ? AppColors.primaryLight : const Color(0xFFE2E8F0).withValues(alpha: alpha);
+        case MonitorFixtureType.showcase:
+          rightColor = active ? AppColors.primaryDark : const Color(0xFF475569).withValues(alpha: alpha);
+          frontColor = active ? AppColors.primary : const Color(0xFF7DD3FC).withValues(alpha: 0.88 * alpha);
+          topColor = active ? AppColors.primaryLight : const Color(0xFFE0F2FE).withValues(alpha: alpha);
+        case MonitorFixtureType.cashCounter:
+          rightColor = active ? AppColors.primaryDark : const Color(0xFF475569).withValues(alpha: alpha);
+          frontColor = active ? AppColors.primary : const Color(0xFF64748B).withValues(alpha: alpha);
+          topColor = active ? AppColors.primaryLight : const Color(0xFFCBD5E1).withValues(alpha: alpha);
+      }
+
+      // Sisi kanan (Right side wall)
+      final rightSidePath = Path()
+        ..addPolygon([
+          p.project(x + w, y, z),
+          p.project(x + w, y + h, z),
+          p.project(x + w, y + h),
+          p.project(x + w, y),
+        ], true);
+      c.drawPath(rightSidePath, Paint()..color = rightColor);
+
+      // Sisi depan hadap kamera (Front side wall)
+      final frontSidePath = Path()
+        ..addPolygon([
+          p.project(x, y + h, z),
+          p.project(x + w, y + h, z),
+          p.project(x + w, y + h),
+          p.project(x, y + h),
+        ], true);
+      c.drawPath(frontSidePath, Paint()..color = frontColor);
+
+      // Detail ornamen jenis furnitur
+      if (!isDimmed) {
+        if (f.type == MonitorFixtureType.shelf) {
+          // Garis ambalan rak horizontal
+          final slat1Z = z * 0.35;
+          final slat2Z = z * 0.70;
+          final slatPaint = Paint()
+            ..color = (active ? AppColors.primaryDark : const Color(0xFF6E5D4B)).withValues(alpha: alpha)
+            ..strokeWidth = 1.2;
+          c.drawLine(p.project(x, y + h, slat1Z), p.project(x + w, y + h, slat1Z), slatPaint);
+          c.drawLine(p.project(x, y + h, slat2Z), p.project(x + w, y + h, slat2Z), slatPaint);
+        } else if (f.type == MonitorFixtureType.fridge) {
+          // Pegangan pintu kulkas vertikal & pantulan kaca
+          final handlePaint = Paint()
+            ..color = Colors.white.withValues(alpha: 0.8 * alpha)
+            ..strokeWidth = 2.0;
+          final handleTop = p.project(x + w * 0.85, y + h, z * 0.75);
+          final handleBottom = p.project(x + w * 0.85, y + h, z * 0.25);
+          c.drawLine(handleTop, handleBottom, handlePaint);
+        } else if (f.type == MonitorFixtureType.showcase) {
+          // Garis pembatas kaca dan bodi bawah etalase
+          final glassDividerZ = z * 0.45;
+          final dividerPaint = Paint()
+            ..color = const Color(0xFF334155).withValues(alpha: alpha)
+            ..strokeWidth = 1.5;
+          c.drawLine(p.project(x, y + h, glassDividerZ), p.project(x + w, y + h, glassDividerZ), dividerPaint);
+        } else if (f.type == MonitorFixtureType.cashCounter) {
+          // Aksen register / monitor kasir mini di atas counter
+          final regCenter = p.project(x + w * 0.7, y + h * 0.5, z);
+          final regBox = Rect.fromCenter(center: regCenter, width: 8, height: 6);
+          c.drawRect(regBox, Paint()..color = const Color(0xFF1E293B).withValues(alpha: alpha));
+        }
+      }
+
+      // Permukaan atas (Top face)
+      final topPath = p.top(f);
+      c.drawPath(topPath, Paint()..color = topColor);
+
+      // Garis tepi / highlight status
+      if (isOut) {
         c.drawPath(
-          Path()..addPolygon(side.points, true),
-          Paint()..color = side.color,
+          topPath,
+          Paint()
+            ..color = AppColors.error.withValues(alpha: alpha)
+            ..strokeWidth = 2.5
+            ..style = PaintingStyle.stroke,
+        );
+      } else if (isLow) {
+        c.drawPath(
+          topPath,
+          Paint()
+            ..color = AppColors.warning.withValues(alpha: alpha)
+            ..strokeWidth = 2.0
+            ..style = PaintingStyle.stroke,
+        );
+      } else {
+        c.drawPath(
+          topPath,
+          Paint()
+            ..color = (active ? AppColors.primary : AppColors.muted).withValues(alpha: alpha)
+            ..strokeWidth = active ? 2.0 : 1.0
+            ..style = PaintingStyle.stroke,
         );
       }
-      c.drawPath(
-        p.top(f),
-        Paint()..color = active ? AppColors.primaryLight : AppColors.surface,
-      );
-      c.drawPath(
-        p.top(f),
-        Paint()
-          ..color = active ? AppColors.primary : AppColors.muted
-          ..style = PaintingStyle.stroke,
-      );
     }
-    // Nomor ringkas menjaga rak rapat tetap terbaca; nama/status lengkap pada daftar.
+
+    // 5. Badge Status Stok & Nomor Objek di Atas Kanvas
     final occupied = <Rect>[];
     for (final f in p.ordered) {
       final center = p.project(
@@ -397,37 +541,62 @@ class _MonitorPainter extends CustomPainter {
       );
       final n = counts(f.id);
       final number = l.fixtures.indexOf(f) + 1;
-      final text = '$number${n.out + n.low > 0 ? ' !' : ''}';
+      final isOut = n.out > 0;
+      final isLow = !isOut && n.low > 0;
+      final active = f.id == selected || f.id == highlightedId;
+
+      Color badgeBg;
+      Color textColor;
+      String text;
+
+      if (isOut) {
+        badgeBg = AppColors.error;
+        textColor = Colors.white;
+        text = '$number !';
+      } else if (isLow) {
+        badgeBg = AppColors.warning;
+        textColor = Colors.white;
+        text = '$number !';
+      } else if (active) {
+        badgeBg = AppColors.primary;
+        textColor = Colors.white;
+        text = '$number';
+      } else {
+        badgeBg = AppColors.surface;
+        textColor = AppColors.ink;
+        text = '$number';
+      }
+
       final painter = TextPainter(
         text: TextSpan(
           text: text,
           style: style.copyWith(
-            color: AppColors.ink,
+            color: textColor,
             fontWeight: FontWeight.bold,
+            fontSize: 11,
           ),
         ),
         textDirection: TextDirection.ltr,
         textScaler: scaler,
       )..layout();
+
       final box = Rect.fromCenter(
         center: center,
-        width: painter.width + AppSpacing.xs,
-        height: painter.height + AppSpacing.xxs,
+        width: painter.width + AppSpacing.xs + 2,
+        height: painter.height + AppSpacing.xxs + 2,
       );
-      if (occupied.any((rect) => rect.overlaps(box)) && f.id != selected) {
+
+      if (occupied.any((rect) => rect.overlaps(box)) && !active) {
         continue;
       }
       occupied.add(box);
-      c.drawRRect(
-        RRect.fromRectAndRadius(box, const Radius.circular(AppSpacing.xxs)),
-        Paint()
-          ..color = f.id == selected
-              ? AppColors.primaryLight
-              : AppColors.surface,
-      );
+
+      final rrect = RRect.fromRectAndRadius(box, const Radius.circular(AppRadius.pill));
+      c.drawShadow(Path()..addRRect(rrect), Colors.black, 2, false);
+      c.drawRRect(rrect, Paint()..color = badgeBg);
       painter.paint(
         c,
-        box.topLeft + const Offset(AppSpacing.xxs, AppSpacing.xxs / 2),
+        box.topLeft + Offset((box.width - painter.width) / 2, (box.height - painter.height) / 2),
       );
     }
   }

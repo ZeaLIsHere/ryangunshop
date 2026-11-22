@@ -15,9 +15,17 @@ berjalan tanpa harus menebak dari riwayat commit.
   pengujian sudah selesai tetapi verifikasi emulator atau tinjauan PR belum ada, dan
   `selesai` hanya bila seluruh poin "Definisi selesai" di `TEAM.md` terpenuhi.
 
-## Kondisi terkini — 20 November 2026
+## Kondisi terkini — 23 November 2026
 
-- Basis kode `a85a159` sudah dipush pada `feat/ui-shell-owner-barcode`.
+- Peningkatan UI/UX Monitor Toko isometrik 2.5D selesai:
+  - Render kanvas 2.5D tematik diperkaya: tekstur visual unik untuk rak berambalan, kulkas kaca biru es dengan gagang vertikal, etalase display kaca, dan meja kasir counter register.
+  - Kedalaman ruang dan tata letak: dinding batas belakang (low back walls) dan bayangan kontak lantai halus (ambient contact shadows).
+  - Indikator status spasial: garis tepi dan aura glow status stok (merah untuk habis, amber untuk menipis), serta pill badge kontras.
+  - Pengalaman interaksi: Floating Quick-Peek Card di bawah kanvas saat mengetuk rak (tanpa langsung menutup layar dengan modal besar), filter chip fokus "Sorot Perlu Restok" dengan efek dimming objek aman, dan pencarian spasial produk ("Cari Produk") dengan auto pan & zoom ke rak target.
+  - Editor tata letak: Tombol penempatan massal instan per kategori ("Pilih/Lepas Semua [Kategori]") dan feedback haptic mikro saat manipulasi grid/rotasi objek.
+- Validasi kode: `flutter analyze` bersih (0 issue), seluruh test render dan editor Monitor lulus pada 360 dp & 1024 dp skala 1,3.
+- APK debug terbaru berhasil dibangun dan telah dipasang ulang via `adb install -r` serta diluncurkan pada Samsung SM-A366B (serial RRGYC07G09Z) tanpa menghapus data lokal. Startup mulus dan terverifikasi berjalan aktif.
+- Basis kode sebelumnya:
   Native mengutamakan Firestore melalui `CloudReadThrough`: reuse hasil 15 detik,
   backoff gagal 30 detik, timeout 8 detik, fallback SQLite. Outbox dan revisi data
   melindungi perubahan lokal serta memperbarui UI. Web masih preview lokal.

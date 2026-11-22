@@ -29,6 +29,8 @@ class _MonitorScreenState extends State<MonitorScreen> {
   MonitorLayoutRepository? _repository;
   bool _leavingRole = false;
   bool _checkingCloud = false;
+  bool _filterAlertsOnly = false;
+  String? _searchHighlightedId;
 
   bool get _owner =>
       mounted && AppSessionScope.of(context).role.canManageProducts;
@@ -331,6 +333,270 @@ class _MonitorScreenState extends State<MonitorScreen> {
     MonitorFixtureType.shelf => Icons.shelves,
   };
 
+  Future<void> _openSpatialSearch() async {
+    final model = _model;
+    if (model == null || !_owner) return;
+    await model.refreshProducts();
+    if (!mounted) return;
+
+    var query = '';
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheet) {
+          final q = query.trim().toLowerCase();
+          final matches = model.products.where((p) {
+            return q.isEmpty ||
+                p.name.toLowerCase().contains(q) ||
+                p.category.toLowerCase().contains(q) ||
+                p.locationLabel.toLowerCase().contains(q);
+          }).toList();
+
+          return SafeArea(
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.viewInsetsOf(context).bottom,
+              ),
+              child: SizedBox(
+                height: (MediaQuery.sizeOf(context).height -
+                        MediaQuery.viewInsetsOf(context).bottom) *
+                    0.80,
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.screen),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Cari Lokasi Produk',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          IconButton(
+                            tooltip: 'Tutup',
+                            onPressed: () => Navigator.pop(sheetContext),
+                            icon: const Icon(Icons.close),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      TextField(
+                        autofocus: true,
+                        decoration: const InputDecoration(
+                          hintText: 'Ketik nama produk atau kategori…',
+                          prefixIcon: Icon(Icons.search),
+                          isDense: true,
+                        ),
+                        onChanged: (v) => setSheet(() => query = v),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Expanded(
+                        child: matches.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  'Produk tidak ditemukan.',
+                                  style: TextStyle(color: AppColors.muted),
+                                ),
+                              )
+                            : ListView.separated(
+                                itemCount: matches.length,
+                                separatorBuilder: (context, index) =>
+                                    const Divider(height: 1),
+                                itemBuilder: (context, index) {
+                                  final p = matches[index];
+                                  final fixtureId =
+                                      model.layout?.assignments[p.id];
+                                  final fixture = model.layout?.fixtures
+                                      .where((f) => f.id == fixtureId)
+                                      .firstOrNull;
+                                  final isOut = p.stock == 0;
+                                  final isLow = p.stock > 0 &&
+                                      p.stock <= p.lowStockThreshold;
+
+                                  return ListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    leading: Container(
+                                      width: 36,
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        color: isOut
+                                            ? AppColors.error
+                                                .withValues(alpha: 0.12)
+                                            : isLow
+                                                ? AppColors.warning
+                                                    .withValues(alpha: 0.12)
+                                                : AppColors.primarySubtle,
+                                        borderRadius: BorderRadius.circular(
+                                            AppRadius.squircle),
+                                      ),
+                                      child: Icon(
+                                        isOut
+                                            ? Icons.remove_shopping_cart_outlined
+                                            : isLow
+                                                ? Icons.warning_amber_rounded
+                                                : (fixture != null
+                                                    ? _fixtureIcon(fixture.type)
+                                                    : Icons
+                                                        .inventory_2_outlined),
+                                        color: isOut
+                                            ? AppColors.error
+                                            : isLow
+                                                ? AppColors.warning
+                                                : AppColors.primary,
+                                        size: 20,
+                                      ),
+                                    ),
+                                    title: Text(
+                                      p.name,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w600),
+                                    ),
+                                    subtitle: Text(
+                                      fixture != null
+                                          ? 'Lokasi: ${fixture.name} (${fixture.type.label})'
+                                          : 'Belum ditempatkan di denah',
+                                      style: TextStyle(
+                                        color: fixture != null
+                                            ? AppColors.primary
+                                            : AppColors.muted,
+                                        fontWeight: fixture != null
+                                            ? FontWeight.w500
+                                            : FontWeight.normal,
+                                      ),
+                                    ),
+                                    trailing: Text(
+                                      '${p.stock} ${p.unit}',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: isOut
+                                            ? AppColors.error
+                                            : isLow
+                                                ? AppColors.warning
+                                                : AppColors.ink,
+                                      ),
+                                    ),
+                                    onTap: () {
+                                      Navigator.pop(sheetContext);
+                                      if (fixtureId != null) {
+                                        setState(() {
+                                          _searchHighlightedId = fixtureId;
+                                        });
+                                        model.select(fixtureId);
+                                      } else {
+                                        _productDetails(null);
+                                      }
+                                    },
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildQuickPeekCard(BuildContext context, MonitorViewModel model) {
+    final fixtureId = model.selectedId;
+    final fixture = model.layout?.fixtures
+        .where((f) => f.id == fixtureId)
+        .firstOrNull;
+    if (fixture == null) return const SizedBox.shrink();
+
+    final counts = model.counts(fixture.id);
+    final prods = model.productsAt(fixture.id);
+    final isOut = counts.out > 0;
+    final isLow = counts.low > 0;
+
+    return AppCard(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs + 2,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: isOut
+                  ? AppColors.error.withValues(alpha: 0.12)
+                  : isLow
+                      ? AppColors.warning.withValues(alpha: 0.12)
+                      : AppColors.primarySubtle,
+              borderRadius: BorderRadius.circular(AppRadius.squircle),
+            ),
+            child: Icon(
+              _fixtureIcon(fixture.type),
+              color: isOut
+                  ? AppColors.error
+                  : isLow
+                      ? AppColors.warning
+                      : AppColors.primary,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  fixture.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+                Text(
+                  '${fixture.type.label} · ${prods.length} produk${isOut ? " · ${counts.out} habis" : ""}${isLow ? " · ${counts.low} menipis" : ""}',
+                  style: TextStyle(
+                    color: isOut
+                        ? AppColors.error
+                        : (isLow ? AppColors.warning : AppColors.muted),
+                    fontSize: 11,
+                    fontWeight: isOut || isLow
+                        ? FontWeight.w600
+                        : FontWeight.normal,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          FilledButton.tonal(
+            style: FilledButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+              ),
+            ),
+            onPressed: () => _productDetails(fixture.id),
+            child: const Text('Rincian', style: TextStyle(fontSize: 12)),
+          ),
+          const SizedBox(width: AppSpacing.xxs),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            tooltip: 'Tutup',
+            icon: const Icon(Icons.close, size: 18),
+            onPressed: () => model.select(''),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final model = _model;
@@ -513,6 +779,36 @@ class _MonitorScreenState extends State<MonitorScreen> {
                               _productDetails(null, alertsOnly: true),
                         ),
                         const SizedBox(width: AppSpacing.xs),
+                        FilterChip(
+                          avatar: Icon(
+                            _filterAlertsOnly
+                                ? Icons.visibility
+                                : Icons.filter_alt_outlined,
+                            size: 16,
+                            color: _filterAlertsOnly
+                                ? AppColors.surface
+                                : AppColors.ink,
+                          ),
+                          label: Text(
+                            _filterAlertsOnly
+                                ? 'Sorot: Perlu Restok'
+                                : 'Sorot Perlu Restok',
+                            style: TextStyle(
+                              color: _filterAlertsOnly
+                                  ? AppColors.surface
+                                  : AppColors.ink,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          ),
+                          selected: _filterAlertsOnly,
+                          selectedColor: AppColors.primary,
+                          backgroundColor: AppColors.surface,
+                          side: const BorderSide(color: AppColors.borderSubtle),
+                          onSelected: (val) =>
+                              setState(() => _filterAlertsOnly = val),
+                        ),
+                        const SizedBox(width: AppSpacing.xs),
                         ActionChip(
                           avatar: const Icon(
                             Icons.inventory_2_outlined,
@@ -524,6 +820,19 @@ class _MonitorScreenState extends State<MonitorScreen> {
                           backgroundColor: AppColors.primarySubtle,
                           side: BorderSide.none,
                           onPressed: () => _productDetails(null),
+                        ),
+                        const SizedBox(width: AppSpacing.xs),
+                        ActionChip(
+                          avatar: const Icon(
+                            Icons.search,
+                            size: 16,
+                          ),
+                          label: const Text('Cari Produk'),
+                          backgroundColor: AppColors.canvas,
+                          side: const BorderSide(
+                            color: AppColors.borderSubtle,
+                          ),
+                          onPressed: _openSpatialSearch,
                         ),
                         if (_repository != null) ...[
                           const SizedBox(width: AppSpacing.xs),
@@ -548,16 +857,36 @@ class _MonitorScreenState extends State<MonitorScreen> {
 
                 // Kanvas Isometrik Utama
                 Expanded(
-                  child: MonitorCanvas(
-                    layout: layout,
-                    selectedId: model.selectedId,
-                    editing: false,
-                    counts: model.counts,
-                    onSelect: (id) {
-                      model.select(id);
-                      _productDetails(id);
-                    },
-                    onMove: (id, x, y) {},
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: MonitorCanvas(
+                          layout: layout,
+                          selectedId: model.selectedId,
+                          editing: false,
+                          counts: model.counts,
+                          filterAlertsOnly: _filterAlertsOnly,
+                          highlightedId: _searchHighlightedId,
+                          onSelect: (id) {
+                            setState(() {
+                              _searchHighlightedId = null;
+                            });
+                            model.select(id);
+                          },
+                          onMove: (id, x, y) {},
+                        ),
+                      ),
+                      if (model.selectedId != null &&
+                          model.layout?.fixtures
+                                  .any((f) => f.id == model.selectedId) ==
+                              true)
+                        Positioned(
+                          left: AppSpacing.sm,
+                          right: AppSpacing.sm,
+                          bottom: AppSpacing.sm,
+                          child: _buildQuickPeekCard(context, model),
+                        ),
+                    ],
                   ),
                 ),
 
