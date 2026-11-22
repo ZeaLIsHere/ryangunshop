@@ -5,6 +5,24 @@ implementasi cloud-first native dari rencana Monitor,
 bukan lagi tahap UI-only. Pemilik fitur katalog/kasir: Blessly Victory Deo Silaban;
 shell, Beranda, dan laporan: Tariq. Pembagian kerja tetap mengikuti `TEAM.md`.
 
+## Autentikasi dan Pengelolaan Peran (Owner & Kasir)
+
+1. **Alur Masuk & Daftar (`/login`, `/register`):**
+   - Layar Login (`LoginScreen`): input email dan password dengan validasi format. Menyediakan tautan cepat ke registrasi akun baru.
+   - Layar Register (`RegisterScreen`): pemilih peran antara **Pemilik Toko (Owner)** dan **Kasir**. Form Owner meminta nama toko dan alamat toko; toko dibuat otomatis saat registrasi berhasil. Form Kasir hanya mendaftarkan profil pengguna tanpa toko awal.
+2. **Penampung Kasir Tanpa Toko (`/kasir-menunggu`):**
+   - Kasir yang baru mendaftar atau belum memiliki relasi toko diarahkan ke `CashierPendingInvitationScreen`.
+   - Menampilkan status menunggu undangan dan daftar kartu undangan masuk dari Owner toko, lengkap dengan nama toko, nama pengundang, dan tombol tindakan **Terima** atau **Tolak**.
+   - Ketika kasir menerima undangan, relasi toko aktif diperbarui dan kasir diarahkan ke Beranda operasional kasir.
+3. **Pengelolaan Kasir Toko oleh Owner (`/kelola-kasir`):**
+   - Diakses melalui menu Pengaturan atau pintasan kelola pada Beranda Owner.
+   - Tab **Kasir Aktif**: daftar kasir yang terhubung dengan toko beserta tanggal bergabung dan tombol "Lepas Kasir" (konfirmasi modal tanpa menghapus akun kasir).
+   - Tab **Undangan Menunggu**: daftar undangan kasir yang berstatus pending dengan opsi "Batalkan Undangan".
+   - Floating Action Button **Undang Kasir**: modal bottom sheet (`InviteCashierSheet`) untuk memasukkan email kasir terdaftar.
+4. **Sesi dan Akses Kontrol:**
+   - Sesi pengguna disimpan secara persisten di database Drift lokal.
+   - Halaman pengelolaan kasir dan aksi kelola toko dibatasi ketat hanya untuk akun bertipe Owner. Kasir tidak dapat mengakses layar manajemen toko.
+
 ## Peran dan Beranda
 
 Pemilik/kasir dipilih lewat Pengaturan, tanpa login atau PIN. Pembatasan kelola

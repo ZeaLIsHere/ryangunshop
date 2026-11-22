@@ -109,6 +109,23 @@ berkas checklist terpisah.
 | Chatbot asisten AI (IyanBoT) | `mobile/lib/features/chatbot/` | Tim | review |
 | Analitik & statistik penjualan | `mobile/lib/features/statistics/` | Tim | review |
 | Monitor pemilik (tata letak isometrik & stok) | `mobile/lib/features/monitor/` | Koordinasi pada `TEAM.md` | review |
+| Autentikasi, multi-peran & kelola kasir | `mobile/lib/features/auth/`, `mobile/lib/features/cashier_management/` | Tim | review |
+
+## Sistem Autentikasi Multi-Peran & Manajemen Kasir — 23 November 2026, review
+
+- Sistem Autentikasi & Multi-Peran (`mobile/lib/features/auth/`):
+  1. Registrasi Akun Multi-Peran (`RegisterScreen`): pendaftaran terpisah antara Owner (Pemilik Toko) dan Kasir. Form Owner mewajibkan input informasi toko (Nama Toko & Alamat) dan otomatis mengaitkan Owner sebagai pemilik utama toko tersebut. Form Kasir mendaftarkan akun tanpa kepemilikan toko awal.
+  2. Login Terintegrasi (`LoginScreen`): login dengan validasi email dan sandi. Sandi di-hash menggunakan SHA-256 + cryptographic salt unik per pengguna.
+  3. Sesi Persisten (`AppSession` & `DriftAuthRepository`): sesi pengguna dan toko aktif tersimpan aman di tabel SQLite lokal (`app_users`, `app_stores`, `app_store_memberships`, `app_cashier_invitations`, `app_active_sessions`) pada skema database versi 8.
+  4. Redirection & Guards: Kasir yang belum memiliki toko diarahkan ke halaman antrean `CashierPendingInvitationScreen` dan dilarang mengakses kasir operasional atau analitik toko. Owner memiliki akses penuh dan menu kelola kasir.
+- Sistem Undangan & Pengelolaan Kasir (`mobile/lib/features/cashier_management/`):
+  1. Undangan Kasir (`InviteCashierSheet`): Owner dapat mengundang calon kasir melalui email. Sistem memvalidasi eksistensi akun kasir, mencegah pengundangan akun Owner lain, dan memblokir duplikasi undangan aktif.
+  2. Menerima / Menolak Undangan: Kasir dapat melihat daftar undangan toko yang masuk pada `CashierPendingInvitationScreen`, lalu memilih Terima (terhubung ke toko) atau Tolak.
+  3. Manajemen Kasir Toko (`CashierManagementScreen`): menyajikan 2 tab ("Kasir Aktif" dan "Undangan Menunggu"). Owner dapat membatalkan undangan pending atau melepas/menonaktifkan kasir dari toko dengan konfirmasi dialog aman tanpa menghapus akun kasir tersebut.
+  4. Integrasi Pengaturan (`SettingsScreen`): menampilkan profil pengguna yang login, nama toko, tombol akses "Kelola Kasir Toko" untuk Owner, serta tombol Logout.
+- Validasi Kode & Pengujian:
+  - Analyzer bersih (`flutter analyze --no-pub` 0 issue).
+  - 289/289 test Flutter lulus (termasuk unit test alur auth, unit test alur undangan kasir, dan widget test UI login/register/kelola kasir).
 
 ## Fitur Barcode Produk: Tombol Dinamis Form & Cetak Melayang — 20 November 2026, review
 
