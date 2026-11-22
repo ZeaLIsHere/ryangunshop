@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_radius.dart';
 import '../../core/theme/app_spacing.dart';
+import '../../core/session/app_session.dart';
 import '../../core/widgets/ryan_app_logo.dart';
 import '../routing/app_router.dart';
 import '../startup/app_startup_state.dart';
@@ -81,9 +82,21 @@ class _SplashScreenState extends State<SplashScreen>
       AppStartupState.markOnboardingSeen();
     }
 
+    final session = AppSessionScope.maybeOf(context);
+    final String nextRoute;
+    if (!hasSeenOnboarding) {
+      nextRoute = AppRoutes.onboarding;
+    } else if (session == null || !session.isAuthenticated) {
+      nextRoute = AppRoutes.login;
+    } else if (session.isCashier && !session.isCashierLinkedToStore) {
+      nextRoute = AppRoutes.cashierPending;
+    } else {
+      nextRoute = AppRoutes.shell;
+    }
+
     navigator.pushReplacement(
       AppRouter.crossfadeRoute(
-        hasSeenOnboarding ? AppRoutes.shell : AppRoutes.onboarding,
+        nextRoute,
         reduceMotion: reduceMotion,
       ),
     );

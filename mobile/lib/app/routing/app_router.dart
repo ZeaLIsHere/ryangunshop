@@ -74,7 +74,20 @@ abstract final class AppRouter {
       case AppRoutes.onboarding:
         return const OnboardingScreen();
       case AppRoutes.shell:
-        return const AppShell();
+        return Builder(
+          builder: (context) {
+            final session = AppSessionScope.maybeOf(context);
+            if (session != null && !session.isAuthenticated) {
+              return const LoginScreen();
+            }
+            if (session != null &&
+                session.isCashier &&
+                !session.isCashierLinkedToStore) {
+              return const CashierPendingInvitationScreen();
+            }
+            return const AppShell();
+          },
+        );
       case AppRoutes.reports:
         return const ReportsScreen();
       case AppRoutes.scanner:

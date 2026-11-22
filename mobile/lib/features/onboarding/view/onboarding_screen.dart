@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/routing/app_router.dart';
+import '../../../core/session/app_session.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -45,8 +46,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _finish() {
+    final session = AppSessionScope.maybeOf(context);
+    final String nextRoute;
+    if (session == null || !session.isAuthenticated) {
+      nextRoute = AppRoutes.login;
+    } else if (session.isCashier && !session.isCashierLinkedToStore) {
+      nextRoute = AppRoutes.cashierPending;
+    } else {
+      nextRoute = AppRoutes.shell;
+    }
+
     Navigator.of(context).pushReplacement(
-      AppRouter.crossfadeRoute(AppRoutes.shell, reduceMotion: _reduceMotion),
+      AppRouter.crossfadeRoute(nextRoute, reduceMotion: _reduceMotion),
     );
   }
 
