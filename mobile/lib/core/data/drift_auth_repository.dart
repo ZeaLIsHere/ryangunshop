@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
+import 'package:drift/drift.dart';
 
 import '../../features/auth/model/cashier_invitation.dart';
 import '../../features/auth/model/store_info.dart';
