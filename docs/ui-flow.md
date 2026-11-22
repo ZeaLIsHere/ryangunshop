@@ -7,7 +7,10 @@ shell, Beranda, dan laporan: Tariq. Pembagian kerja tetap mengikuti `TEAM.md`.
 
 ## Autentikasi dan Pengelolaan Peran (Owner & Kasir)
 
-1. **Alur Masuk & Daftar (`/login`, `/register`):**
+1. **Alur Startup & Auth Gate (Splash ➔ Login / Shell):**
+   - Setelah Splash Screen dan Perkenalan Onboarding selesai, sistem memeriksa status login pengguna di `AppSession`:
+     - Jika **belum login**: langsung diarahkan ke layar Login (`/login`). Rute utama `/utama` (`AppShell`) terlindungi sehingga pengguna yang belum terotentikasi tidak dapat mengakses halaman kasir atau dashboard toko.
+     - Jika **sudah login**: langsung diarahkan ke `AppShell` (Dashboard sesuai role) tanpa perlu login ulang (auto-login session restore).
    - Layar Login (`LoginScreen`): input email dan password dengan validasi format. Menyediakan tautan cepat ke registrasi akun baru.
    - Layar Register (`RegisterScreen`): pemilih peran antara **Pemilik Toko (Owner)** dan **Kasir**. Form Owner meminta nama toko dan alamat toko; toko dibuat otomatis saat registrasi berhasil. Form Kasir hanya mendaftarkan profil pengguna tanpa toko awal.
 2. **Penampung Kasir Tanpa Toko (`/kasir-menunggu`):**
