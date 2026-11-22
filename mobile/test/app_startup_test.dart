@@ -45,18 +45,19 @@ void main() {
     expect(find.text('Lewati'), findsOneWidget);
   });
 
-  testWidgets('perkenalan dapat dilewati menuju halaman login bila belum masuk akun', (
-    tester,
-  ) async {
-    _usePhoneViewport(tester);
-    await tester.pumpWidget(const RyanGunshopApp());
-    await tester.pumpAndSettle();
+  testWidgets(
+    'perkenalan dapat dilewati menuju halaman login bila belum masuk akun',
+    (tester) async {
+      _usePhoneViewport(tester);
+      await tester.pumpWidget(const RyanGunshopApp());
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Lewati'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Lewati'));
+      await tester.pumpAndSettle();
 
-    expect(find.byType(LoginScreen), findsOneWidget);
-  });
+      expect(find.byType(LoginScreen), findsOneWidget);
+    },
+  );
 
   testWidgets('splash melewati perkenalan menuju login bila belum masuk akun', (
     tester,
@@ -71,27 +72,28 @@ void main() {
     expect(find.text('Lewati'), findsNothing);
   });
 
-  testWidgets('splash langsung menuju kerangka utama jika pengguna sudah login', (
-    tester,
-  ) async {
-    _usePhoneViewport(tester);
-    AppStartupState.markOnboardingSeen();
+  testWidgets(
+    'splash langsung menuju kerangka utama jika pengguna sudah login',
+    (tester) async {
+      _usePhoneViewport(tester);
+      AppStartupState.markOnboardingSeen();
 
-    final session = AppSession();
-    addTearDown(session.dispose);
-    await session.registerOwner(
-      name: 'Pemilik Toko',
-      email: 'pemilik@toko.com',
-      password: 'password123',
-      storeName: 'Toko Ryan',
-    );
+      final session = AppSession();
+      addTearDown(session.dispose);
+      await session.registerOwner(
+        name: 'Pemilik Toko',
+        email: 'pemilik@toko.com',
+        password: 'password123',
+        storeName: 'Toko Ryan',
+      );
 
-    await tester.pumpWidget(RyanGunshopApp(session: session));
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(RyanGunshopApp(session: session));
+      await tester.pumpAndSettle();
 
-    expect(find.byType(AppShell), findsOneWidget);
-    expect(find.text('Lewati'), findsNothing);
-  });
+      expect(find.byType(AppShell), findsOneWidget);
+      expect(find.text('Lewati'), findsNothing);
+    },
+  );
 }
 
 class _StartupSession extends AppSession {
