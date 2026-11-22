@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 import '../../../core/session/app_session.dart';
 
@@ -8,6 +9,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/primary_action.dart';
 import '../../../core/widgets/sample_badge.dart';
+import '../model/barcode_labels.dart';
 import '../model/catalog_product.dart';
 import '../sample/catalog_sample.dart';
 
@@ -83,6 +85,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       text: p?.barcode ?? widget.initialBarcode ?? '',
     );
     _hasSamplePhoto = p?.hasSamplePhoto ?? false;
+    _barcodeController.addListener(() {
+      if (mounted) setState(() {});
+    });
     if (p != null) {
       _selectedUnit = p.unit;
       _selectedFixtureId = p.fixtureId;
@@ -99,6 +104,112 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _thresholdController.dispose();
     _barcodeController.dispose();
     super.dispose();
+  }
+
+  void _generateBarcode() {
+    final id =
+        widget.initialProduct?.id ??
+        'prod-${DateTime.now().microsecondsSinceEpoch}';
+    final used = widget.existingProducts
+        .map((p) => p.barcode)
+        .whereType<String>()
+        .toList();
+    final generated = internalBarcode(id, used);
+    setState(() {
+      _barcodeController.text = generated;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Barcode $generated berhasil dibuat'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showBarcodeModal(
+    BuildContext context,
+    String barcode,
+    String productName,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(AppSpacing.screen),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.muted.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Text(
+              productName.isEmpty ? 'Barcode Produk' : productName,
+              style: Theme.of(context).textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: AppRadius.controlBorder,
+                border: Border.all(color: AppColors.borderSubtle),
+              ),
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: 56,
+                    width: double.infinity,
+                    child: CustomPaint(painter: _FormBarcodePainter(barcode)),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    barcode,
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      letterSpacing: 1.5,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    isInternalBarcode(barcode)
+                        ? 'Barcode Internal RyanGunshop (Code128)'
+                        : 'Barcode Produk (Code128)',
+                    style: Theme.of(context).textTheme.bodySmall
+                        ?.copyWith(color: AppColors.muted),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Tutup'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _saveProduct() {
@@ -310,6 +421,34 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                               : null;
                         },
                       ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: OutlinedButton.icon(
+                          icon: Icon(
+                            _barcodeController.text.trim().isEmpty
+                                ? Icons.qr_code
+                                : Icons.visibility_outlined,
+                            size: 18,
+                          ),
+                          label: Text(
+                            _barcodeController.text.trim().isEmpty
+                                ? 'Buat barcode'
+                                : 'Lihat Barcode',
+                          ),
+                          onPressed: () {
+                            if (_barcodeController.text.trim().isEmpty) {
+                              _generateBarcode();
+                            } else {
+                              _showBarcodeModal(
+                                context,
+                                _barcodeController.text.trim(),
+                                _nameController.text.trim(),
+                              );
+                            }
+                          },
+                        ),
+                      ),
                       const SizedBox(height: AppSpacing.lg),
 
                       // Section 3: Harga & Stok
@@ -496,4 +635,57 @@ class _SectionHeader extends StatelessWidget {
       ],
     );
   }
+}
+
+class _FormBarcodePainter extends CustomPainter {
+  _FormBarcodePainter(this.code);
+  final String code;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    try {
+      final geometry = barcodeLabelGeometry(code, size.width);
+      final bars = pw.Barcode.code128().make(
+        code,
+        width: geometry.bars,
+        height: size.height,
+        drawText: false,
+      );
+      final paint = Paint()
+        ..color = Colors.black
+        ..isAntiAlias = false;
+      for (final bar in bars) {
+        if (bar is pw.BarcodeBar && bar.black) {
+          canvas.drawRect(
+            Rect.fromLTWH(
+              geometry.quiet + bar.left,
+              bar.top,
+              bar.width,
+              bar.height,
+            ),
+            paint,
+          );
+        }
+      }
+    } catch (_) {
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: code,
+          style: const TextStyle(color: AppColors.muted, fontSize: 14),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout(maxWidth: size.width);
+      textPainter.paint(
+        canvas,
+        Offset(
+          (size.width - textPainter.width) / 2,
+          (size.height - textPainter.height) / 2,
+        ),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_FormBarcodePainter oldDelegate) =>
+      oldDelegate.code != code;
 }

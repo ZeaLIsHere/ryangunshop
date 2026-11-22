@@ -250,6 +250,28 @@ void main() {
     expect(vm.filteredProducts, isNotEmpty);
     expect(vm.filteredProducts.every((p) => p.category == 'Minuman'), isTrue);
   });
+
+  testWidgets(
+    'pemilik melihat tombol melayang Cetak Barcode di kiri dan Tambah Produk di kanan',
+    (tester) async {
+      final session = AppSession()..selectRole(UserRole.owner);
+      addTearDown(session.dispose);
+      final vm = CatalogViewModel(initialProducts: CatalogSample.products);
+      addTearDown(vm.dispose);
+
+      await _showCatalog(tester, session: session, viewModel: vm);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Cetak Barcode'), findsOneWidget);
+      expect(find.text('Tambah Produk'), findsOneWidget);
+
+      await tester.tap(find.text('Cetak Barcode'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Label Barcode'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
 
 Future<void> _showCatalog(

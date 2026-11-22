@@ -254,7 +254,7 @@ Pekerjaan produksi berikut belum selesai atau belum terverifikasi:
 
 Impor Firestore `iyangunshop` / `stores/toko-utama` terverifikasi: 90 dokumen
 dibuat dan terbaca ulang, 24 produk, 66 nota tunai, 394 unit, Rp3.035.800.
-Rentang 10–24 November 2026 inklusif: 15 hari, 3–6 nota/hari. Data presentasi
+Rentang 6–20 November 2026 inklusif: 15 hari sampai hari ini, 3–6 nota/hari. Data presentasi
 tanpa label visual, metadata asal internal; bukan bukti penjualan aktual atau
 keberhasilan unduh data lewat aplikasi.
 

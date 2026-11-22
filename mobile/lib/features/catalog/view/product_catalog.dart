@@ -14,6 +14,7 @@ import '../model/catalog_scenario.dart';
 import '../model/catalog_sort.dart';
 import '../view_model/catalog_view_model.dart';
 import 'catalog_product_card.dart';
+import 'barcode_labels_screen.dart';
 import 'product_detail_sheet.dart';
 import 'product_form_screen.dart';
 
@@ -87,6 +88,19 @@ class _ProductCatalogState extends State<ProductCatalog> {
     if (result != null) {
       await _persistProduct(result);
     }
+  }
+
+  void _openBarcodeLabels() {
+    if (!_canManageProducts) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => BarcodeLabelsScreen(
+          repository:
+              widget.repository ??
+              AppSessionScope.maybeOf(context)?.productRepository,
+        ),
+      ),
+    );
   }
 
   Future<void> _deleteProduct(CatalogProduct product) async {
@@ -389,13 +403,68 @@ class _ProductCatalogState extends State<ProductCatalog> {
           // FAB overlay
           if (_canManageProducts)
             Positioned(
+              left: AppSpacing.screen,
               right: AppSpacing.screen,
               bottom: AppSpacing.screen,
-              child: FloatingActionButton.extended(
-                heroTag: 'add-product-fab',
-                icon: const Icon(Icons.add),
-                label: const Text('Tambah Produk'),
-                onPressed: () => _openProductForm(),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Material(
+                        elevation: 3,
+                        shadowColor: Colors.black26,
+                        borderRadius: BorderRadius.circular(16),
+                        color: AppColors.surface,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: _openBarcodeLabels,
+                          child: Container(
+                            height: 56,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            alignment: Alignment.center,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.print_outlined,
+                                    color: AppColors.primary,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Cetak Barcode',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelLarge
+                                        ?.copyWith(
+                                          color: AppColors.primary,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: FloatingActionButton.extended(
+                        heroTag: 'add-product-fab',
+                        icon: const Icon(Icons.add),
+                        label: const Text('Tambah Produk'),
+                        onPressed: () => _openProductForm(),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
         ],

@@ -27,6 +27,7 @@ class StatisticsDataSet {
     required this.trend,
     required this.topProducts,
     required this.slowMoving,
+    this.trendPoints = const [],
   });
 
   final int total;
@@ -42,6 +43,7 @@ class StatisticsDataSet {
   final List<HourBucket> peakHours;
   final String trendTitle;
   final List<SalesPoint> trend;
+  final List<({DateTime date, int total})> trendPoints;
   final List<TopProduct> topProducts;
   final List<TopProduct> slowMoving;
 
@@ -53,6 +55,7 @@ class StatisticsDataSet {
     int? transactions,
     int? itemsSold,
     int? grossProfit,
+    List<({DateTime date, int total})>? trendPoints,
   }) {
     return StatisticsDataSet(
       total: total ?? this.total,
@@ -65,6 +68,7 @@ class StatisticsDataSet {
       peakHours: peakHours,
       trendTitle: trendTitle,
       trend: trend,
+      trendPoints: trendPoints ?? this.trendPoints,
       topProducts: topProducts,
       slowMoving: slowMoving,
     );

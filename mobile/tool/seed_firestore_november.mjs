@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url';
 
 export const PROJECT = 'iyangunshop';
 export const STORE = 'toko-utama';
-export const BATCH = 'RG-20261110-20261124-v1';
+export const BATCH = 'RG-20261106-20261120-v1';
 const ROOT = `projects/${PROJECT}/databases/(default)/documents`;
 const API = `https://firestore.googleapis.com/v1/${ROOT}`;
 const WIB = 7 * 60 * 60 * 1000;
@@ -55,18 +55,20 @@ export function buildDataset() {
       schemaVersion: 1, name, barcode: `RG202611${String(i + 1).padStart(6, '0')}`,
       salePrice, costPrice, stock, category, unit, fixtureId: '',
       locationLabel: category === 'Minuman' ? 'Rak minuman' : `Rak ${category.toLowerCase()}`,
-      lowStockThreshold: 5, updatedAt: Date.parse('2026-11-24T21:00:00+07:00'),
+      lowStockThreshold: 5, updatedAt: Date.parse('2026-11-20T21:00:00+07:00'),
       deletedAt: null, ...metadata, seedOpeningStock: stock, seedUnitsSold: 0,
     },
   }));
   const transactions = [];
   const times = ['07:15', '09:40', '11:55', '14:20', '17:10', '20:05'];
-  for (let day = 10; day <= 24; day++) {
-    const date = `2026-11-${day}`;
-    for (let receipt = 0; receipt < 3 + (day - 10) % 4; receipt++) {
+  for (let day = 6; day <= 20; day++) {
+    const dayStr = String(day).padStart(2, '0');
+    const date = `2026-11-${dayStr}`;
+    const offset = day - 6;
+    for (let receipt = 0; receipt < 3 + offset % 4; receipt++) {
       const items = [];
       for (let line = 0; line < 1 + (day + receipt) % 5; line++) {
-        const product = products[((day - 10) * 3 + receipt * 5 + line * 7) % products.length];
+        const product = products[(offset * 3 + receipt * 5 + line * 7) % products.length];
         const quantity = 1 + (day + receipt + line) % 3;
         items.push({ productId: product.id, productName: product.data.name, quantity,
           unitPrice: product.data.salePrice, subtotal: quantity * product.data.salePrice });
@@ -80,7 +82,7 @@ export function buildDataset() {
         : Math.ceil(totalAmount / (totalAmount <= 50000 ? 10000 : 50000))
           * (totalAmount <= 50000 ? 10000 : 50000);
       transactions.push({
-        collection: 'transactions', id: `TRX-202611${day}-${String(receipt + 1).padStart(3, '0')}-RG1`,
+        collection: 'transactions', id: `TRX-202611${dayStr}-${String(receipt + 1).padStart(3, '0')}-RG1`,
         data: {
           schemaVersion: 1, createdAt: Date.parse(`${date}T${times[receipt]}:00+07:00`),
           totalAmount, discountAmount, paymentMethod: 'cash', cashReceived,

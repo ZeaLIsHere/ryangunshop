@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/data/transaction_repository.dart';
 import '../../../core/format/rupiah.dart';
 import '../../../core/session/app_session.dart';
 import '../../../core/theme/app_colors.dart';
@@ -7,8 +8,10 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/app_card.dart';
+import '../../../core/widgets/sales_line_chart.dart';
 import '../../../core/widgets/sample_badge.dart';
 import '../../catalog/model/catalog_product.dart';
+import '../../dashboard/model/dashboard_period.dart';
 import '../sample/statistics_sample.dart';
 
 /// Layar statistik penjualan dan stok berbasis Bento Grid.
@@ -21,6 +24,7 @@ class StatisticsScreen extends StatefulWidget {
 
 class _StatisticsScreenState extends State<StatisticsScreen> {
   List<CatalogProduct>? _localProducts;
+  List<TransactionRecord>? _transactions;
   int? _dataRevision;
 
   @override
@@ -29,18 +33,26 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     final revision = AppSessionScope.maybeOf(context)?.dataRevision;
     if (_localProducts == null || revision != _dataRevision) {
       _dataRevision = revision;
-      _loadLocalProducts();
+      _loadData();
     }
   }
 
-  Future<void> _loadLocalProducts() async {
-    final repo = AppSessionScope.maybeOf(context)?.productRepository;
-    if (repo == null) return;
+  Future<void> _loadData() async {
+    final session = AppSessionScope.maybeOf(context);
+    if (session == null) return;
     try {
-      final records = await repo.listProducts();
+      final records = await session.productRepository.listProducts();
+      final now = DateTime.now();
+      // Mengambil 30 hari transaksi agar seluruh statistik mencakup data toko yang ada
+      final period = DashboardPeriod(now, 30);
+      final txs = await session.transactionRepository.listForPeriod(
+        period.start,
+        period.end,
+      );
       if (!mounted) return;
       setState(() {
         _localProducts = records.map(CatalogProduct.fromRecord).toList();
+        _transactions = txs;
       });
     } catch (_) {}
   }
@@ -51,19 +63,138 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     final session = AppSessionScope.maybeOf(context);
     final isLocal = session?.productRepository != null;
 
+    final products = _localProducts ?? const <CatalogProduct>[];
+    final txs = _transactions ?? const <TransactionRecord>[];
+
     final StatisticsDataSet data;
-    if (session != null) {
-      final todayTotal = session.todayRevenue;
-      final todayCount = session.todayTransactionCount;
-      final itemsSold = session.recentTransactions.fold<int>(
-        0,
-        (sum, tx) => sum + tx.itemCount,
-      );
+    if (session != null && txs.isNotEmpty) {
+      final total = txs.fold<int>(0, (sum, t) => sum + t.totalAmount);
+      final count = txs.length;
+      final itemsSold = txs.fold<int>(0, (sum, t) => sum + t.itemCount);
+
+      // 1. Metode Pembayaran
+      final cashTotal = txs
+          .where((t) => t.paymentMethod == 'cash')
+          .fold<int>(0, (sum, t) => sum + t.totalAmount);
+      final qrisTotal = txs
+          .where((t) => t.paymentMethod == 'qris')
+          .fold<int>(0, (sum, t) => sum + t.totalAmount);
+      final payments = <PaymentSlice>[
+        if (cashTotal > 0) PaymentSlice(label: 'Tunai', total: cashTotal),
+        if (qrisTotal > 0) PaymentSlice(label: 'QRIS', total: qrisTotal),
+      ];
+
+      // 2. Waktu Transaksi Terbanyak (Jam Sibuk)
+      var pagi = 0;
+      var siang = 0;
+      var sore = 0;
+      var malam = 0;
+      for (final t in txs) {
+        final h = t.createdAt.toLocal().hour;
+        if (h >= 5 && h < 11) {
+          pagi++;
+        } else if (h >= 11 && h < 15) {
+          siang++;
+        } else if (h >= 15 && h < 18) {
+          sore++;
+        } else {
+          malam++;
+        }
+      }
+      final peakHours = [
+        HourBucket(label: 'Pagi', transactions: pagi),
+        HourBucket(label: 'Siang', transactions: siang),
+        HourBucket(label: 'Sore', transactions: sore),
+        HourBucket(label: 'Malam', transactions: malam),
+      ];
+
+      // 3. Tren Penjualan 7 Hari Terakhir Dinamis (Mundur dari hari ini)
+      final weeklyPeriod = DashboardPeriod(DateTime.now(), 7);
+      final trendPoints = weeklyPeriod.dailyTotals(txs);
+      final dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+      final trend = [
+        for (var i = 0; i < trendPoints.length; i++)
+          SalesPoint(
+            label: i == trendPoints.length - 1
+                ? 'Hari ini'
+                : dayNames[trendPoints[i].date.weekday - 1],
+            total: trendPoints[i].total,
+          ),
+      ];
+
+      // 4. Produk Terlaris
+      final soldMap = <String, ({String name, int sold, String unit})>{};
+      for (final t in txs) {
+        for (final item in t.items) {
+          final existing = soldMap[item.productId];
+          soldMap[item.productId] = (
+            name: existing?.name ?? item.productName,
+            sold: (existing?.sold ?? 0) + item.quantity,
+            unit: existing?.unit ?? 'pcs',
+          );
+        }
+      }
+      final sortedSold = soldMap.values.toList()
+        ..sort((a, b) => b.sold.compareTo(a.sold));
+      final topProducts = sortedSold
+          .take(5)
+          .map((s) => TopProduct(name: s.name, sold: s.sold, unit: s.unit))
+          .toList();
+
+      // 5. Produk Lambat Laku
+      final slowMoving = <TopProduct>[];
+      if (products.isNotEmpty) {
+        final withSales =
+            products
+                .map(
+                  (p) => (
+                    name: p.name,
+                    sold: soldMap[p.id]?.sold ?? 0,
+                    unit: p.unit,
+                  ),
+                )
+                .toList()
+              ..sort((a, b) => a.sold.compareTo(b.sold));
+        for (final item in withSales.take(3)) {
+          slowMoving.add(
+            TopProduct(name: item.name, sold: item.sold, unit: item.unit),
+          );
+        }
+      }
+
       data = StatisticsDataSet(
-        total: todayTotal,
+        total: total,
         previousTotal: 0,
-        transactions: todayCount,
+        transactions: count,
         itemsSold: itemsSold,
+        grossProfit: 0,
+        payments: payments,
+        peakTitle: 'Waktu transaksi terbanyak',
+        peakHours: peakHours,
+        trendTitle: 'Tren penjualan',
+        trend: trend,
+        trendPoints: trendPoints,
+        topProducts: topProducts,
+        slowMoving: slowMoving,
+      );
+    } else {
+      final weeklyPeriod = DashboardPeriod(DateTime.now(), 7);
+      final emptyTrendPoints = weeklyPeriod.dailyTotals(const []);
+      final dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+      final emptyTrend = [
+        for (var i = 0; i < emptyTrendPoints.length; i++)
+          SalesPoint(
+            label: i == emptyTrendPoints.length - 1
+                ? 'Hari ini'
+                : dayNames[emptyTrendPoints[i].date.weekday - 1],
+            total: 0,
+          ),
+      ];
+      data = StatisticsDataSet(
+        total: 0,
+        previousTotal: 0,
+        transactions: 0,
+        itemsSold: 0,
         grossProfit: 0,
         payments: const [],
         peakTitle: 'Waktu transaksi terbanyak',
@@ -74,49 +205,12 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           HourBucket(label: 'Malam', transactions: 0),
         ],
         trendTitle: 'Tren penjualan',
-        trend: [
-          const SalesPoint(label: 'Sen', total: 0),
-          const SalesPoint(label: 'Sel', total: 0),
-          const SalesPoint(label: 'Rab', total: 0),
-          const SalesPoint(label: 'Kam', total: 0),
-          const SalesPoint(label: 'Jum', total: 0),
-          const SalesPoint(label: 'Sab', total: 0),
-          SalesPoint(label: 'Hari ini', total: todayTotal),
-        ],
+        trend: emptyTrend,
+        trendPoints: emptyTrendPoints,
         topProducts: const [],
         slowMoving: const [],
       );
-    } else {
-      data = const StatisticsDataSet(
-        total: 0,
-        previousTotal: 0,
-        transactions: 0,
-        itemsSold: 0,
-        grossProfit: 0,
-        payments: [],
-        peakTitle: 'Waktu transaksi terbanyak',
-        peakHours: [
-          HourBucket(label: 'Pagi', transactions: 0),
-          HourBucket(label: 'Siang', transactions: 0),
-          HourBucket(label: 'Sore', transactions: 0),
-          HourBucket(label: 'Malam', transactions: 0),
-        ],
-        trendTitle: 'Tren penjualan',
-        trend: [
-          SalesPoint(label: 'Sen', total: 0),
-          SalesPoint(label: 'Sel', total: 0),
-          SalesPoint(label: 'Rab', total: 0),
-          SalesPoint(label: 'Kam', total: 0),
-          SalesPoint(label: 'Jum', total: 0),
-          SalesPoint(label: 'Sab', total: 0),
-          SalesPoint(label: 'Hari ini', total: 0),
-        ],
-        topProducts: [],
-        slowMoving: [],
-      );
     }
-
-    final products = _localProducts ?? const <CatalogProduct>[];
 
     final lowStock = products
         .where((p) => p.stockStatus == ProductStockStatus.low)
@@ -234,11 +328,14 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 const SizedBox(height: AppSpacing.sm),
               ],
 
-              // BENTO 4: Tren Penjualan & Pembayaran (Row / Bento)
+              // BENTO 4: Tren Penjualan 7 Hari Terakhir & Pembayaran (Row / Bento)
               _BentoSectionContainer(
                 title: data.trendTitle,
-                subtitle: 'Aktivitas penjualan periode mingguan',
-                child: _WeeklyChart(points: data.trend),
+                subtitle: 'Aktivitas 7 hari terakhir sampai hari ini',
+                child: SalesLineChart(
+                  points: data.trendPoints,
+                  wrapCard: false,
+                ),
               ),
               const SizedBox(height: AppSpacing.sm),
 
@@ -803,59 +900,6 @@ class _BentoSectionContainer extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           child,
-        ],
-      ),
-    );
-  }
-}
-
-class _WeeklyChart extends StatelessWidget {
-  const _WeeklyChart({required this.points});
-
-  final List<SalesPoint> points;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final maxTotal = points.fold<int>(
-      1,
-      (max, p) => p.total > max ? p.total : max,
-    );
-
-    return SizedBox(
-      height: 140,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          for (final point in points)
-            Expanded(
-              child: Semantics(
-                label: '${point.label}: ${formatRupiah(point.total)}',
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    const Spacer(),
-                    Container(
-                      width: 18,
-                      height: (point.total / maxTotal) * 88,
-                      decoration: BoxDecoration(
-                        color: point.total == maxTotal
-                            ? AppColors.primary
-                            : AppColors.primaryLight,
-                        borderRadius: AppRadius.fixtureBorder,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      point.label,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: AppColors.muted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
         ],
       ),
     );

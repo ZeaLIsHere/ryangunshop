@@ -103,8 +103,8 @@ Pemindaian koleksi tetap memakai read Firestore sesuai jumlah dokumen.
 
 Impor Firestore `iyangunshop` / `stores/toko-utama` terverifikasi pada
 19 November 2026: 90 dokumen dibuat dan terbaca ulang, 24 produk, 66 nota tunai,
-394 unit, Rp3.035.800. Data presentasi mencakup 10–24 November 2026 inklusif
-(15 hari, 3–6 nota/hari), termasuk tanggal setelah hari verifikasi; bukan klaim
+394 unit, Rp3.035.800. Data presentasi mencakup 6–20 November 2026 inklusif
+(15 hari sampai hari ini, 3–6 nota/hari); bukan klaim
 penjualan aktual. Tidak ada label visual demo; metadata asal tetap internal.
 
 Bukti impor bukan bukti unduh data lewat aplikasi nyata atau pemulihan perangkat

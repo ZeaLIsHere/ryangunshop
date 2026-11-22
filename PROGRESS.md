@@ -15,15 +15,23 @@ berjalan tanpa harus menebak dari riwayat commit.
   pengujian sudah selesai tetapi verifikasi emulator atau tinjauan PR belum ada, dan
   `selesai` hanya bila seluruh poin "Definisi selesai" di `TEAM.md` terpenuhi.
 
-## Kondisi terkini — 20 November 2026
+## Kondisi terkini — 23 November 2026
 
-- Basis kode `a85a159` sudah dipush pada `feat/ui-shell-owner-barcode`.
+- Peningkatan UI/UX Monitor Toko isometrik 2.5D selesai:
+  - Render kanvas 2.5D tematik diperkaya: tekstur visual unik untuk rak berambalan, kulkas kaca biru es dengan gagang vertikal, etalase display kaca, dan meja kasir counter register.
+  - Kedalaman ruang dan tata letak: dinding batas belakang (low back walls) dan bayangan kontak lantai halus (ambient contact shadows).
+  - Indikator status spasial: garis tepi dan aura glow status stok (merah untuk habis, amber untuk menipis), serta pill badge kontras.
+  - Pengalaman interaksi: Floating Quick-Peek Card di bawah kanvas saat mengetuk rak (tanpa langsung menutup layar dengan modal besar), filter chip fokus "Sorot Perlu Restok" dengan efek dimming objek aman, dan pencarian spasial produk ("Cari Produk") dengan auto pan & zoom ke rak target.
+  - Editor tata letak: Tombol penempatan massal instan per kategori ("Pilih/Lepas Semua [Kategori]") dan feedback haptic mikro saat manipulasi grid/rotasi objek.
+- Validasi kode: `flutter analyze` bersih (0 issue), seluruh test render dan editor Monitor lulus pada 360 dp & 1024 dp skala 1,3.
+- APK debug terbaru berhasil dibangun dan telah dipasang ulang via `adb install -r` serta diluncurkan pada Samsung SM-A366B (serial RRGYC07G09Z) tanpa menghapus data lokal. Startup mulus dan terverifikasi berjalan aktif.
+- Basis kode sebelumnya:
   Native mengutamakan Firestore melalui `CloudReadThrough`: reuse hasil 15 detik,
   backoff gagal 30 detik, timeout 8 detik, fallback SQLite. Outbox dan revisi data
   melindungi perubahan lokal serta memperbarui UI. Web masih preview lokal.
 - Impor Firestore `iyangunshop` / `toko-utama` terverifikasi create-only/read-back:
-  24 produk, 66 nota tunai, 394 unit, Rp3.035.800, 10–24 November 2026 inklusif
-  (15 hari, 3–6 nota/hari). Data tampil normal tanpa label visual, metadata internal.
+  24 produk, 66 nota tunai, 394 unit, Rp3.035.800, 6–20 November 2026 inklusif
+  (15 hari sampai hari ini, 3–6 nota/hari). Data tampil normal tanpa label visual, metadata internal.
 - Validasi tahap Monitor: analyzer bersih, 268 test Flutter dan 12 test Node lulus.
 - APK debug cloud-first + Monitor berhasil dibangun (50 detik) dan telah dipasang
   ulang via `adb install -r` serta dijalankan pada Samsung SM_A366B (serial RRGYC07G09Z)
@@ -101,6 +109,84 @@ berkas checklist terpisah.
 | Chatbot asisten AI (IyanBoT) | `mobile/lib/features/chatbot/` | Tim | review |
 | Analitik & statistik penjualan | `mobile/lib/features/statistics/` | Tim | review |
 | Monitor pemilik (tata letak isometrik & stok) | `mobile/lib/features/monitor/` | Koordinasi pada `TEAM.md` | review |
+
+## Fitur Barcode Produk: Tombol Dinamis Form & Cetak Melayang — 20 November 2026, review
+
+- Formulir Edit Produk (`ProductFormScreen`):
+  1. Tombol Dinamis Barcode: tombol diletakkan tepat di bawah field barcode; jika produk belum memiliki barcode, label adalah **"Buat barcode"**; jika produk sudah memiliki barcode, label otomatis beralih menjadi **"Lihat Barcode"**.
+  2. Generator Barcode Otomatis: menekan "Buat barcode" menghasilkan barcode internal Code128 format `RG...` via `internalBarcode` bebas tabrakan dan langsung mengisi field serta mengubah tombol menjadi "Lihat Barcode".
+  3. Pratinjau Barcode Modal: menekan "Lihat Barcode" membuka modal bottom sheet interaktif yang merender batang garis Code128 presisi, kode angka monospaced, dan nama produk.
+- Layar Katalog Produk (`ProductCatalog`):
+  1. Tombol Melayang "Cetak Barcode": tombol melayang (FAB pill) di sebelah kiri bawah berpasangan dengan "Tambah Produk" di sebelah kanan bawah.
+  2. Menekan "Cetak Barcode" langsung membuka layar `BarcodeLabelsScreen` untuk memilih jumlah label, pratinjau, dan ekspor/cetak dokumen PDF A4.
+  3. Layout bebas tabrakan dengan adaptasi `FittedBox` yang aman pada layar 360 dp dan skala teks 1.3.
+- Validasi:
+  - Analyzer bersih (0 error).
+  - 271/271 test Flutter lulus (termasuk 2 widget test baru).
+  - 12/12 test Node lulus.
+  - APK debug dibangun dan terpasang di Samsung SM-A366B (`RRGYC07G09Z`).
+
+## Penyelarasan Diagram Garis Tren Penjualan & Pemurnian Nota Terbaru — 20 November 2026, review
+
+- Pemurnian Nota Terbaru Beranda (`OwnerDashboard` & `CashierDashboard`):
+  1. Mengeliminasi transaksi berstempel masa depan (`createdAt.isAfter(DateTime.now())`) yang sebelumnya berasal dari seed sintetis sore hari (17:10).
+  2. Memprioritaskan transaksi nyata kasir (`TRX-...` non-sintetis) pada daftar "Nota terbaru": bila pengguna telah melakukan transaksi riil di kasir, nota riil tersebut langsung tampil di posisi teratas tanpa tersisip atau tergeser data sintetis.
+  3. Memperbarui subtitle menjadi "Nota transaksi kasir terbaru".
+- Komponen bersama `SalesLineChart` (`mobile/lib/core/widgets/sales_line_chart.dart`): mengekstrak *Smooth Area Line Chart* interaktif bergradien violet lengkap dengan touch-scrubbing, badge tanggal, dan garis pemandu ke komponen inti `core/widgets/`.
+- Layar Statistik (`StatisticsScreen`): mengubah visual tren penjualan 7 hari terakhir dari diagram batang menjadi diagram garis area mulus yang selaras dengan Beranda Owner, menampilkan penjualan bersih harian seminggu terakhir dengan interaksi sentuh dinamis, serta menghapus chip filter periode atas permintaan pengguna.
+- Beranda Owner (`OwnerDashboard`): beralih ke `SalesLineChart` bersama, memangkas lebih dari 340 baris kode redundan.
+- Validasi:
+  - Analyzer bersih (0 error).
+  - 269/269 test Flutter lulus.
+
+## Integrasi Data Transaksi Nyata pada Layar Statistik — 20 November 2026, review
+
+- Halaman Statistik (`StatisticsScreen`):
+  1. Integrasi Penuh Transaksi Repository: menghubungkan `session.transactionRepository.listForPeriod` dengan perhitungan dinamis 100% data nyata dari database/cloud.
+  2. Tren Penjualan 7 Hari Terakhir: terkunci murni pada 7 hari kalender terakhir mundur sampai hari ini (tanpa filter periode yang membingungkan). Sumbu hari otomatis berubah mengikuti hari ini (`Sab, Min, Sen, Sel, Rab, Kam, Hari ini`).
+  3. Visual Diagram Mingguan: nominal angka ringkas (mis. `207rb`) tercetak tepat di atas tiap batang, warna aktif membedakan transaksi hari ini, dan layout responsif bebas overflow.
+  4. Komposisi Metode Pembayaran: menghitung pembagian Tunai vs QRIS aktual dari riwayat nota.
+  5. Jam Sibuk (Waktu Transaksi Terbanyak): mengelompokkan jam transaksi nyata ke dalam kategori Pagi (05-11), Siang (11-15), Sore (15-18), dan Malam (18-05).
+  6. Produk Terlaris & Lambat Laku: merangking produk paling laku berdasarkan kuantitas barang terjual nyata, dan mendeteksi produk dengan perputaran stok rendah.
+- Beranda Owner (`OwnerDashboard`):
+  - Penjualan Bersih dan grafik Penjualan Harian disetel default ke `7 hari` (seminggu terakhir), menyajikan kurva tren mulus dan total transaksi seminggu secara langsung saat beranda dibuka.
+- Validasi:
+  - Analyzer bersih (0 error).
+  - 269/269 test Flutter dan 12/12 test Node lulus.
+  - APK debug dibangun ulang (17 detik), diinstal ke Samsung SM_A366B (`RRGYC07G09Z`), dan diluncurkan langsung.
+- Validasi:
+  - Analyzer bersih (0 error).
+  - 269/269 test Flutter dan 12/12 test Node lulus.
+  - APK debug dibangun ulang (18,2 detik), diinstal ke Samsung SM_A366B (`RRGYC07G09Z`), dan diluncurkan langsung.
+
+## Penyelarasan Tanggal Transaksi Firestore (6–20 November 2026) — 20 November 2026, review
+
+- Sesuai instruksi pengguna agar tidak ada transaksi di masa depan dan seluruh transaksi masuk ke grafik 7/30 hari:
+  1. 18 transaksi masa depan (tanggal 21–24 November) dihapus dari Firestore `iyangunshop`, `stores/toko-utama`.
+  2. 18 transaksi baru untuk tanggal 6–9 November diinjeksi via create-only.
+  3. Rentang transaksi kini pas 15 hari kalender ke belakang sampai hari ini (6 s/d 20 November 2026).
+  4. Total tetap konsisten: 24 produk, 66 nota tunai, 394 unit, Rp3.035.800. Hari ini (20 Nov) memiliki 5 nota transaksi.
+  5. Seluruh 90 dokumen dibaca ulang dan divalidasi (*read-back-verified*).
+- Validasi: 12/12 test Node lulus, 268/268 test Flutter lulus.
+
+## Editor Tata Letak Toko Fullscreen & Etalase — 20 November 2026, review
+
+- Halaman Khusus Editor Fullscreen (`MonitorEditorScreen`):
+  1. Kanvas Isometrik 100% Layar: menghilangkan kanvas terjepit; pan & pinch-zoom bebas serta drag & drop snap-to-grid langsung pada viewport penuh.
+  2. Floating HUD Ukuran Toko: tombol mengambang di pojok atas membuka sheet penyesuaian ukuran ruang toko. Tersedia preset instan (Kecil `12×12`, Standar `16×16`, Luas `20×20`, Memanjang `12×24`) dan slider manual (`8–32` petak) dengan proteksi batas objek.
+  3. Objek Baru "Etalase" (`MonitorFixtureType.showcase`): ukuran 2×1 dengan visual tinggi dan aksen khas etalase/kaca toko. Total 4 tipe objek: Rak, Kulkas, Etalase, Meja Kasir.
+  4. Dock Bawah Ergonomis (Thumb-Zone Optimization):
+     - Saat tidak ada objek dipilih: bar horizontal tambah objek (`+ Rak`, `+ Kulkas`, `+ Etalase`, `+ Meja Kasir`).
+     - Saat objek dipilih: panel kontekstual memuat nama, tombol putar 90°, ubah nama, hapus, tombol atur produk langsung, dan pad geser 1 petak (*Nudge D-pad*) untuk presisi jempol tanpa harus drag.
+  5. Top Bar Ringkas: tombol Batal dengan dialog konfirmasi jika kotor, dan tombol Simpan (FilledButton).
+- Pembersihan `MonitorScreen` (Mode Pantau Murni):
+  1. Halaman utama Monitor fokus 100% untuk memantau stok dan alert toko, dengan tombol `Edit Tata Letak` di AppBar.
+  2. Mengetuk rak langsung membuka sheet/dialog rincian stok produk di rak tersebut.
+  3. Chip alert stok di atas menyaring daftar peringatan secara instan.
+- Validasi:
+  - Analyzer bersih (0 peringatan/error).
+  - 268/268 test Flutter dan 12/12 test Node lulus.
+  - APK debug baru berhasil dibangun (137 detik) di `mobile/build/app/outputs/flutter-apk/app-debug.apk`.
 
 ## Penyempurnaan Bento Dashboard, Grafik Kurva dan Bento Statistik — 20 November 2026, review
 

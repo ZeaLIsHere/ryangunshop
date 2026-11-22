@@ -70,7 +70,15 @@ class _CashierDashboardState extends State<CashierDashboard> {
     final daily = await session.transactionRepository.listForDay(
       DateTime.now(),
     );
-    final recent = await session.transactionRepository.listRecent(limit: 5);
+    final rawRecent = await session.transactionRepository.listRecent(limit: 20);
+    final now = DateTime.now();
+    final nonFuture = rawRecent
+        .where((t) => !t.createdAt.toLocal().isAfter(now))
+        .toList();
+    final realRecent = nonFuture.where((t) => !t.id.endsWith('-RG1')).toList();
+    final recent = (realRecent.isNotEmpty ? realRecent : nonFuture)
+        .take(5)
+        .toList();
     final products = await session.productRepository.listProducts();
     if (!mounted) throw StateError('Beranda sudah ditutup');
     return (
