@@ -28,8 +28,9 @@ shell, Beranda, dan laporan: Tariq. Pembagian kerja tetap mengikuti `TEAM.md`.
 
 ## Peran dan Beranda
 
-Pemilik/kasir dipilih lewat Pengaturan, tanpa login atau PIN. Pembatasan kelola
-produk adalah pemeriksaan mode aplikasi, bukan batas keamanan autentikasi.
+Peran Pemilik/Kasir ditentukan dari autentikasi akun saat masuk/mendaftar.
+Pemilih peran demo di Pengaturan telah dihapus; hak akses kelola produk dan
+pengelolaan kasir kini dikunci ketat berdasarkan akun pengguna terdaftar.
 Peran dibaca dari sesi bersama dan diperiksa ulang saat penyimpanan.
 
 - **Kasir:** desain operasional asli dipertahankan: Hero **Omzet Hari Ini**,

@@ -122,7 +122,7 @@ berkas checklist terpisah.
   1. Undangan Kasir (`InviteCashierSheet`): Owner dapat mengundang calon kasir melalui email. Sistem memvalidasi eksistensi akun kasir, mencegah pengundangan akun Owner lain, dan memblokir duplikasi undangan aktif.
   2. Menerima / Menolak Undangan: Kasir dapat melihat daftar undangan toko yang masuk pada `CashierPendingInvitationScreen`, lalu memilih Terima (terhubung ke toko) atau Tolak.
   3. Manajemen Kasir Toko (`CashierManagementScreen`): menyajikan 2 tab ("Kasir Aktif" dan "Undangan Menunggu"). Owner dapat membatalkan undangan pending atau melepas/menonaktifkan kasir dari toko dengan konfirmasi dialog aman tanpa menghapus akun kasir tersebut.
-  4. Integrasi Pengaturan (`SettingsScreen`): menampilkan profil pengguna yang login, nama toko, tombol akses "Kelola Kasir Toko" untuk Owner, serta tombol Logout.
+  4. Integrasi Pengaturan (`SettingsScreen`): menampilkan profil pengguna yang login, nama toko, status hak akses operasional toko, tombol akses "Kelola Kasir Toko" untuk Owner, serta tombol Logout. Pemilih peran demo manual di halaman pengaturan telah dihapus dan peran kini sepenuhnya dikendalikan oleh autentikasi akun.
 - Validasi Kode & Pengujian:
   - Analyzer bersih (`flutter analyze --no-pub` 0 issue).
   - 289/289 test Flutter lulus (termasuk unit test alur auth, unit test alur undangan kasir, dan widget test UI login/register/kelola kasir).
