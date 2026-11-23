@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../app/routing/app_router.dart';
 import '../../../core/config/firebase_bootstrap.dart';
 import '../../../core/session/app_session.dart';
-import '../../../core/session/user_role.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -258,22 +257,6 @@ class _SettingsContent extends StatelessWidget {
             ),
           ],
           const SizedBox(height: AppSpacing.lg),
-
-          const _SectionTitle(text: SettingsSample.rolesSectionTitle),
-          const SizedBox(height: AppSpacing.sm),
-          for (final role in viewModel.roleOptions) ...[
-            _RoleOption(
-              role: role,
-              isSelected: role == viewModel.selectedRole,
-              onTap: () => viewModel.selectRole(role),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-          ],
-          Text(
-            SettingsSample.rolesSectionNote,
-            style: theme.textTheme.bodySmall,
-          ),
-          const SizedBox(height: AppSpacing.lg),
           const _SectionTitle(text: SettingsSample.floorPlanAccessTitle),
           const SizedBox(height: AppSpacing.sm),
           _FloorPlanAccessStatus(canEdit: viewModel.canEditFloorPlan),
@@ -358,52 +341,6 @@ class _SectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(text, style: Theme.of(context).textTheme.headlineSmall);
-  }
-}
-
-/// Satu pilihan peran pengguna.
-///
-/// Keadaan terpilih disampaikan lewat ikon, teks, dan warna sekaligus.
-class _RoleOption extends StatelessWidget {
-  const _RoleOption({
-    required this.role,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  final UserRole role;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Semantics(
-      selected: isSelected,
-      button: true,
-      child: AppCard(
-        onTap: onTap,
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(role.label, style: theme.textTheme.titleMedium),
-                  const SizedBox(height: AppSpacing.xxs),
-                  Text(role.description, style: theme.textTheme.bodySmall),
-                ],
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Icon(
-              isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
-              color: isSelected ? AppColors.primary : AppColors.muted,
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 
