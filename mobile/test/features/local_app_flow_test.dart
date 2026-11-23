@@ -29,6 +29,12 @@ void main() {
     );
     final session = AppSession(database: database);
     addTearDown(session.dispose);
+    await session.registerOwner(
+      name: 'Pemilik Toko',
+      email: 'pemilik@toko.com',
+      password: 'password123',
+      storeName: 'Toko Ryan',
+    );
     await tester.pumpWidget(RyanGunshopApp(session: session));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Lewati'));

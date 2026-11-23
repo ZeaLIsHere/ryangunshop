@@ -4,6 +4,7 @@ import 'package:ryangunshop/app/app.dart';
 import 'package:ryangunshop/app/shell/app_shell.dart';
 import 'package:ryangunshop/app/startup/app_startup_state.dart';
 import 'package:ryangunshop/core/session/app_session.dart';
+import 'package:ryangunshop/features/auth/view/login_screen.dart';
 import 'package:ryangunshop/features/onboarding/sample/onboarding_sample.dart';
 
 void main() {
@@ -44,20 +45,21 @@ void main() {
     expect(find.text('Lewati'), findsOneWidget);
   });
 
-  testWidgets('perkenalan dapat dilewati menuju kerangka utama', (
-    tester,
-  ) async {
-    _usePhoneViewport(tester);
-    await tester.pumpWidget(const RyanGunshopApp());
-    await tester.pumpAndSettle();
+  testWidgets(
+    'perkenalan dapat dilewati menuju halaman login bila belum masuk akun',
+    (tester) async {
+      _usePhoneViewport(tester);
+      await tester.pumpWidget(const RyanGunshopApp());
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Lewati'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Lewati'));
+      await tester.pumpAndSettle();
 
-    expect(find.byType(AppShell), findsOneWidget);
-  });
+      expect(find.byType(LoginScreen), findsOneWidget);
+    },
+  );
 
-  testWidgets('splash melewati perkenalan bila sudah pernah dilihat', (
+  testWidgets('splash melewati perkenalan menuju login bila belum masuk akun', (
     tester,
   ) async {
     _usePhoneViewport(tester);
@@ -66,9 +68,32 @@ void main() {
     await tester.pumpWidget(const RyanGunshopApp());
     await tester.pumpAndSettle();
 
-    expect(find.byType(AppShell), findsOneWidget);
+    expect(find.byType(LoginScreen), findsOneWidget);
     expect(find.text('Lewati'), findsNothing);
   });
+
+  testWidgets(
+    'splash langsung menuju kerangka utama jika pengguna sudah login',
+    (tester) async {
+      _usePhoneViewport(tester);
+      AppStartupState.markOnboardingSeen();
+
+      final session = AppSession();
+      addTearDown(session.dispose);
+      await session.registerOwner(
+        name: 'Pemilik Toko',
+        email: 'pemilik@toko.com',
+        password: 'password123',
+        storeName: 'Toko Ryan',
+      );
+
+      await tester.pumpWidget(RyanGunshopApp(session: session));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AppShell), findsOneWidget);
+      expect(find.text('Lewati'), findsNothing);
+    },
+  );
 }
 
 class _StartupSession extends AppSession {

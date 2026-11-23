@@ -1,32 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ryangunshop/core/session/app_session.dart';
-import 'package:ryangunshop/core/session/user_role.dart';
 import 'package:ryangunshop/core/theme/app_theme.dart';
 import 'package:ryangunshop/features/settings/sample/settings_sample.dart';
 import 'package:ryangunshop/features/settings/view/settings_screen.dart';
 
 void main() {
-  testWidgets('memilih peran kasir mengunci mode edit denah', (tester) async {
+  testWidgets('peran pemilik dan kasir menentukan hak akses tanpa pemilih peran demo', (tester) async {
     _usePhoneViewport(tester);
     final session = AppSession();
     addTearDown(session.dispose);
+
+    // 1. Uji peran Pemilik
+    await session.registerOwner(
+      name: 'Pemilik Toko',
+      email: 'pemilik@toko.com',
+      password: 'password123',
+      storeName: 'Toko Ryan',
+    );
 
     await tester.pumpWidget(_host(const SettingsScreen(), session));
     await tester.pumpAndSettle();
 
     expect(find.text(SettingsSample.floorPlanAccessAllowed), findsOneWidget);
     expect(find.text(SettingsSample.floorPlanAccessLocked), findsNothing);
+    expect(find.text(SettingsSample.rolesSectionTitle), findsNothing);
+    expect(find.text('Kelola Kasir & Undangan'), findsOneWidget);
 
-    final cashierOption = find.text(UserRole.cashier.label);
-    await tester.ensureVisible(cashierOption);
-    await tester.pumpAndSettle();
-    await tester.tap(cashierOption);
+    // 2. Uji peran Kasir
+    await session.registerCashier(
+      name: 'Kasir Satu',
+      email: 'kasir@toko.com',
+      password: 'password123',
+    );
+
+    await tester.pumpWidget(_host(const SettingsScreen(), session));
     await tester.pumpAndSettle();
 
-    expect(session.role, UserRole.cashier);
+    expect(session.isCashier, isTrue);
     expect(find.text(SettingsSample.floorPlanAccessLocked), findsOneWidget);
     expect(find.text(SettingsSample.floorPlanAccessAllowed), findsNothing);
+    expect(find.text('Kelola Kasir & Undangan'), findsNothing);
+    expect(find.text(SettingsSample.rolesSectionTitle), findsNothing);
   });
 
   testWidgets('profil warung kosong tidak memakai data contoh', (tester) async {

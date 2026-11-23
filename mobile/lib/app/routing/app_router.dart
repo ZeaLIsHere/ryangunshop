@@ -12,6 +12,10 @@ import '../../features/panorama/view/panorama_viewer_screen.dart';
 import '../../features/reports/view/reports_screen.dart';
 import '../../features/scanner/view/product_scanner_screen.dart';
 import '../../features/statistics/view/statistics_screen.dart';
+import '../../features/auth/view/cashier_pending_invitation_screen.dart';
+import '../../features/auth/view/login_screen.dart';
+import '../../features/auth/view/register_screen.dart';
+import '../../features/cashier_management/view/cashier_management_screen.dart';
 import '../shell/app_shell.dart';
 import '../splash/splash_screen.dart';
 
@@ -43,6 +47,18 @@ abstract final class AppRoutes {
 
   /// Chatbot bantuan.
   static const String chatbot = '/chatbot';
+
+  /// Masuk ke akun pengguna.
+  static const String login = '/login';
+
+  /// Pendaftaran akun Pemilik atau Kasir baru.
+  static const String register = '/register';
+
+  /// Halaman penampung kasir yang belum terhubung toko.
+  static const String cashierPending = '/kasir-menunggu';
+
+  /// Halaman pengelolaan kasir oleh Pemilik toko.
+  static const String cashierManagement = '/kelola-kasir';
 }
 
 /// Pembuat rute aplikasi.
@@ -58,7 +74,20 @@ abstract final class AppRouter {
       case AppRoutes.onboarding:
         return const OnboardingScreen();
       case AppRoutes.shell:
-        return const AppShell();
+        return Builder(
+          builder: (context) {
+            final session = AppSessionScope.maybeOf(context);
+            if (session != null && !session.isAuthenticated) {
+              return const LoginScreen();
+            }
+            if (session != null &&
+                session.isCashier &&
+                !session.isCashierLinkedToStore) {
+              return const CashierPendingInvitationScreen();
+            }
+            return const AppShell();
+          },
+        );
       case AppRoutes.reports:
         return const ReportsScreen();
       case AppRoutes.scanner:
@@ -76,6 +105,14 @@ abstract final class AppRouter {
         );
       case AppRoutes.chatbot:
         return const ChatbotScreen();
+      case AppRoutes.login:
+        return const LoginScreen();
+      case AppRoutes.register:
+        return const RegisterScreen();
+      case AppRoutes.cashierPending:
+        return const CashierPendingInvitationScreen();
+      case AppRoutes.cashierManagement:
+        return const CashierManagementScreen();
       default:
         return _UnknownRouteView(routeName: name);
     }

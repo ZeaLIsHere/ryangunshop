@@ -6,7 +6,6 @@ import 'package:ryangunshop/app/shell/shell_destination.dart';
 import 'package:ryangunshop/core/data/product_record.dart';
 import 'package:ryangunshop/core/session/app_session.dart';
 import 'package:ryangunshop/app/startup/app_startup_state.dart';
-import 'package:ryangunshop/core/session/user_role.dart';
 import 'package:ryangunshop/features/catalog/model/catalog_product.dart';
 import 'package:ryangunshop/features/payment/view/payment_sheet.dart';
 import 'package:ryangunshop/features/payment/view/payment_success_screen.dart';
@@ -24,6 +23,12 @@ void main() {
 
       final session = AppSession();
       addTearDown(session.dispose);
+      await session.registerOwner(
+        name: 'Pemilik Toko',
+        email: 'pemilik@toko.com',
+        password: 'password123',
+        storeName: 'Toko Ryan',
+      );
       await tester.pumpWidget(RyanGunshopApp(session: session));
       expect(find.text('RyanGunshop'), findsOneWidget);
 
@@ -148,6 +153,12 @@ void main() {
 
       final session = AppSession();
       addTearDown(session.dispose);
+      await session.registerOwner(
+        name: 'Pemilik Toko',
+        email: 'pemilik@toko.com',
+        password: 'password123',
+        storeName: 'Toko Ryan',
+      );
       await session.productRepository.save(
         const ProductRecord(
           id: 'contoh-produk-1',
@@ -191,7 +202,7 @@ void main() {
   );
 
   testWidgets(
-    'Alur pengguna: Pengaturan Peran -> Hak akses edit denah berubah',
+    'Alur pengguna: Pengaturan menampilkan profil akun Pemilik dan opsi kelola kasir',
     (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 3;
@@ -201,26 +212,28 @@ void main() {
 
       final session = AppSession();
       addTearDown(session.dispose);
+      await session.registerOwner(
+        name: 'Pemilik Toko',
+        email: 'pemilik@toko.com',
+        password: 'password123',
+        storeName: 'Toko Ryan',
+      );
 
       await tester.pumpWidget(RyanGunshopApp(session: session));
       await tester.pumpAndSettle();
 
-      // Awalnya peran Pemilik -> boleh edit denah
+      // Hak akses Pemilik -> boleh edit denah
       expect(session.canEditFloorPlan, isTrue);
 
       // Buka Pengaturan via App Bar
       await tester.tap(find.byTooltip('Pengaturan'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Peran Pengguna'), findsOneWidget);
-      expect(find.text('Kasir'), findsOneWidget);
-
-      // Pilih peran Kasir
-      await tester.tap(find.text('Kasir'));
-      await tester.pumpAndSettle();
-
-      expect(session.role, UserRole.cashier);
-      expect(session.canEditFloorPlan, isFalse);
+      expect(find.text('Pemilik Toko'), findsOneWidget);
+      expect(find.text('pemilik@toko.com'), findsOneWidget);
+      expect(find.text('Pemilik'), findsOneWidget);
+      expect(find.text('Kelola Kasir & Undangan'), findsOneWidget);
+      expect(find.text('Peran Pengguna'), findsNothing);
     },
   );
 }

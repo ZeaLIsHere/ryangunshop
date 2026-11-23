@@ -71,7 +71,7 @@ void main() {
       var name = 'Nota awal';
       var calls = 0;
       final now = DateTime.now();
-      final old = DateTime(now.year, now.month, now.day, 12);
+      final old = now.subtract(const Duration(minutes: 5));
       final cloud = CloudReadThrough(
         database: database,
         fetch: () async {
